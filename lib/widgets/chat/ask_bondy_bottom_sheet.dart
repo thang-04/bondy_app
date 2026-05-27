@@ -25,22 +25,22 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        left: 20,
-        right: 20,
-        top: 10,
+      padding: EdgeInsets.fromLTRB(
+        24,
+        12,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Pull indicator
+          // ── Pull indicator ── căn giữa
           Center(
             child: Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
@@ -48,10 +48,12 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Header
+          const SizedBox(height: 18),
+
+          // ── Header ── căn trái đồng nhất với toàn bộ nội dung
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,13 +61,13 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                   Row(
                     children: [
                       Container(
-                        width: 24,
-                        height: 24,
+                        width: 26,
+                        height: 26,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: BondyColors.primaryGradient,
                         ),
-                        child: const Icon(Icons.favorite, color: Colors.white, size: 12),
+                        child: const Icon(Icons.favorite, color: Colors.white, size: 13),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -78,21 +80,24 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     'LẮNG NGHE & THẤU HIỂU',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: BondyColors.primary,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.8,
                     ),
                   ),
                 ],
               ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Container(
-                  padding: const EdgeInsets.all(4),
+              // Nút đóng — canh phải, cùng trục phải với mọi element
+              InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     shape: BoxShape.circle,
@@ -103,75 +108,83 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
             ],
           ),
           const SizedBox(height: 20),
-          // Tilted Welcome AI Card
-          Transform.rotate(
-            angle: 0.03, // Tilted approx 2 degrees
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: BondyColors.primaryGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: BondyColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
+
+          // ── Welcome Card nghiêng nhẹ ──
+          // Bọc Padding(horizontal: 4) để góc xoay không tràn ra ngoài 24px gốc
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Transform.rotate(
+              angle: 0.025,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: BondyColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: BondyColors.primary.withValues(alpha: 0.20),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
                     ),
-                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bondy lắng nghe bạn...',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Một không gian an toàn để chia sẻ cảm xúc và tìm lời khuyên cho trái tim.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 26),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bondy lắng nghe bạn...',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Không gian an toàn để chia sẻ cảm xúc.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.88),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          // Prompts List
+          const SizedBox(height: 22),
+
+          // ── Section label ── căn trái cùng với header
           Text(
             'GỢI Ý TRÒ CHUYỆN',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w800,
               color: Colors.grey.shade400,
-              letterSpacing: 0.5,
+              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 10),
+
+          // ── Prompt buttons ── chiều rộng full (= container width - 24*2)
           _buildPromptButton(
             icon: Icons.forum_outlined,
             text: 'Làm sao để mở đầu câu chuyện?',
@@ -190,18 +203,22 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
             color: const Color(0xFFFFF1F2),
             onTap: () => widget.onSubmit('Tư vấn về mục tiêu yêu đương'),
           ),
-          const SizedBox(height: 20),
-          // Chat input row
+          const SizedBox(height: 16),
+
+          // ── Chat input ── cùng chiều rộng với prompt buttons
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Container(
+                  height: 48,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  alignment: Alignment.centerLeft,
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
@@ -211,6 +228,8 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                         fontSize: 13,
                       ),
                       border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
                     style: GoogleFonts.plusJakartaSans(fontSize: 14),
                   ),
@@ -227,25 +246,26 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                   height: 48,
                   decoration: BoxDecoration(
                     gradient: BondyColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.send, color: Colors.white, size: 20),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          // Security note
+          const SizedBox(height: 14),
+
+          // ── Security note ── căn giữa
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.verified_user_outlined, color: Colors.green, size: 14),
+              const Icon(Icons.verified_user_outlined, color: Colors.green, size: 13),
               const SizedBox(width: 4),
               Text(
                 'Cuộc trò chuyện của bạn luôn được bảo mật',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: Colors.grey.shade400,
                 ),
               ),
