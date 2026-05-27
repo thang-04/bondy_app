@@ -38,19 +38,8 @@ class BondyBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: _outline.withValues(alpha: 0.3))),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF5D4E46).withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
+    return CustomPaint(
+      painter: BottomNavBarPainter(),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -300,3 +289,84 @@ class _MatchButton extends StatelessWidget {
     );
   }
 }
+
+class BottomNavBarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.95)
+      ..style = PaintingStyle.fill;
+
+    Paint shadowPaint = Paint()
+      ..color = const Color(0xFF5D4E46).withValues(alpha: 0.08)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+
+    Path path = Path();
+    
+    final w = size.width;
+    final h = size.height;
+    final r = 32.0; // corner radius
+    
+    final centerX = w / 2;
+    final curveWidth = 96.0;
+    final curveHeight = 22.0;
+    
+    path.moveTo(0, r);
+    path.quadraticBezierTo(0, 0, r, 0);
+    path.lineTo(centerX - curveWidth / 2 - 12, 0);
+    
+    // Smooth arch using cubic Beziers
+    path.cubicTo(
+      centerX - curveWidth / 2 + 10, 0,
+      centerX - curveWidth / 2 + 20, -curveHeight,
+      centerX, -curveHeight,
+    );
+    path.cubicTo(
+      centerX + curveWidth / 2 - 20, -curveHeight,
+      centerX + curveWidth / 2 - 10, 0,
+      centerX + curveWidth / 2 + 12, 0,
+    );
+    
+    path.lineTo(w - r, 0);
+    path.quadraticBezierTo(w, 0, w, r);
+    path.lineTo(w, h);
+    path.lineTo(0, h);
+    path.close();
+
+    // Draw drop shadow
+    canvas.drawPath(path.shift(const Offset(0, -3)), shadowPaint);
+    
+    // Draw background fill
+    canvas.drawPath(path, paint);
+
+    // Draw subtle cam outline on the upper lip
+    Paint strokePaint = Paint()
+      ..color = BondyBottomNavBar._outline.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+      
+    Path strokePath = Path();
+    strokePath.moveTo(0, r);
+    strokePath.quadraticBezierTo(0, 0, r, 0);
+    strokePath.lineTo(centerX - curveWidth / 2 - 12, 0);
+    strokePath.cubicTo(
+      centerX - curveWidth / 2 + 10, 0,
+      centerX - curveWidth / 2 + 20, -curveHeight,
+      centerX, -curveHeight,
+    );
+    strokePath.cubicTo(
+      centerX + curveWidth / 2 - 20, -curveHeight,
+      centerX + curveWidth / 2 - 10, 0,
+      centerX + curveWidth / 2 + 12, 0,
+    );
+    strokePath.lineTo(w - r, 0);
+    strokePath.quadraticBezierTo(w, 0, w, r);
+    
+    canvas.drawPath(strokePath, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
