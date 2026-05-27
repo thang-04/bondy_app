@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../models/discover/discover_profile_model.dart';
 import '../../models/home/home_widget_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/discover_service.dart';
 import '../../services/healing/healing_service.dart';
 import '../../services/profile_service.dart';
 import '../../viewmodels/home/home_viewmodel.dart';
+import '../../widgets/bondy_logo.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../healing/widgets/emotional_checkin_dialog.dart';
 
@@ -52,6 +54,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   UserProfileModel? _profile;
   bool _healingGateNeeded = false;
   bool _loadingProfile = true;
+  List<DiscoverProfile> _suggestedProfiles = [];
 
   @override
   void initState() {
@@ -79,6 +82,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       final gate = fetch.healingGate;
       if (gate != null && gate['needsCheckin'] == true && mounted) {
         setState(() => _healingGateNeeded = true);
+      }
+      
+      final sortedProfiles = List<DiscoverProfile>.from(fetch.profiles);
+      sortedProfiles.sort((a, b) => b.matchPercentage.compareTo(a.matchPercentage));
+      if (mounted) {
+        setState(() {
+          _suggestedProfiles = sortedProfiles;
+        });
       }
     } catch (_) {
       // discover may fail (no candidates yet, network blip) — keep banner off.
@@ -162,6 +173,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: _FeaturedJourneyCard(
                   onStart: () => Navigator.of(context).pushNamed('/healing/daily'),
                 ),
+              ),
+              SliverToBoxAdapter(
+                child: _SuggestedProfilesSection(profiles: _suggestedProfiles),
               ),
               SliverToBoxAdapter(
                 child: _QuickDiscoveryBento(
@@ -278,8 +292,7 @@ class _HomeTopBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bubble_chart_rounded,
-                  color: Color(0xFFFF6B6B), size: 28),
+              const BondyLogoMini(size: 32),
               const SizedBox(width: 8),
               ShaderMask(
                 shaderCallback: (rect) => _Palette.gradient.createShader(rect),
@@ -429,7 +442,7 @@ class _HealingGateBanner extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Check-in cảm xúc hôm nay',
+                      Text('Hôm nay bạn cảm thấy như thế nào?',
                           style: _font(
                               size: 14,
                               weight: FontWeight.w700,
@@ -672,7 +685,7 @@ class _QuickDiscoveryBento extends StatelessWidget {
                   icon: Icons.favorite_rounded,
                   iconColor: _Palette.primary,
                   title: 'Kết đôi',
-                  subtitle: 'Tìm người phù hợp',
+                  subtitle: 'Tìm tri kỷ',
                   onTap: onMatchTap,
                 ),
               ),
@@ -682,7 +695,7 @@ class _QuickDiscoveryBento extends StatelessWidget {
                   icon: Icons.self_improvement_rounded,
                   iconColor: _Palette.primaryDeep,
                   title: 'Chữa lành',
-                  subtitle: 'Nuôi dưỡng tâm hồn',
+                  subtitle: 'Thiền & Yoga',
                   onTap: onHealingTap,
                 ),
               ),
@@ -693,7 +706,7 @@ class _QuickDiscoveryBento extends StatelessWidget {
             icon: Icons.diversity_1_rounded,
             iconColor: _Palette.secondary,
             title: 'Mối quan hệ',
-            subtitle: 'Xây dựng gắn kết bền vững',
+            subtitle: 'Lời khuyên chuyên gia',
             onTap: onRelationshipTap,
           ),
         ],
@@ -1110,6 +1123,172 @@ class _AskBondyFab extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SuggestedProfilesSection extends StatelessWidget {
+  final List<DiscoverProfile> profiles;
+
+  const _SuggestedProfilesSection({required this.profiles});
+
+  @override
+  Widget build(BuildContext context) {
+    if (profiles.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '🔥 Gợi ý tương thích cao',
+                style: _font(
+                  size: 18,
+                  weight: FontWeight.w700,
+                  color: _Palette.onSurface,
+                ),
+              ),
+              Text(
+                'XEM THÊM',
+                style: _font(
+                  size: 11,
+                  weight: FontWeight.w700,
+                  color: _Palette.primary,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 170,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: profiles.length,
+              itemBuilder: (context, index) {
+                final profile = profiles[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pushNamed(
+                      '/profile-detail',
+                      arguments: profile,
+                    );
+                  },
+                  child: Container(
+                    width: 130,
+                    margin: const EdgeInsets.only(right: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _Palette.outlineVariant.withValues(alpha: 0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
+                            image: profile.imageUrl.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(profile.imageUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                            color: _Palette.surfaceContainerHigh,
+                          ),
+                          child: Stack(
+                            children: [
+                              if (profile.imageUrl.isEmpty)
+                                Center(
+                                  child: Text(
+                                    profile.name.isNotEmpty
+                                        ? profile.name[0].toUpperCase()
+                                        : 'B',
+                                    style: _font(
+                                      size: 32,
+                                      weight: FontWeight.w800,
+                                      color: _Palette.primary,
+                                    ),
+                                  ),
+                                ),
+                              Positioned(
+                                bottom: 6,
+                                right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF4D6D),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${profile.matchPercentage}% Match',
+                                    style: _font(
+                                      size: 8,
+                                      weight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${profile.name}, ${profile.age}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _font(
+                                  size: 12,
+                                  weight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                profile.distance,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _font(
+                                  size: 10,
+                                  color: _Palette.onSurfaceMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
