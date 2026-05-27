@@ -90,7 +90,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final body = RefreshIndicator(
       onRefresh: _loadAll,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, widget.embedded ? 110 : 24),
         children: [
           _buildSearchField(),
           const SizedBox(height: 16),
@@ -143,6 +143,47 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       ),
     );
 
+    final mainContent = widget.embedded ? SafeArea(child: body) : body;
+
+    final stackBody = Stack(
+      children: [
+        mainContent,
+        Positioned(
+          bottom: widget.embedded ? 100 : 24,
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => AskBondyBottomSheet(
+                  onSubmit: (msg) {
+                    Navigator.pop(context);
+                    Navigator.of(context).pushNamed(
+                      '/chatbot',
+                      arguments: {'initialMessage': msg},
+                    ).then((_) => _loadAll(silent: true));
+                  },
+                ),
+              );
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 4,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: BondyColors.primaryGradient,
+              ),
+              child: const Icon(Icons.smart_toy, color: Colors.white, size: 28),
+            ),
+          ),
+        ),
+      ],
+    );
+
     final scaffold = Scaffold(
       backgroundColor: BondyColors.background,
       appBar: widget.embedded
@@ -154,36 +195,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               ),
               title: const Text('Tin nhắn'),
             ),
-      body: widget.embedded ? SafeArea(child: body) : body,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => AskBondyBottomSheet(
-              onSubmit: (msg) {
-                Navigator.pop(context);
-                Navigator.of(context).pushNamed(
-                  '/chatbot',
-                  arguments: {'initialMessage': msg},
-                ).then((_) => _loadAll(silent: true));
-              },
-            ),
-          );
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 4,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: BondyColors.primaryGradient,
-          ),
-          child: const Icon(Icons.smart_toy, color: Colors.white, size: 28),
-        ),
-      ),
+      body: stackBody,
     );
 
     return scaffold;
