@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'common/bondy_widgets.dart';
+
+/// Primary action button used across the app.
+///
+/// The filled variant delegates to [BondyPrimaryButton] (the gradient CTA
+/// pulled up from the Healing design system) so every CTA in the app shares
+/// the same height, radius, gradient and glow. The outlined and loading
+/// variants keep their classic Material treatment.
 class BondyButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -18,39 +26,38 @@ class BondyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isOutlined) {
-      return OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        child: _buildChild(),
-      );
-    }
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      child: _buildChild(),
-    );
-  }
-
-  Widget _buildChild() {
     if (isLoading) {
-      return const SizedBox(
-        height: 24,
-        width: 24,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      return ElevatedButton(
+        onPressed: null,
+        child: const SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
         ),
       );
     }
-    if (icon != null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Text(text),
-        ],
+    if (isOutlined) {
+      return OutlinedButton(
+        onPressed: onPressed,
+        child: icon == null
+            ? Text(text)
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20),
+                  const SizedBox(width: 8),
+                  Text(text),
+                ],
+              ),
       );
     }
-    return Text(text);
+    return BondyPrimaryButton(
+      label: text,
+      icon: icon ?? Icons.arrow_forward,
+      onTap: onPressed,
+    );
   }
 }

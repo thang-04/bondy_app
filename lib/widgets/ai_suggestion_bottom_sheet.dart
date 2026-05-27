@@ -5,11 +5,15 @@ import '../theme/app_theme.dart';
 import '../viewmodels/ai/ai_coach_viewmodel.dart';
 
 class AiSuggestionBottomSheet extends StatelessWidget {
+  final String conversationId;
+  final String userId;
   final VoidCallback onDismiss;
   final ValueChanged<String> onSuggestionSelected;
 
   const AiSuggestionBottomSheet({
     super.key,
+    required this.conversationId,
+    required this.userId,
     required this.onDismiss,
     required this.onSuggestionSelected,
   });
@@ -19,6 +23,8 @@ class AiSuggestionBottomSheet extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AiCoachViewModel(),
       child: _AiSuggestionBottomSheetContent(
+        conversationId: conversationId,
+        userId: userId,
         onDismiss: onDismiss,
         onSuggestionSelected: onSuggestionSelected,
       ),
@@ -27,10 +33,14 @@ class AiSuggestionBottomSheet extends StatelessWidget {
 }
 
 class _AiSuggestionBottomSheetContent extends StatelessWidget {
+  final String conversationId;
+  final String userId;
   final VoidCallback onDismiss;
   final ValueChanged<String> onSuggestionSelected;
 
   const _AiSuggestionBottomSheetContent({
+    required this.conversationId,
+    required this.userId,
     required this.onDismiss,
     required this.onSuggestionSelected,
   });
@@ -73,7 +83,6 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: BondyColors.textPrimary,
-                  letterSpacing: -0.02,
                 ),
               ),
               const Spacer(),
@@ -98,7 +107,10 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
     );
   }
 
-  Widget _buildIntentSelector(BuildContext context, AiCoachViewModel viewModel) {
+  Widget _buildIntentSelector(
+    BuildContext context,
+    AiCoachViewModel viewModel,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -150,8 +162,8 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           height: 52,
           child: ElevatedButton(
             onPressed: () => viewModel.getSuggestions(
-              conversationId: 'mock-conversation',
-              userId: 'mock-user',
+              conversationId: conversationId,
+              userId: userId,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: BondyColors.primary,
@@ -285,8 +297,8 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           const SizedBox(height: 16),
           TextButton(
             onPressed: () => viewModel.getSuggestions(
-              conversationId: 'mock-conversation',
-              userId: 'mock-user',
+              conversationId: conversationId,
+              userId: userId,
             ),
             child: Text(
               'Thử lại',
@@ -301,7 +313,10 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSuggestionsList(BuildContext context, AiCoachViewModel viewModel) {
+  Widget _buildSuggestionsList(
+    BuildContext context,
+    AiCoachViewModel viewModel,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,10 +344,12 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        ...viewModel.suggestions.map((s) => _SuggestionChip(
-              suggestion: s,
-              onTap: () => onSuggestionSelected(s),
-            )),
+        ...viewModel.suggestions.map(
+          (s) => _SuggestionChip(
+            suggestion: s,
+            onTap: () => onSuggestionSelected(s),
+          ),
+        ),
       ],
     );
   }
@@ -342,10 +359,7 @@ class _SuggestionChip extends StatelessWidget {
   final String suggestion;
   final VoidCallback onTap;
 
-  const _SuggestionChip({
-    required this.suggestion,
-    required this.onTap,
-  });
+  const _SuggestionChip({required this.suggestion, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

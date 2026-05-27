@@ -64,12 +64,12 @@ class _FakeSurveyService extends SurveyService {
   }
 
   @override
-  Future<(bool, String?)> submitSurvey(
+  Future<(bool, String?, String?)> submitSurvey(
     String surveyId,
     Map<String, dynamic> answersMap,
     List<SurveyQuestion> questions,
   ) async {
     submitCalls++;
-    return (true, null);
+    return (true, null, null);
   }
 }

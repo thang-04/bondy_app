@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/bondy_error_mapper.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/profile_service.dart';
 import '../../widgets/location/shopee_location_picker.dart';
+import '../../widgets/profile/prompts_editor_section.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -34,6 +36,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // Controllers cho text fields
   late final TextEditingController _bioController;
   late final TextEditingController _cityController;
+  late final TextEditingController _fullNameController;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -41,6 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _bioController = TextEditingController();
     _cityController = TextEditingController();
+    _fullNameController = TextEditingController();
     _loadProfile();
   }
 
@@ -48,6 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _bioController.dispose();
     _cityController.dispose();
+    _fullNameController.dispose();
     super.dispose();
   }
 
@@ -62,7 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _applyProfile(profile);
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString());
+        setState(() => _errorMessage = BondyErrorMapper.message(e));
       }
     } finally {
       if (mounted) setState(() => _isLoadingData = false);
@@ -73,6 +78,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _applyProfile(UserProfileModel profile) {
     setState(() {
       _profile = profile;
+      _fullNameController.text = profile.fullName ?? profile.name ?? '';
       _bioController.text = profile.bio ?? '';
       _cityController.text = profile.city ?? '';
 
@@ -128,10 +134,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // 3. Gửi toàn bộ dữ liệu kèm bộ link ảnh tổng hợp lên /profile/me
+      final fullName = _fullNameController.text.trim();
       await _profileService.updateProfile(
+        fullName: fullName.isNotEmpty ? fullName : null,
         bio: _bioController.text.trim(),
         city: _cityController.text.trim(),
-        photos: finalPhotos,
+        photos: finalPhotos.isNotEmpty ? finalPhotos : null,
       );
 
       if (!mounted) return;
@@ -329,6 +337,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _buildPhotosSection(),
           const SizedBox(height: 28),
           _buildFieldSection(
+            title: 'Tên hiển thị',
+            icon: Icons.person_outline,
+            child: _buildTextField(
+              controller: _fullNameController,
+              hint: 'Tên của bạn...',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildFieldSection(
             title: 'Giới thiệu bản thân',
             child: _buildTextField(
               controller: _bioController,
@@ -342,6 +359,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             icon: Icons.location_on_outlined,
             child: _buildLocationSelector(),
           ),
+          const SizedBox(height: 24),
+          const PromptsEditorSection(),
           const SizedBox(height: 40),
         ],
       ),
@@ -532,30 +551,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ],
               )
-            : Stack(
-                children: [
-                  if (index == 0)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Icon(Icons.star,
-                          color: BondyColors.primary, size: 16),
-                    ),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_a_photo_outlined,
-                            color: const Color(0xFF9CA3AF), size: 24),
-                        const SizedBox(height: 4),
-                        Text('Thêm ảnh',
-                            style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10, color: const Color(0xFF9CA3AF))),
-                      ],
-                    ),
-                  ),
-                ],
+            : _buildEmptySlot(index),
+      ),
+    );
+  }
+
+  Widget _buildEmptySlot(int index) {
+    final isFirst = index == 0;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFirst
+              ? BondyColors.primary.withValues(alpha: 0.5)
+              : BondyColors.divider,
+          width: 1.5,
+          // Dashed border simulated via decoration
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isFirst
+                    ? BondyColors.primary.withValues(alpha: 0.1)
+                    : const Color(0xFFF3F4F6),
+                shape: BoxShape.circle,
               ),
+              child: Icon(
+                isFirst ? Icons.add_a_photo : Icons.camera_alt_outlined,
+                color: isFirst ? BondyColors.primary : const Color(0xFF9CA3AF),
+                size: 20,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isFirst ? 'Thêm ảnh đầu tiên' : 'Thêm ảnh',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                color: isFirst ? BondyColors.primary : const Color(0xFF9CA3AF),
+                fontWeight: isFirst ? FontWeight.w600 : FontWeight.normal,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

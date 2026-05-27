@@ -49,12 +49,27 @@ dependencies:
   dio: ^5.9.2
   flutter_secure_storage: ^10.0.0
   flutter_dotenv: ^5.1.0
+  just_audio: ^0.9.46
+  record: ^6.0.0
+  web_socket_channel: ^3.0.2
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.3
+
+  # Observability
+  sentry_flutter: ^8.13.3
+
+  # Internationalisation
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   integration_test:
     sdk: flutter
+  patrol: ^3.20.0
+  patrol_finders: ^2.9.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -69,6 +84,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true   # enables flutter gen-l10n for intl ARB files
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -79,6 +95,7 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/
+    - assets/images/healing_stitch/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see

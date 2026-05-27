@@ -4,11 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('EmotionCheckinWidget', () {
-    testWidgets('renders partner name and mood options', (tester) async {
-      final data = {
-        'partner_name': 'Minh',
-        'relationship_id': 'rel_123',
-      };
+    testWidgets('renders partner name and check-in CTA', (tester) async {
+      final data = {'partner_name': 'Minh', 'relationship_id': 'rel_123'};
 
       await tester.pumpWidget(
         MaterialApp(
@@ -20,19 +17,19 @@ void main() {
         ),
       );
 
-      expect(find.text('Check-in cảm xúc hôm nay'), findsOneWidget);
-      expect(find.text('Bạn đang cảm thế nào với Minh?'), findsOneWidget);
-      expect(find.text('Vui'), findsOneWidget);
-      expect(find.text('Bình yên'), findsOneWidget);
-      expect(find.text('Buồn'), findsOneWidget);
-      expect(find.text('Lo lắng'), findsOneWidget);
+      expect(find.textContaining('Minh'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsOneWidget);
     });
 
-    testWidgets('shows snackbar on mood tap', (tester) async {
+    testWidgets('opens relationship check-in flow from CTA', (tester) async {
       final data = {'partner_name': 'Test', 'relationship_id': 'rel_123'};
 
       await tester.pumpWidget(
         MaterialApp(
+          routes: {
+            '/relationship/checkin': (_) =>
+                const Scaffold(body: Text('relationship check-in')),
+          },
           home: Scaffold(
             body: SingleChildScrollView(
               child: EmotionCheckinWidget(data: data),
@@ -41,10 +38,10 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Vui'));
-      await tester.pump();
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pumpAndSettle();
 
-      expect(find.text('Đã ghi nhận cảm xúc: Vui'), findsOneWidget);
+      expect(find.text('relationship check-in'), findsOneWidget);
     });
   });
 }

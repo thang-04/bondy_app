@@ -66,4 +66,9 @@ class _FakeProfileService extends ProfileService {
       gender: 'Nữ',
     );
   }
+
+  @override
+  Future<Map<String, dynamic>> getProfileStats() async {
+    return {'streakDays': 7, 'matchCount': 3, 'weeklyActivities': 5};
+  }
 }

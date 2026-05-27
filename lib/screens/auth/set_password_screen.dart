@@ -121,7 +121,6 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
 class _RegisterField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
-  final TextInputType? keyboardType;
   final bool obscureText;
   final ValueChanged<String> onChanged;
 
@@ -130,7 +129,6 @@ class _RegisterField extends StatelessWidget {
     required this.controller,
     required this.hintText,
     required this.onChanged,
-    this.keyboardType,
     this.obscureText = false,
   });
 
@@ -144,7 +142,6 @@ class _RegisterField extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
-        keyboardType: keyboardType,
         obscureText: obscureText,
         autocorrect: false,
         onChanged: onChanged,

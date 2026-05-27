@@ -1,242 +1,271 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 
-class RelationshipHomeDashboard extends StatelessWidget {
+import '../healing/healing_stitch_style.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
+
+class RelationshipHomeDashboard extends StatefulWidget {
   const RelationshipHomeDashboard({super.key});
 
   @override
+  State<RelationshipHomeDashboard> createState() =>
+      _RelationshipHomeDashboardState();
+}
+
+class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
+  late final RelationshipViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = RelationshipViewModel();
+    _viewModel.loadDashboard();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Của chúng mình',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: BondyColors.textPrimary,
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) {
+        final dash = _viewModel.dashboard;
+        if (_viewModel.isLoading && dash == null) {
+          return const Scaffold(
+            backgroundColor: HealingStitchColors.warmBackground,
+            body: Center(
+              child: CircularProgressIndicator(color: HealingStitchColors.coral),
+            ),
+          );
+        }
+
+        if (dash == null || !dash.hasRelationship) {
+          return Scaffold(
+            backgroundColor: HealingStitchColors.warmBackground,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Của chúng mình',
+                      style: healingText(size: 24, weight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Mời người yêu tham gia Bondy để cùng check-in, ghi nhận cột mốc và giải quyết mâu thuẫn.',
+                      style: healingText(color: HealingStitchColors.textMuted),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: HealingStitchColors.warmGradient,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              Navigator.of(context).pushNamed('/relationship/invite'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Text(
+                            'Mời người yêu',
+                            style: healingText(
+                              weight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        'Hoan & Linh',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: BondyColors.textSecondary,
-                        ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        final photo = dash.partnerPhotoUrl;
+        return Scaffold(
+          backgroundColor: HealingStitchColors.warmBackground,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Của chúng mình',
+                            style: healingText(size: 24, weight: FontWeight.w800),
+                          ),
+                          Text(
+                            dash.partnerName ?? 'Người yêu',
+                            style: healingText(
+                              size: 14,
+                              color: HealingStitchColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundImage: photo != null && photo.startsWith('http')
+                            ? NetworkImage(photo)
+                            : null,
+                        backgroundColor: HealingStitchColors.paleCoral,
+                        child: photo == null || !photo.startsWith('http')
+                            ? Text(
+                                (dash.partnerName ?? '?')[0].toUpperCase(),
+                                style: healingText(weight: FontWeight.w800),
+                              )
+                            : null,
                       ),
                     ],
                   ),
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=hoan_linh'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Relationship Streak Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: BondyColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: BondyColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: HealingStitchColors.warmGradient,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [healingGlowShadow()],
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
+                    child: Column(
+                      children: [
+                        Text(
+                          '${dash.daysTogether} ngày bên nhau',
+                          style: healingText(
+                            size: 20,
+                            weight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          dash.nextMilestoneTitle != null
+                              ? 'Sắp tới: ${dash.nextMilestoneTitle}'
+                              : 'Streak ${dash.streakDays} ngày check-in',
+                          style: healingText(
+                            size: 14,
+                            color: Colors.white.withValues(alpha: 0.92),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _ActionTile(
+                    icon: Icons.favorite_outline,
+                    title: 'Check-in cảm xúc',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/relationship/checkin'),
+                  ),
+                  _ActionTile(
+                    icon: Icons.handshake_outlined,
+                    title: 'Giải quyết mâu thuẫn',
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('/relationship/conflict-tool'),
+                  ),
+                  _ActionTile(
+                    icon: Icons.celebration_outlined,
+                    title: 'Cột mốc',
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('/relationship/milestones'),
+                  ),
+                  _ActionTile(
+                    icon: Icons.bar_chart_outlined,
+                    title: 'Báo cáo tuần',
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('/relationship/weekly-report'),
+                  ),
+                  if (dash.recentCheckins.isNotEmpty) ...[
+                    const SizedBox(height: 24),
                     Text(
-                      '365 ngày bên nhau',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
+                      'Check-in gần đây',
+                      style: healingText(size: 16, weight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Kỷ niệm 1 năm sắp tới rồi! ❤️',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.9),
+                    ...dash.recentCheckins.take(5).map(
+                      (c) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Text(c.mood, style: const TextStyle(fontSize: 28)),
+                        title: Text(
+                          c.isMine ? 'Bạn' : (dash.partnerName ?? 'Người yêu'),
+                          style: healingText(weight: FontWeight.w600),
+                        ),
+                        subtitle: c.note != null && c.note!.isNotEmpty
+                            ? Text(c.note!, style: healingText(size: 13))
+                            : null,
                       ),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Action Grid
-              Text(
-                'Hoạt động cặp đôi',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.1,
-                children: [
-                  _buildActionCard(
-                    context,
-                    'Emotional\nCheck-in',
-                    Icons.favorite_outline,
-                    const Color(0xFFFFE5E5),
-                    const Color(0xFFFF5252),
-                    '/relationship/checkin',
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Conflict\nResolver',
-                    Icons.handshake_outlined,
-                    const Color(0xFFE5F6FF),
-                    const Color(0xFF2196F3),
-                    '/relationship/conflict-tool',
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Relationship\nMilestones',
-                    Icons.emoji_events_outlined,
-                    const Color(0xFFFFF7E5),
-                    const Color(0xFFFFB300),
-                    '/relationship/milestones',
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Partner\nInvite',
-                    Icons.person_add_outlined,
-                    const Color(0xFFF3E5FF),
-                    const Color(0xFF9C27B0),
-                    '/relationship/invite',
-                  ),
                 ],
               ),
-              const SizedBox(height: 32),
-
-              // Shared Memories / Upcoming
-              Text(
-                'Kỷ niệm sắp tới',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildMemoryItem('Kỷ niệm 1 năm', 'Còn 14 ngày', '🎂'),
-              _buildMemoryItem('Chuyến du lịch tiếp theo', 'Tháng sau', '✈️'),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
 
-  Widget _buildActionCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color bgColor,
-    Color iconColor,
-    String route,
-  ) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, route),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: iconColor, size: 28),
-            Text(
-              title,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: BondyColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
 
-  Widget _buildMemoryItem(String title, String subtitle, String emoji) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(emoji, style: const TextStyle(fontSize: 20)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: HealingStitchColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: BondyColors.textPrimary,
+                Icon(icon, color: HealingStitchColors.coral),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: healingText(size: 16, weight: FontWeight.w700),
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: BondyColors.textSecondary,
-                  ),
-                ),
+                const Icon(Icons.chevron_right, color: HealingStitchColors.textMuted),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
-        ],
+        ),
       ),
     );
   }

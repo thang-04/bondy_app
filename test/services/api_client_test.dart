@@ -64,12 +64,6 @@ class _MockAuthService implements AuthService {
     required String password,
   }) async => throw UnimplementedError();
   @override
-  Future<dynamic> register({
-    required String email,
-    required String password,
-    String? name,
-  }) async => throw UnimplementedError();
-  @override
   Future<void> verifyEmail({required String token}) async =>
       throw UnimplementedError();
   @override
@@ -89,8 +83,15 @@ class _MockAuthService implements AuthService {
   Future<void> setPassword({required String password}) async =>
       throw UnimplementedError();
   @override
+  Future<void> setPasswordEmail({
+    required String email,
+    required String password,
+  }) async => throw UnimplementedError();
+  @override
   Future<Map<String, dynamic>> getCurrentUser() async =>
       throw UnimplementedError();
+  @override
+  Future<void> deleteAccount() async => throw UnimplementedError();
   @override
   Future<void> logout() async {}
   @override
@@ -326,14 +327,10 @@ void main() {
   );
 
   test('exposes baseUrl for environment detection', () {
-    final devClient = ApiClient(
-      baseUrlOverride: 'http://localhost:3000/api',
-    );
+    final devClient = ApiClient(baseUrlOverride: 'http://localhost:3000/api');
     expect(devClient.baseUrl, 'http://localhost:3000/api');
 
-    final prodClient = ApiClient(
-      baseUrlOverride: 'https://api.bondy.com/api',
-    );
+    final prodClient = ApiClient(baseUrlOverride: 'https://api.bondy.com/api');
     expect(prodClient.baseUrl, 'https://api.bondy.com/api');
   });
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
@@ -94,11 +93,16 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
               // Dùng context.watch để tự động bắt sự kiện khi isValid thay đổi
               BondyButton(
                 key: const Key('auth_continue_button'),
-                text: context.watch<AuthViewModel>().isLoading ? 'Đang gửi...' : 'Tiếp tục',
+                text: context.watch<AuthViewModel>().isLoading
+                    ? 'Đang gửi...'
+                    : 'Tiếp tục',
                 onPressed: context.watch<AuthViewModel>().isValid
                     ? () {
                         // Gọi Controller xử lý action submit
-                        context.read<AuthViewModel>().sendOtpAndNavigate(context, _phoneController.text);
+                        context.read<AuthViewModel>().sendOtpAndNavigate(
+                          context,
+                          _phoneController.text,
+                        );
                       }
                     : () {},
               ),

@@ -7,13 +7,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../services/onboarding_router.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
 
 class GoogleMapLocationScreen extends StatefulWidget {
-  static const onboardingContinueRoute = '/survey/intro';
-
   final bool isPicking;
   const GoogleMapLocationScreen({super.key, this.isPicking = false});
 
@@ -332,10 +331,7 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
 
       if (!mounted) return;
       setState(() => _isSaving = false);
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        GoogleMapLocationScreen.onboardingContinueRoute,
-        (route) => false,
-      );
+      await OnboardingRouter.navigateToNextStep(context);
     } catch (e) {
       debugPrint('Save location error: $e');
       if (!mounted) return;

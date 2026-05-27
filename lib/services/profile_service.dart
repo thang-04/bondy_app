@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../models/user_profile_model.dart';
 import './api_client.dart';
@@ -35,13 +36,21 @@ class ProfileService {
     }
   }
 
-  Future<String?> uploadImage(XFile file) async {
+  Future<String?> uploadImage(XFile file) => uploadMediaFile(file);
+
+  Future<String?> uploadMediaFile(XFile file) async {
     try {
       final fileName = file.name;
       final bytes = await file.readAsBytes();
+      final ext = fileName.split('.').last.toLowerCase();
+      final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
 
       final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+          contentType: MediaType.parse(mimeType),
+        ),
       });
 
       final response = await _dio.post(
@@ -55,7 +64,7 @@ class ProfileService {
       }
       return null;
     } catch (e) {
-      debugPrint('Upload image error: $e');
+      debugPrint('Upload media error: $e');
       return null;
     }
   }
@@ -115,11 +124,104 @@ class ProfileService {
     return const [];
   }
 
+  /// Trả về danh sách interest ID mà user đã chọn
+  Future<List<String>> getUserInterests() async {
+    final body = await _apiClient.get('/profile/interests', authenticated: true);
+    final data = body['data'];
+    if (data is List) {
+      return data.map((e) => e.toString()).toList();
+    }
+    return const [];
+  }
+
   Future<void> saveInterests(List<String> interestIds) async {
     await _apiClient.put(
       '/profile/interests',
       body: {'interestIds': interestIds},
       authenticated: true,
+    );
+  }
+
+  Future<Map<String, dynamic>> getProfileStats() async {
+    final body = await _apiClient.get('/profile/stats', authenticated: true);
+    return (body['data'] as Map<String, dynamic>?) ?? {};
+  }
+
+  Future<Map<String, dynamic>> updateVisibility({required bool hidden}) async {
+    final body = await _apiClient.patch(
+      '/profile/visibility',
+      body: {'isVisible': !hidden},
+      authenticated: true,
+    );
+    return (body['data'] as Map<String, dynamic>?) ?? body;
+  }
+
+  Future<void> deleteAccount({required String password}) async {
+    final body = await _apiClient.post(
+      '/profile/delete',
+      body: {'password': password},
+      authenticated: true,
+    );
+    if (body['success'] != true) {
+      throw Exception(body['error']?.toString() ?? 'Xóa tài khoản thất bại');
+    }
+    await AuthService().clearSession();
+  }
+
+  // ── Snooze (pause discovery) ────────────────────────────────────────────
+  Future<SnoozeStatus> getSnoozeStatus() async {
+    final body = await _apiClient.get('/profile/snooze', authenticated: true);
+    final data = body['data'] as Map<String, dynamic>? ?? const {};
+    return SnoozeStatus.fromJson(data);
+  }
+
+  /// [duration] is one of `24h`, `72h`, `7d`, `30d`, or `null` to un-snooze.
+  Future<SnoozeStatus> setSnooze({String? duration}) async {
+    final body = await _apiClient.post(
+      '/profile/snooze',
+      body: {'until': duration},
+      authenticated: true,
+    );
+    final data = body['data'] as Map<String, dynamic>? ?? const {};
+    return SnoozeStatus.fromJson(data);
+  }
+
+  // ── Notification preferences ────────────────────────────────────────────
+  Future<Map<String, dynamic>> getNotificationPrefs() async {
+    final body = await _apiClient.get(
+      '/profile/notification-prefs',
+      authenticated: true,
+    );
+    return (body['data'] as Map<String, dynamic>?) ?? const {};
+  }
+
+  Future<Map<String, dynamic>> updateNotificationPrefs(
+    Map<String, Map<String, bool>> partial,
+  ) async {
+    final body = await _apiClient.put(
+      '/profile/notification-prefs',
+      body: partial,
+      authenticated: true,
+    );
+    return (body['data'] as Map<String, dynamic>?) ?? const {};
+  }
+}
+
+class SnoozeStatus {
+  final DateTime? snoozedUntil;
+  final bool isSnoozed;
+
+  const SnoozeStatus({this.snoozedUntil, required this.isSnoozed});
+
+  factory SnoozeStatus.fromJson(Map<String, dynamic> json) {
+    final raw = json['snoozedUntil'];
+    DateTime? until;
+    if (raw is String && raw.isNotEmpty) {
+      until = DateTime.tryParse(raw);
+    }
+    return SnoozeStatus(
+      snoozedUntil: until,
+      isSnoozed: json['isSnoozed'] == true,
     );
   }
 }

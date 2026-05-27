@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'theme/app_theme.dart';
-import 'viewmodels/ai/ai_coach_viewmodel.dart';
+import '../theme/app_theme.dart';
+import '../viewmodels/ai/ai_coach_viewmodel.dart';
 
 class AiSuggestBottomSheet extends StatelessWidget {
   final List<String> suggestions;
@@ -95,10 +95,7 @@ class AiSuggestBottomSheet extends StatelessWidget {
   Widget _buildLimitReachedContent(BuildContext context) {
     return Column(
       children: [
-        const Text(
-          '🔒',
-          style: TextStyle(fontSize: 48),
-        ),
+        const Text('🔒', style: TextStyle(fontSize: 48)),
         const SizedBox(height: 12),
         Text(
           'Bạn đã hết lượt gợi ý hôm nay',
@@ -145,10 +142,7 @@ class AiSuggestBottomSheet extends StatelessWidget {
         ),
         if (onRetry != null) ...[
           const SizedBox(height: 16),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Thử lại'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
         ],
       ],
     );

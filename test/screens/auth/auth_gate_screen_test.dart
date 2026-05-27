@@ -23,6 +23,7 @@ Widget _testApp(AuthService authService) {
       '/onboarding': (context) => const Text('onboarding'),
       '/home': (context) => const Text('home'),
       '/profile-setup': (context) => const Text('profile setup'),
+      '/verify-email': (context) => const Text('verify email'),
     },
   );
 }
@@ -46,6 +47,9 @@ void main() {
     final authService = _FakeAuthService(
       () async => const SessionRestoreResult.authenticated({
         'id': 'user-id',
+        'emailVerified': '2026-05-22T00:00:00.000Z',
+        'profileComplete': true,
+        'surveyComplete': true,
         'profile': {
           'fullName': 'User',
           'gender': 'MALE',
@@ -67,6 +71,7 @@ void main() {
       final authService = _FakeAuthService(
         () async => const SessionRestoreResult.authenticated({
           'id': 'user-id',
+          'emailVerified': '2026-05-22T00:00:00.000Z',
           'profile': {'fullName': 'User'},
         }),
       );

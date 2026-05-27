@@ -1,3 +1,5 @@
+import '../core/media_url.dart';
+
 /// Model ánh xạ response từ GET /api/profile/me
 /// Response shape: { success: true, data: { id, name, email, image, phone, profile: {...} } }
 class UserProfileModel {
@@ -16,6 +18,7 @@ class UserProfileModel {
   final String? bio;
   final String? datingGoal;
   final List<String> photos;
+  final bool isHidden;
 
   const UserProfileModel({
     required this.id,
@@ -30,34 +33,64 @@ class UserProfileModel {
     this.bio,
     this.datingGoal,
     this.photos = const [],
+    this.isHidden = false,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    final profile = json['profile'] as Map<String, dynamic>?;
+    // Server trả về Prisma Profile với user nested:
+    // { id (profile id), userId, fullName, gender, ..., user: { id, email, name, image } }
+    // Cũng hỗ trợ format cũ: { id (user id), email, name, image, profile: { fullName, ... } }
+    final userNode = json['user'] as Map<String, dynamic>?;
+    final legacyProfile = json['profile'] as Map<String, dynamic>?;
 
-    // Parse photos: server trả về List<dynamic>
+    // Xác định profile fields từ top-level (server mới) hoặc nested 'profile' (format cũ)
+    final profileFields = legacyProfile ?? json;
+
+    // Parse photos: server trả về List<dynamic>. Rewrite host trong từng URL
+    // để máy thật reach được ảnh đã upload từ emulator (vốn lưu URL 10.0.2.2).
     List<String> parsePhotos(dynamic raw) {
       if (raw == null) return [];
-      if (raw is List) return raw.map((e) => e.toString()).toList();
+      if (raw is List) {
+        return raw
+            .map((e) => rewriteMediaUrl(e.toString()) ?? e.toString())
+            .toList();
+      }
       return [];
     }
 
+    // User identity: ưu tiên user.id (server mới) → userId field → json['id']
+    final userId = userNode?['id']?.toString()
+        ?? json['userId']?.toString()
+        ?? json['id']?.toString()
+        ?? '';
+
+    // isVisible từ server, isHidden = !isVisible
+    final isVisible = profileFields['isVisible'] as bool?;
+    final isHiddenLegacy = profileFields['isHidden'] as bool?;
+    final isHidden = isHiddenLegacy ?? (isVisible != null ? !isVisible : false);
+
     return UserProfileModel(
-      id: json['id']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      name: json['name']?.toString(),
-      image: json['image']?.toString(),
+      id: userId,
+      email: userNode?['email']?.toString()
+          ?? json['email']?.toString()
+          ?? '',
+      name: userNode?['name']?.toString()
+          ?? json['name']?.toString(),
+      image: rewriteMediaUrl(
+            userNode?['image']?.toString() ?? json['image']?.toString(),
+          ),
       phone: json['phone']?.toString(),
-      // Profile
-      fullName: profile?['fullName']?.toString(),
-      gender: profile?['gender']?.toString(),
-      birthDate: profile?['birthDate'] != null
-          ? DateTime.tryParse(profile!['birthDate'].toString())
+      // Profile fields (top-level trên server mới, nested trên format cũ)
+      fullName: profileFields['fullName']?.toString(),
+      gender: profileFields['gender']?.toString(),
+      birthDate: profileFields['birthDate'] != null
+          ? DateTime.tryParse(profileFields['birthDate'].toString())
           : null,
-      city: profile?['city']?.toString(),
-      bio: profile?['bio']?.toString(),
-      datingGoal: profile?['datingGoal']?.toString(),
-      photos: parsePhotos(profile?['photos']),
+      city: profileFields['city']?.toString(),
+      bio: profileFields['bio']?.toString(),
+      datingGoal: profileFields['datingGoal']?.toString(),
+      photos: parsePhotos(profileFields['photos']),
+      isHidden: isHidden,
     );
   }
 
@@ -82,5 +115,6 @@ class UserProfileModel {
         'bio': bio,
         'datingGoal': datingGoal,
         'photos': photos,
+        'isHidden': isHidden,
       };
 }

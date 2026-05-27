@@ -17,32 +17,42 @@ void main() {
   test('lists chats for the authenticated user', () async {
     final storage = FlutterSecureStorage();
     await storage.write(key: 'accessToken', value: 'access-token');
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-    final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-      expect(request.method, 'GET');
-      expect(request.headers['authorization'], 'Bearer access-token');
-      return http.Response(jsonEncode({
-        'success': true,
-        'data': [
-          {
-            'id': 'chat-1',
-            'matchId': 'match-1',
-            'otherUser': {
-              'id': 'user-2',
-              'firstName': 'Minh',
-              'lastName': 'Anh',
-              'photo': null,
-            },
-            'lastMessage': {
-              'content': 'Xin chao',
-              'createdAt': '2026-04-29T10:00:00Z',
-              'isMine': false,
-            },
-            'updatedAt': '2026-04-29T10:00:00Z',
-          },
-        ],
-      }), 200);
-    }));
+    final authService = AuthService(
+      baseUrlOverride: 'https://api.example.com/api',
+      storage: storage,
+    );
+    final apiClient = ApiClient(
+      baseUrlOverride: 'https://api.example.com/api',
+      authService: authService,
+      client: MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.headers['authorization'], 'Bearer access-token');
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': [
+              {
+                'id': 'chat-1',
+                'matchId': 'match-1',
+                'otherUser': {
+                  'id': 'user-2',
+                  'firstName': 'Minh',
+                  'lastName': 'Anh',
+                  'photo': null,
+                },
+                'lastMessage': {
+                  'content': 'Xin chao',
+                  'createdAt': '2026-04-29T10:00:00Z',
+                  'isMine': false,
+                },
+                'updatedAt': '2026-04-29T10:00:00Z',
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
     final service = ChatService(apiClient);
 
     final chats = await service.listChats();
@@ -55,23 +65,33 @@ void main() {
   test('lists messages for a chat', () async {
     final storage = FlutterSecureStorage();
     await storage.write(key: 'accessToken', value: 'access-token');
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-    final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-      expect(request.method, 'GET');
-      expect(request.headers['authorization'], 'Bearer access-token');
-      return http.Response(jsonEncode({
-        'success': true,
-        'data': [
-          {
-            'id': 'msg-1',
-            'content': 'Xin chao',
-            'senderId': 'user-2',
-            'isRead': false,
-            'createdAt': '2026-04-29T10:00:00Z',
-          },
-        ],
-      }), 200);
-    }));
+    final authService = AuthService(
+      baseUrlOverride: 'https://api.example.com/api',
+      storage: storage,
+    );
+    final apiClient = ApiClient(
+      baseUrlOverride: 'https://api.example.com/api',
+      authService: authService,
+      client: MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.headers['authorization'], 'Bearer access-token');
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': [
+              {
+                'id': 'msg-1',
+                'content': 'Xin chao',
+                'senderId': 'user-2',
+                'isRead': false,
+                'createdAt': '2026-04-29T10:00:00Z',
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
     final service = ChatService(apiClient);
 
     final messages = await service.listMessages('chat-1');
@@ -84,22 +104,35 @@ void main() {
   test('sends text messages to a chat', () async {
     final storage = FlutterSecureStorage();
     await storage.write(key: 'accessToken', value: 'access-token');
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-    final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-      expect(request.method, 'POST');
-      expect(request.headers['authorization'], 'Bearer access-token');
-      expect(jsonDecode(request.body), {'content': 'Hello'});
-      return http.Response(jsonEncode({
-        'success': true,
-        'data': {
-          'id': 'msg-2',
+    final authService = AuthService(
+      baseUrlOverride: 'https://api.example.com/api',
+      storage: storage,
+    );
+    final apiClient = ApiClient(
+      baseUrlOverride: 'https://api.example.com/api',
+      authService: authService,
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.headers['authorization'], 'Bearer access-token');
+        expect(jsonDecode(request.body), {
           'content': 'Hello',
-          'senderId': 'user-1',
-          'isRead': false,
-          'createdAt': '2026-04-29T10:05:00Z',
-        },
-      }), 200);
-    }));
+          'messageType': 'TEXT',
+        });
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': {
+              'id': 'msg-2',
+              'content': 'Hello',
+              'senderId': 'user-1',
+              'isRead': false,
+              'createdAt': '2026-04-29T10:05:00Z',
+            },
+          }),
+          200,
+        );
+      }),
+    );
     final service = ChatService(apiClient);
 
     final message = await service.sendMessage('chat-1', 'Hello');

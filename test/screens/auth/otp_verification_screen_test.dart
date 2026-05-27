@@ -94,12 +94,10 @@ Future<void> _pumpOtpScreen(
 
 class _FakeAuthService extends AuthService {
   _FakeAuthService({
-    this.sendOtpResult = const SendOtpResult(message: 'Đã gửi mã OTP'),
     this.requestLoginOtpResult = const SendOtpResult(message: 'Đã gửi mã OTP'),
     this.sendOtpError,
   }) : super(baseUrlOverride: 'https://api.example.com/api');
 
-  final SendOtpResult sendOtpResult;
   final SendOtpResult requestLoginOtpResult;
   final Object? sendOtpError;
 
@@ -114,7 +112,7 @@ class _FakeAuthService extends AuthService {
     lastEmail = email;
     final error = sendOtpError;
     if (error != null) throw error;
-    return sendOtpResult;
+    return const SendOtpResult(message: 'Đã gửi mã OTP');
   }
 
   @override

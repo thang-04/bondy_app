@@ -1,10 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../screens/healing/healing_navigation.dart';
+import '../../services/healing/healing_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
 
-class SurveyResultScreen extends StatelessWidget {
+class SurveyResultScreen extends StatefulWidget {
   const SurveyResultScreen({super.key});
+
+  @override
+  State<SurveyResultScreen> createState() => _SurveyResultScreenState();
+}
+
+class _SurveyResultScreenState extends State<SurveyResultScreen> {
+  final HealingService _healingService = HealingService();
+  bool _didPrompt = false;
+  String? _finalModeCode;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didPrompt) return;
+    _didPrompt = true;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map) {
+      _finalModeCode = args['finalModeCode']?.toString();
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showPlanPrompt());
+  }
+
+  bool get _needsHealing =>
+      _finalModeCode == null || _finalModeCode!.toLowerCase() == 'healer';
+
+  Future<void> _showPlanPrompt() async {
+    if (_needsHealing) {
+      await _showHealingPlanPrompt();
+    } else {
+      await _showMatchingPrompt();
+    }
+  }
+
+  Future<void> _showHealingPlanPrompt() async {
+    try {
+      await _healingService.fetchEntryState(entry: 'ONBOARDING');
+    } catch (_) {
+      // Healing remains usable even if the recommendation request fails.
+    }
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Bạn muốn theo lộ trình chữa lành này chứ?',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: BondyColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Bạn có thể bắt đầu ngay, xem trước trước khi quyết định, hoặc để sau.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: BondyColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                BondyButton(
+                  text: 'Bắt đầu ngay',
+                  onPressed: () async {
+                    await _healingService.startRecommendedPlan();
+                    if (!sheetContext.mounted) return;
+                    Navigator.of(sheetContext).pop();
+                    if (!mounted) return;
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      healingPlanRoute,
+                      (_) => false,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      healingPlanRoute,
+                      (_) => false,
+                      arguments: const {'preview': true},
+                    );
+                  },
+                  child: const Text('Xem trước'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/home/healing',
+                      (_) => false,
+                    );
+                  },
+                  child: const Text('Để sau'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showMatchingPrompt() async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('💚', style: TextStyle(fontSize: 32), textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                Text(
+                  'Bạn đã sẵn sàng kết nối!',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: BondyColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Bondy sẽ gợi ý những người phù hợp với hành trình của bạn.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: BondyColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 18),
+                BondyButton(
+                  text: 'Khám phá ngay',
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/discover',
+                      (_) => false,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/home/healing',
+                      (_) => false,
+                    );
+                  },
+                  child: const Text('Xem Content Hub trước'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +201,6 @@ class SurveyResultScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                // Completion icon
                 Container(
                   width: 100,
                   height: 100,
@@ -61,7 +241,6 @@ class SurveyResultScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 36),
-                // Healing path card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -109,10 +288,10 @@ class SurveyResultScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 BondyButton(
-                  text: 'Bắt đầu hành trình',
+                  text: 'Vào Healing',
                   onPressed: () {
                     Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home',
+                      '/home/healing',
                       (route) => false,
                     );
                   },

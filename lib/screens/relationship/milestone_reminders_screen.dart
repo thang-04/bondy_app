@@ -1,185 +1,190 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 
-class MilestoneRemindersScreen extends StatelessWidget {
+import '../healing/healing_stitch_style.dart';
+import '../../core/bondy_error_mapper.dart';
+import '../../services/relationship_service.dart';
+import '../../widgets/common/bondy_feedback.dart';
+
+class MilestoneRemindersScreen extends StatefulWidget {
   const MilestoneRemindersScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: BondyColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Dấu mốc kỷ niệm',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: BondyColors.textPrimary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: BondyColors.primary),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  State<MilestoneRemindersScreen> createState() => _MilestoneRemindersScreenState();
+}
+
+class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
+  final RelationshipService _service = RelationshipService();
+  List<Map<String, dynamic>> _milestones = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      _milestones = await _service.listMilestones();
+    } catch (e) {
+      _error = BondyErrorMapper.message(e);
+      _milestones = [];
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showAddDialog() async {
+    final titleController = TextEditingController();
+    DateTime selected = DateTime.now().add(const Duration(days: 30));
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Thêm cột mốc', style: healingText(weight: FontWeight.w800)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Đừng bỏ lỡ những khoảnh khắc quan trọng',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: BondyColors.textPrimary,
-                height: 1.3,
-              ),
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(hintText: 'Tiêu đề'),
             ),
-            const SizedBox(height: 32),
-
-            Text(
-              'Sắp tới',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: BondyColors.textPrimary,
-              ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: ctx,
+                  initialDate: selected,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                );
+                if (picked != null) selected = picked;
+              },
+              child: Text('Chọn ngày', style: healingText(color: HealingStitchColors.coral)),
             ),
-            const SizedBox(height: 16),
-            _buildMilestoneCard(
-              'Kỷ niệm 1 năm',
-              'Trong 14 ngày nữa (10/03)',
-              '🎂',
-              const Color(0xFFFFE5E5),
-              const Color(0xFFFF5252),
-            ),
-            _buildMilestoneCard(
-              'Ngày đầu gặp gỡ',
-              'Trong 45 ngày nữa (10/04)',
-              '✨',
-              const Color(0xFFFFF7E5),
-              const Color(0xFFFFB300),
-            ),
-
-            const SizedBox(height: 32),
-            Text(
-              'Đã qua',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: BondyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildMilestoneItem('Lần đầu đi xem phim', '24/12/2025', '🎬'),
-            _buildMilestoneItem('Buổi hẹn hò đầu tiên', '15/11/2025', '☕'),
-            _buildMilestoneItem('Lần đầu cùng đi du lịch', '10/10/2025', '🏕️'),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMilestoneCard(
-    String title,
-    String date,
-    String emoji,
-    Color bgColor,
-    Color accentColor,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(emoji, style: const TextStyle(fontSize: 24)),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: BondyColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  date,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor,
-                  ),
-                ),
-              ],
-            ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Lưu', style: healingText(color: HealingStitchColors.coral)),
           ),
         ],
       ),
     );
+
+    if (saved != true || titleController.text.trim().isEmpty) return;
+
+    try {
+      await _service.addMilestone(
+        title: titleController.text.trim(),
+        milestoneDate: selected,
+      );
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e);
+    }
   }
 
-  Widget _buildMilestoneItem(String title, String date, String emoji) {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final upcoming = _milestones.where((m) {
+      final d = DateTime.tryParse(m['milestoneDate']?.toString() ?? '');
+      return d != null && !d.isBefore(now);
+    }).toList();
+    final past = _milestones.where((m) {
+      final d = DateTime.tryParse(m['milestoneDate']?.toString() ?? '');
+      return d != null && d.isBefore(now);
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: HealingStitchColors.warmBackground,
+      appBar: AppBar(
+        backgroundColor: HealingStitchColors.warmBackground,
+        elevation: 0,
+        leading: HealingIconButton(
+          icon: Icons.arrow_back,
+          onTap: () => Navigator.pop(context),
+        ),
+        title: Text('Dấu mốc kỷ niệm', style: healingText(size: 16, weight: FontWeight.w800)),
+        centerTitle: true,
+        actions: [
+          HealingIconButton(icon: Icons.add, onTap: _showAddDialog),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: HealingStitchColors.coral,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: HealingStitchColors.coral))
+            : ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Text(
+                    'Đừng bỏ lỡ những khoảnh khắc quan trọng',
+                    style: healingText(size: 22, weight: FontWeight.w800),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: healingText(color: HealingStitchColors.textSoft)),
+                  ],
+                  const SizedBox(height: 24),
+                  Text('Sắp tới', style: healingText(size: 18, weight: FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  if (upcoming.isEmpty)
+                    Text(
+                      'Chưa có cột mốc sắp tới. Nhấn + để thêm.',
+                      style: healingText(color: HealingStitchColors.textMuted),
+                    )
+                  else
+                    ...upcoming.map((m) => _card(m, upcoming: true)),
+                  const SizedBox(height: 24),
+                  Text('Đã qua', style: healingText(size: 18, weight: FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  if (past.isEmpty)
+                    Text('Chưa có kỷ niệm đã qua.', style: healingText(color: HealingStitchColors.textMuted))
+                  else
+                    ...past.map((m) => _card(m, upcoming: false)),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _card(Map<String, dynamic> m, {required bool upcoming}) {
+    final date = DateTime.tryParse(m['milestoneDate']?.toString() ?? '');
+    final label = date != null
+        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'
+        : '';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: upcoming ? HealingStitchColors.paleCoral : HealingStitchColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [healingSoftShadow()],
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
+          Text(upcoming ? '🎂' : '✨', style: const TextStyle(fontSize: 28)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: BondyColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  date,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: BondyColors.textSecondary,
-                  ),
-                ),
+                Text(m['title']?.toString() ?? '', style: healingText(size: 16, weight: FontWeight.w700)),
+                Text(label, style: healingText(size: 13, color: HealingStitchColors.coral)),
               ],
             ),
           ),
-          const Icon(Icons.check_circle_outline, color: Color(0xFF9CA3AF), size: 18),
         ],
       ),
     );

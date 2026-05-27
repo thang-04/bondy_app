@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${APP_ROOT}"
 
-printf '%s\n' 'Prerequisite: start backend from ../bondy_server with npm run dev; Android emulator reaches it through http://10.0.2.2:3000/api.'
+printf '%s\n' 'Prerequisite: API server is reachable at http://103.149.86.25:3000/api or override API_BASE_URL in .env.'
 flutter devices
 
 DEVICE_ID="${1:-}"

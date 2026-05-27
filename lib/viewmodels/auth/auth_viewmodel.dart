@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/bondy_error_mapper.dart';
 import '../../services/auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
+  static const int minimumAge = 18;
+
   final AuthService _authService;
 
   AuthViewModel({AuthService? authService})
@@ -15,23 +18,61 @@ class AuthViewModel extends ChangeNotifier {
   String? devToken;
   bool isPasswordReset = false;
 
+  static final RegExp _emailRegex =
+      RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
+
+  /// F-05: registration requires a slightly stronger password — at least 8
+  /// characters with both a letter and a digit. Login keeps the 6-char floor
+  /// so users with older passwords can still sign in.
+  static bool isStrongPassword(String password) {
+    if (password.length < 8) return false;
+    final hasLetter = password.contains(RegExp(r'[A-Za-z]'));
+    final hasDigit = password.contains(RegExp(r'\d'));
+    return hasLetter && hasDigit;
+  }
+
   void validateEmail(String email) {
-    isValid = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(email);
+    isValid = _emailRegex.hasMatch(email);
     notifyListeners();
   }
 
   void validateLogin(String email, String password) {
-    isValid =
-        RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(email) &&
-        password.length >= 6;
+    isValid = _emailRegex.hasMatch(email) && password.length >= 6;
     notifyListeners();
   }
 
   void validateRegister(String email, String password, String? name) {
-    isValid =
-        RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(email) &&
-        password.length >= 6;
+    isValid = _emailRegex.hasMatch(email) && isStrongPassword(password);
     notifyListeners();
+  }
+
+  String? validateBirthDate(DateTime? birthDate) {
+    if (birthDate == null) {
+      return 'Vui lòng nhập ngày sinh';
+    }
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    if (age < minimumAge) {
+      return 'Bạn phải từ $minimumAge tuổi trở lên để sử dụng ứng dụng';
+    }
+    if (age > 120) {
+      return 'Ngày sinh không hợp lệ';
+    }
+    return null;
+  }
+
+  static bool isUnderage(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age < minimumAge;
   }
 
   Future<void> sendOtpAndNavigate(
@@ -52,7 +93,7 @@ class AuthViewModel extends ChangeNotifier {
         context,
       ).pushNamed('/otp', arguments: {'email': email, 'flow': flow});
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Không thể gửi OTP')),
@@ -81,11 +122,14 @@ class AuthViewModel extends ChangeNotifier {
         Navigator.of(
           context,
         ).pushReplacementNamed('/register', arguments: email);
+      } else if (flow == 'password_reset') {
+        // Don't navigate - VerifyOtpScreen will handle navigation
+        return;
       } else {
         await _navigateAfterAuth(context);
       }
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Mã OTP không hợp lệ')),
@@ -130,7 +174,7 @@ class AuthViewModel extends ChangeNotifier {
       }
       return true;
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Không thể gửi lại OTP')),
@@ -157,7 +201,7 @@ class AuthViewModel extends ChangeNotifier {
       if (!context.mounted) return;
       await _navigateAfterAuth(context);
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Đăng nhập thất bại')),
@@ -182,7 +226,7 @@ class AuthViewModel extends ChangeNotifier {
       if (!context.mounted) return;
       Navigator.of(context).pushReplacementNamed('/profile-setup');
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Tạo mật khẩu thất bại')),
@@ -207,7 +251,7 @@ class AuthViewModel extends ChangeNotifier {
       if (!context.mounted) return;
       await _navigateAfterAuth(context);
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Xác minh email thất bại')),
@@ -231,9 +275,9 @@ class AuthViewModel extends ChangeNotifier {
     try {
       devToken = await _authService.forgotPassword(email: email);
       if (!context.mounted) return;
-      Navigator.of(context).pushNamed('/reset-password', arguments: email);
+      Navigator.of(context).pushNamed('/verify-otp', arguments: email);
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -241,6 +285,33 @@ class AuthViewModel extends ChangeNotifier {
           ),
         );
       }
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> setPasswordEmailAndNavigate(
+    BuildContext context,
+    String email,
+    String password,
+  ) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.setPasswordEmail(email: email, password: password);
+      isPasswordReset = true;
+      return true;
+    } catch (error) {
+      errorMessage = BondyErrorMapper.message(error);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage ?? 'Đặt lại mật khẩu thất bại')),
+        );
+      }
+      return false;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -265,7 +336,7 @@ class AuthViewModel extends ChangeNotifier {
         context,
       ).pushNamedAndRemoveUntil('/login', (route) => route.isFirst);
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Đặt lại mật khẩu thất bại')),
@@ -297,7 +368,7 @@ class AuthViewModel extends ChangeNotifier {
       ).showSnackBar(const SnackBar(content: Text('Đổi mật khẩu thành công')));
       Navigator.of(context).pop();
     } catch (error) {
-      errorMessage = error.toString();
+      errorMessage = BondyErrorMapper.message(error);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage ?? 'Đổi mật khẩu thất bại')),
@@ -317,6 +388,16 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final userData = await _authService.getCurrentUser();
       if (!context.mounted) return;
+
+      // Check email verification status
+      final emailVerified = userData['emailVerified'] != null;
+
+      if (!emailVerified) {
+        // Redirect to email verification screen
+        Navigator.of(context).pushReplacementNamed('/verify-email');
+        return;
+      }
+
       final profile = userData['profile'];
       final hasCompletedProfile =
           profile is Map<String, dynamic> &&

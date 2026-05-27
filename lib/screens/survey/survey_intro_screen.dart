@@ -60,7 +60,7 @@ class SurveyIntroScreen extends StatelessWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -133,10 +133,25 @@ class SurveyIntroScreen extends StatelessWidget {
                     children: [
                       BondyButton(
                         text: 'Bắt đầu',
-                        onPressed: () {
-                          // Điều chỉnh surveyType khớp với DB là 'onboarding'
-                          context.read<SurveyViewModel>().loadSurvey('onboarding');
-                          Navigator.of(context).pushNamed('/survey/question');
+                        onPressed: () async {
+                          final viewModel = context.read<SurveyViewModel>();
+                          final navigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+                          await viewModel.loadSurveyWithCompletionCheck('onboarding');
+
+                          if (viewModel.isAlreadyCompleted) {
+                            // Đã hoàn thành survey, chuyển thẳng đến Home
+                            navigator.pushNamedAndRemoveUntil(
+                              '/home',
+                              (route) => false,
+                            );
+                          } else if (viewModel.errorMessage != null) {
+                            messenger.showSnackBar(
+                              SnackBar(content: Text(viewModel.errorMessage!)),
+                            );
+                          } else {
+                            navigator.pushNamed('/survey/question');
+                          }
                         },
                       ),
                       const SizedBox(height: 16),

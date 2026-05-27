@@ -230,6 +230,7 @@ class _FakeAuthService extends AuthService {
     return {
       'id': loginResult.userId,
       'email': loginResult.email,
+      'emailVerified': '2026-05-22T00:00:00.000Z',
       'profile': {
         'fullName': loginResult.name,
         'gender': 'MALE',

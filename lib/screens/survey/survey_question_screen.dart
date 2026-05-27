@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/common/bondy_feedback.dart';
 import '../../widgets/survey_option_card.dart';
 import '../../viewmodels/survey/survey_viewmodel.dart';
 import '../../models/survey/survey_question_model.dart';
@@ -42,16 +43,7 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  viewModel.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    color: BondyColors.textSecondary,
-                  ),
-                ),
+                BondyErrorBanner(message: viewModel.errorMessage!),
                 const SizedBox(height: 24),
                 BondyButton(
                   text: 'Quay lại',
@@ -231,8 +223,11 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
       case 'TEXT':
       case 'TEXTAREA':
         return _buildTextInput(question, viewModel);
+      case 'DATE':
+        return _buildDatePicker(question, viewModel);
+      case 'RATING':
+        return _buildRating(question, viewModel);
       default:
-        // Fallback cho các loại chưa được implement (DATE, BOOLEAN, RATING...)
         return _buildFallback(question);
     }
   }
@@ -301,6 +296,60 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDatePicker(SurveyQuestion question, SurveyViewModel viewModel) {
+    final current = viewModel.currentAnswer is String
+        ? DateTime.tryParse(viewModel.currentAnswer as String)
+        : null;
+    return Column(
+      children: [
+        ListTile(
+          title: Text(
+            current != null
+                ? '${current.day}/${current.month}/${current.year}'
+                : 'Chọn ngày',
+            style: GoogleFonts.plusJakartaSans(fontSize: 16),
+          ),
+          trailing: const Icon(Icons.calendar_today, color: BondyColors.primary),
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: current ?? DateTime.now(),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+            if (picked != null) {
+              viewModel.saveAnswer(picked.toIso8601String());
+              setState(() {});
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRating(SurveyQuestion question, SurveyViewModel viewModel) {
+    final max = (question.maxValue ?? 5).toInt();
+    final current = (viewModel.currentAnswer as num?)?.toInt() ?? 0;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(max, (index) {
+        final star = index + 1;
+        final filled = star <= current;
+        return IconButton(
+          icon: Icon(
+            filled ? Icons.star : Icons.star_border,
+            color: BondyColors.primary,
+            size: 36,
+          ),
+          onPressed: () {
+            viewModel.saveAnswer(star);
+            setState(() {});
+          },
+        );
+      }),
     );
   }
 

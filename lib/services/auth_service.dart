@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -99,9 +99,11 @@ class LoginResult {
 }
 
 class AuthService {
+  static const defaultApiBaseUrl = 'http://103.149.86.25:3000/api';
   static const _accessTokenKey = 'accessToken';
   static const _refreshTokenKey = 'refreshToken';
   static const _userIdKey = 'userId';
+  static const _timeout = Duration(seconds: 15);
 
   final String _baseUrl;
   final FlutterSecureStorage _storage;
@@ -133,20 +135,46 @@ class AuthService {
       return envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
     }
 
-    // Priority 2: Platform-specific fallback
-    if (kIsWeb) return 'http://localhost:3001/api';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3001/api';  // Android emulator only
-    }
-    return 'http://localhost:3001/api';
+    // Priority 2: shared fallback when .env is not bundled or loaded.
+    return defaultApiBaseUrl;
+  }
+
+  /// WebSocket base for chat realtime (port 3001 by default).
+  static String resolveWsUrl({
+    required String chatId,
+    required String accessToken,
+  }) {
+    String? wsPort;
+    try {
+      wsPort = dotenv.env['CHAT_WS_PORT'];
+    } catch (_) {}
+
+    final apiBase = resolveBaseUrl();
+    final apiUri = Uri.parse(apiBase);
+    final host = apiUri.host;
+    final port = wsPort ?? '3001';
+    final encodedToken = Uri.encodeComponent(accessToken);
+    final encodedChat = Uri.encodeComponent(chatId);
+    return 'ws://$host:$port?token=$encodedToken&chatId=$encodedChat';
   }
 
   Future<SendOtpResult> sendOtp(String email) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/auth/send-otp'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+    final http.Response response;
+    try {
+      response = await _client
+          .post(
+            Uri.parse('$_baseUrl/auth/send-otp'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email}),
+          )
+          .timeout(_timeout);
+    } on TimeoutException {
+      throw const AuthServiceException(
+        'Máy chủ không phản hồi. Kiểm tra kết nối và thử lại.',
+      );
+    } catch (e) {
+      throw AuthServiceException('Không thể kết nối máy chủ: $e');
+    }
 
     final body = _decodeBody(response);
     if (response.statusCode != 200 || body['success'] != true) {
@@ -308,6 +336,24 @@ class AuthService {
     if (response.statusCode != 200 || body['success'] != true) {
       throw AuthServiceException(
         body['error']?.toString() ?? 'Đặt lại mật khẩu thất bại',
+      );
+    }
+  }
+
+  Future<void> setPasswordEmail({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/auth/set-password-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    final body = _decodeBody(response);
+    if (response.statusCode != 200 || body['success'] != true) {
+      throw AuthServiceException(
+        body['error']?.toString() ?? 'Đặt mật khẩu thất bại',
       );
     }
   }
@@ -493,6 +539,24 @@ class AuthService {
     } finally {
       await clearSession();
     }
+  }
+
+  Future<void> deleteAccount() async {
+    final response = await _client.delete(
+      Uri.parse('$_baseUrl/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await requireAccessToken()}',
+      },
+    );
+
+    final body = _decodeBody(response);
+    if (response.statusCode != 200 || body['success'] != true) {
+      throw AuthServiceException(
+        body['error']?.toString() ?? 'Xóa tài khoản thất bại',
+      );
+    }
+    await clearSession();
   }
 
   Future<String?> getAccessToken() => _storage.read(key: _accessTokenKey);

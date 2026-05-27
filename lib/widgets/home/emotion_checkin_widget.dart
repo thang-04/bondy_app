@@ -3,6 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../services/relationship_service.dart';
+import '../common/bondy_feedback.dart';
+
 class EmotionCheckinWidget extends StatelessWidget {
   final Map<String, dynamic> data;
 
@@ -11,7 +14,6 @@ class EmotionCheckinWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final partnerName = data['partner_name'] as String? ?? 'Người ấy';
-    final relationshipId = data['relationship_id'] as String? ?? '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -23,82 +25,40 @@ class EmotionCheckinWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xffffffff),
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFb70047).withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE0E6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Color(0xFFb70047),
-                    size: 22,
+          Row(
+            children: [
+              const Icon(Icons.favorite, color: Color(0xFFb70047), size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Check-in với $partnerName',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Check-in cảm xúc hôm nay',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A2E),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Bạn đang cảm thấy thế nào với $partnerName?',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Chia sẻ cảm xúc hôm nay để hai bạn thấu hiểu nhau hơn.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: const Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _MoodChip(icon: Icons.sentiment_satisfied, label: 'Vui', mood: 'happy', relationshipId: relationshipId),
-                _MoodChip(icon: Icons.spa, label: 'Bình yên', mood: 'peaceful', relationshipId: relationshipId),
-                _MoodChip(icon: Icons.sentiment_dissatisfied, label: 'Buồn', mood: 'sad', relationshipId: relationshipId),
-                _MoodChip(icon: Icons.psychology, label: 'Lo lắng', mood: 'anxious', relationshipId: relationshipId),
-              ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pushNamed('/relationship/checkin'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFb70047),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Bắt đầu check-in'),
             ),
           ),
         ],
@@ -107,52 +67,33 @@ class EmotionCheckinWidget extends StatelessWidget {
   }
 }
 
-class _MoodChip extends StatelessWidget {
-  final IconData icon;
+/// Quick mood chip used when inline check-in is enabled.
+class HomeQuickMoodChip extends StatelessWidget {
   final String label;
   final String mood;
-  final String relationshipId;
 
-  const _MoodChip({
-    required this.icon,
-    required this.label,
-    required this.mood,
-    required this.relationshipId,
-  });
+  const HomeQuickMoodChip({super.key, required this.label, required this.mood});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã ghi nhận cảm xúc: $label'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+      onTap: () async {
+        try {
+          await RelationshipService().submitCheckin(mood: mood);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đã ghi nhận: $label')),
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          BondyFeedback.showError(context, e);
+        }
       },
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE0E6).withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: const Color(0xFFb70047),
-              size: 28,
-            ),
-          ),
+          Icon(Icons.circle, size: 8, color: Colors.grey.shade400),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 11)),
         ],
       ),
     );

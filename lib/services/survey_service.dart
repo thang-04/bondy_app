@@ -1,76 +1,59 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+
 import '../models/survey/survey_question_model.dart';
+import 'api_client.dart';
+import 'auth_service.dart';
 
 class SurveyService {
+  final ApiClient _apiClient;
+
+  SurveyService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+
   static String get baseUrl => resolveBaseUrl();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static String resolveBaseUrl({String? baseUrlOverride}) {
-    final override = baseUrlOverride?.trim();
-    if (override != null && override.isNotEmpty) {
-      return override.endsWith('/')
-          ? override.substring(0, override.length - 1)
-          : override;
-    }
-
-    // Priority 1: .env file (for real device and production)
-    String? envUrl;
-    try {
-      envUrl = dotenv.env['API_BASE_URL'];
-    } catch (_) {
-      // dotenv not initialized, use fallback
-    }
-    if (envUrl != null && envUrl.trim().isNotEmpty) {
-      return envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
-    }
-
-    // Priority 2: Platform-specific fallback
-    if (kIsWeb) return 'http://localhost:3001/api';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3001/api';  // Android emulator only
-    }
-    return 'http://localhost:3001/api';
+    return ApiClient.resolveBaseUrl(baseUrlOverride: baseUrlOverride);
   }
 
-  Future<(String, List<SurveyQuestion>)> fetchActiveSurvey({required String surveyType}) async {
+  Future<(String, List<SurveyQuestion>)> fetchActiveSurvey({
+    required String surveyType,
+  }) async {
     try {
-      // Lấy tất cả surveys cùng type (không dùng limit=1 để tránh bỏ sót survey có đủ câu hỏi)
-      final response = await http.get(Uri.parse('$baseUrl/surveys?surveyType=$surveyType&status=active'));
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null && data['data'].isNotEmpty) {
-          final surveys = data['data'] as List;
+      final response = await _apiClient.get(
+        '/surveys',
+        queryParams: {
+          'surveyType': surveyType,
+          'status': 'ACTIVE',
+          'limit': 100,
+        },
+      );
 
-          // Chọn survey có nhiều questions nhất (totalQuestions từ API)
-          surveys.sort((a, b) => ((b['totalQuestions'] ?? 0) as int).compareTo((a['totalQuestions'] ?? 0) as int));
-          final surveyData = surveys.first;
-          final String surveyId = surveyData['id'];
+      if (response['success'] == true) {
+        final surveys = List<Map<String, dynamic>>.from(
+          (response['data'] as List? ?? const []).map(
+            (item) => (item as Map).cast<String, dynamic>(),
+          ),
+        );
+        if (surveys.isEmpty) return ('', <SurveyQuestion>[]);
 
-          // Gọi API detail để lấy chi tiết questions
-          final detailResponse = await http.get(Uri.parse('$baseUrl/surveys/$surveyId?includeQuestions=true'));
-          
-          if (detailResponse.statusCode == 200) {
-            final detailData = json.decode(detailResponse.body);
-            if (detailData['success'] == true) {
-              final questions = detailData['data']['questions'] as List? ?? [];
-              return (surveyId, questions.map((q) => SurveyQuestion.fromJson(q)).toList());
-            }
-          }
-        }
+        surveys.sort(
+          (a, b) => ((b['totalQuestions'] ?? 0) as int).compareTo(
+            (a['totalQuestions'] ?? 0) as int,
+          ),
+        );
+        return _fetchSurveyDetail(surveys.first['id']?.toString() ?? '');
       }
-      
-      debugPrint('Fetch survey failed. Status: ${response.statusCode}, Body: ${response.body}');
-      return ('', <SurveyQuestion>[]); // Return empty tuple instead of mock data so UI can show message
-    } catch (e) {
-      debugPrint('Fetch survey error: $e');
-      throw Exception('Không thể kết nối đến server. Vui lòng kiểm tra lại mạng $e');
+
+      debugPrint('Fetch survey failed. Body: $response');
+      return ('', <SurveyQuestion>[]);
+    } catch (error) {
+      debugPrint('Fetch survey error: $error');
+      throw Exception(
+        'Không thể kết nối đến server. Vui lòng kiểm tra lại mạng $error',
+      );
     }
   }
+
   Future<(String, List<SurveyQuestion>)> fetchSurveyByCode(String code) async {
     final trimmedCode = code.trim();
     if (trimmedCode.isEmpty) {
@@ -78,88 +61,161 @@ class SurveyService {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/surveys/code/$trimmedCode?includeQuestions=true'),
+      final response = await _apiClient.get(
+        '/surveys/code/$trimmedCode',
+        queryParams: {'includeQuestions': true},
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final surveyData = data['data'] as Map<String, dynamic>;
-          final questions = surveyData['questions'] as List? ?? [];
-          return (
-            surveyData['id']?.toString() ?? '',
-            questions.map((q) => SurveyQuestion.fromJson(q)).toList(),
-          );
-        }
+      if (response['success'] == true && response['data'] != null) {
+        return _surveyTupleFromData(
+          (response['data'] as Map).cast<String, dynamic>(),
+        );
       }
 
-      debugPrint(
-        'Fetch survey by code failed. Status: ${response.statusCode}, Body: ${response.body}',
-      );
+      debugPrint('Fetch survey by code failed. Body: $response');
       return ('', <SurveyQuestion>[]);
-    } catch (e) {
-      debugPrint('Fetch survey by code error: $e');
-      throw Exception('Không thể kết nối đến server. Vui lòng kiểm tra lại mạng $e');
+    } catch (error) {
+      debugPrint('Fetch survey by code error: $error');
+      throw Exception(
+        'Không thể kết nối đến server. Vui lòng kiểm tra lại mạng $error',
+      );
     }
   }
 
-  Future<String?> _getAccessToken() async {
-    return await _storage.read(key: 'accessToken');
-  }
+  Future<bool> checkSurveyCompletion(String surveyId) async {
+    if (surveyId.trim().isEmpty) return false;
 
-  Future<(bool, String?)> submitSurvey(String surveyId, Map<String, dynamic> answersMap, List<SurveyQuestion> questions) async {
     try {
-      final List<Map<String, dynamic>> payloadAnswers = [];
-
-      answersMap.forEach((questionId, value) {
-        final q = questions.firstWhere((q) => q.id == questionId);
-        
-        Map<String, dynamic> answerItem = {
-          'questionId': questionId,
-        };
-        
-        if (q.type == 'SLIDER' || value is double || value is int) {
-          answerItem['answerNumber'] = (value as num).toDouble();
-        } else if (value is String) {
-          answerItem['answerText'] = value;
-          // Nếu backend yêu cầu optionId, thì value thực tế là optionId, 
-          // có thể check xem nó có match với option list không.
-          final opt = q.options.where((o) => o.id == value).firstOrNull;
-          if (opt != null) {
-            answerItem['answerText'] = opt.title; 
-          }
-        } else if (value is List) {
-          answerItem['answerJson'] = value;
-        }
-
-        payloadAnswers.add(answerItem);
-      });
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/surveys/$surveyId/submissions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await _getAccessToken()}',
-        },
-        body: json.encode({'answers': payloadAnswers}),
+      final response = await _apiClient.get(
+        '/surveys/$surveyId/has-completed',
+        authenticated: true,
       );
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        debugPrint('Gửi đáp án thất bại. Body: ${response.body}');
-        try {
-          final errorData = json.decode(response.body);
-          return (false, errorData['message']?.toString() ?? errorData['error']?.toString() ?? 'Lỗi từ server');
-        } catch (_) {
-          return (false, 'Lỗi server: ${response.statusCode}');
-        }
+      return response['success'] == true &&
+          response['data']?['hasCompleted'] == true;
+    } catch (error) {
+      debugPrint('Check survey completion error: $error');
+      return false;
+    }
+  }
+
+  // Returns (success, errorMsg, finalModeCode)
+  Future<(bool, String?, String?)> submitSurvey(
+    String surveyId,
+    Map<String, dynamic> answersMap,
+    List<SurveyQuestion> questions,
+  ) async {
+    if (surveyId.trim().isEmpty) {
+      return (false, 'Không có khảo sát hợp lệ để gửi.', null);
+    }
+
+    try {
+      final response = await _apiClient.post(
+        '/surveys/$surveyId/submissions',
+        authenticated: true,
+        body: {'answers': buildSubmitAnswers(answersMap, questions)},
+      );
+
+      if (response['success'] == true) {
+        final modeCode = response['data']?['finalModeCode']?.toString();
+        return (true, null, modeCode);
       }
 
-      return (true, null);
-    } catch (e) {
-      debugPrint('Submit survey error: $e');
-      return (false, 'Không thể kết nối đến server'); 
+      return (
+        false,
+        response['message']?.toString() ??
+            response['error']?.toString() ??
+            'Lỗi từ server',
+        null,
+      );
+    } on AuthRequiredException catch (error) {
+      return (false, error.toString(), null);
+    } on ApiClientException catch (error) {
+      return (false, error.message, null);
+    } catch (error) {
+      debugPrint('Submit survey error: $error');
+      return (false, 'Không thể kết nối đến server', null);
     }
+  }
+
+  static List<Map<String, dynamic>> buildSubmitAnswers(
+    Map<String, dynamic> answersMap,
+    List<SurveyQuestion> questions,
+  ) {
+    final payloadAnswers = <Map<String, dynamic>>[];
+
+    answersMap.forEach((questionId, value) {
+      final question = _questionById(questions, questionId);
+      if (question == null || value == null) return;
+
+      final answerItem = <String, dynamic>{'questionId': questionId};
+      final type = question.type.toUpperCase();
+
+      if (question.isSlider ||
+          type == 'SLIDER' ||
+          type == 'SCALE' ||
+          value is num) {
+        if (value is num) {
+          answerItem['answerNumber'] = value.toDouble();
+        } else {
+          answerItem['answerText'] = value.toString();
+        }
+      } else if (value is List) {
+        answerItem['answerJson'] = value;
+      } else if (value is bool) {
+        answerItem['answerBoolean'] = value;
+      } else {
+        answerItem['answerText'] = value.toString();
+      }
+
+      payloadAnswers.add(answerItem);
+    });
+
+    return payloadAnswers;
+  }
+
+  Future<(String, List<SurveyQuestion>)> _fetchSurveyDetail(
+    String surveyId,
+  ) async {
+    if (surveyId.isEmpty) return ('', <SurveyQuestion>[]);
+
+    final detailResponse = await _apiClient.get(
+      '/surveys/$surveyId',
+      queryParams: {'includeQuestions': true},
+    );
+
+    if (detailResponse['success'] == true && detailResponse['data'] != null) {
+      return _surveyTupleFromData(
+        (detailResponse['data'] as Map).cast<String, dynamic>(),
+      );
+    }
+
+    return ('', <SurveyQuestion>[]);
+  }
+
+  (String, List<SurveyQuestion>) _surveyTupleFromData(
+    Map<String, dynamic> surveyData,
+  ) {
+    final questions = surveyData['questions'] as List? ?? const [];
+    return (
+      surveyData['id']?.toString() ?? '',
+      questions
+          .map(
+            (question) => SurveyQuestion.fromJson(
+              (question as Map).cast<String, dynamic>(),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  static SurveyQuestion? _questionById(
+    List<SurveyQuestion> questions,
+    String questionId,
+  ) {
+    for (final question in questions) {
+      if (question.id == questionId) return question;
+    }
+    return null;
   }
 }
-

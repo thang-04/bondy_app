@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+
+import '../../core/bondy_error_mapper.dart';
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 
@@ -98,7 +100,7 @@ class AiCoachViewModel extends ChangeNotifier {
         errorMessage = response.error ?? 'Có lỗi xảy ra';
       }
     } catch (e) {
-      errorMessage = e.toString();
+      errorMessage = BondyErrorMapper.message(e);
     } finally {
       isLoading = false;
       notifyListeners();

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/common/bondy_feedback.dart';
+import '../../widgets/common/bondy_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,14 +37,17 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthViewModel>();
 
     return Scaffold(
+      backgroundColor: BondyColors.background,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,19 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               Text(
                 'Đăng nhập',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
-                ),
+                style: bondyText(size: 28, weight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
                 'Nhập email và mật khẩu để tiếp tục.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: BondyColors.textSecondary,
-                ),
+                style: bondyText(size: 14, color: BondyColors.textSecondary),
               ),
               const SizedBox(height: 32),
               _AuthField(
@@ -88,24 +85,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.of(context).pushNamed('/forgot-password'),
                   child: Text(
                     'Quên mật khẩu?',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: bondyText(
+                      weight: FontWeight.w700,
                       color: BondyColors.primary,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-              if (auth.errorMessage != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  auth.errorMessage!,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: BondyColors.error,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-              const Spacer(),
+              BondyInlineError(message: auth.errorMessage),
+              const SizedBox(height: 24),
               BondyButton(
                 key: const Key('login_submit_button'),
                 text: auth.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
@@ -147,9 +135,10 @@ class _AuthField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: BondyColors.divider),
-        color: Colors.white,
+        color: BondyColors.surface,
+        boxShadow: [bondySoftShadow(0.03)],
       ),
       child: TextField(
         controller: controller,
@@ -166,12 +155,9 @@ class _AuthField extends StatelessWidget {
             horizontal: 16,
             vertical: 18,
           ),
-          hintStyle: GoogleFonts.plusJakartaSans(color: BondyColors.textHint),
+          hintStyle: bondyText(color: BondyColors.textHint),
         ),
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
+        style: bondyText(size: 16, weight: FontWeight.w500),
       ),
     );
   }

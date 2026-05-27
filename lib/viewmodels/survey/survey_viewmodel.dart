@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/bondy_error_mapper.dart';
 import '../../models/survey/survey_question_model.dart';
 import '../../services/survey_service.dart';
 
@@ -10,9 +12,11 @@ class SurveyViewModel extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
   bool _isSubmitting = false;
+  bool _isAlreadyCompleted = false;
+  String? _finalModeCode;
 
   // Lưu trữ Id của đợt khảo sát để map khi submit
-  String _currentSurveyId = 'mock-id'; // Cập nhật khi fetch được surveyId thật
+  String _currentSurveyId = '';
 
   // Lưu trữ câu trả lời của người dùng (ID câu hỏi -> giá trị trả lời)
   final Map<String, dynamic> _answers = {};
@@ -43,7 +47,7 @@ class SurveyViewModel extends ChangeNotifier {
         _questions = questions;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = BondyErrorMapper.message(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -65,7 +69,44 @@ class SurveyViewModel extends ChangeNotifier {
         _errorMessage = 'Khảo sát không có câu hỏi.';
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = BondyErrorMapper.message(e);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadSurveyWithCompletionCheck(String surveyType) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _isAlreadyCompleted = false;
+    _currentIndex = 0;
+    _answers.clear();
+    notifyListeners();
+
+    try {
+      // Lấy survey info trước
+      final result = await _surveyService.fetchActiveSurvey(
+        surveyType: surveyType,
+      );
+      final surveyId = result.$1;
+      final questions = result.$2;
+
+      if (surveyId.isEmpty || questions.isEmpty) {
+        _errorMessage = 'Không có bài khảo sát nào.';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Check xem đã hoàn thành chưa
+      final hasCompleted = await _surveyService.checkSurveyCompletion(surveyId);
+      _isAlreadyCompleted = hasCompleted;
+
+      _currentSurveyId = surveyId;
+      _questions = questions;
+    } catch (e) {
+      _errorMessage = BondyErrorMapper.message(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -76,7 +117,9 @@ class SurveyViewModel extends ChangeNotifier {
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
+  bool get isAlreadyCompleted => _isAlreadyCompleted;
   String? get errorMessage => _errorMessage;
+  String? get finalModeCode => _finalModeCode;
 
   SurveyQuestion? get currentQuestion =>
       _questions.isNotEmpty ? _questions[_currentIndex] : null;
@@ -135,6 +178,7 @@ class SurveyViewModel extends ChangeNotifier {
       );
       final bool success = result.$1;
       final String? errorMsg = result.$2;
+      _finalModeCode = result.$3;
 
       _isSubmitting = false;
       notifyListeners();
@@ -142,7 +186,10 @@ class SurveyViewModel extends ChangeNotifier {
       if (!context.mounted) return;
 
       if (success) {
-        Navigator.of(context).pushReplacementNamed('/survey/result');
+        Navigator.of(context).pushReplacementNamed(
+          '/survey/result',
+          arguments: {'finalModeCode': _finalModeCode},
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

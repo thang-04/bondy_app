@@ -12,8 +12,8 @@ class HomeService {
     return ApiClient.resolveBaseUrl();
   }
 
-  Future<List<HomeWidget>> fetchHomeContent(String userId) async {
-    final body = await _apiClient.get('/home/content?userId=$userId');
+  Future<List<HomeWidget>> fetchHomeContent() async {
+    final body = await _apiClient.get('/home/content', authenticated: true);
     if (body['success'] != true) {
       throw Exception(body['error']?.toString() ?? 'Lỗi không xác định');
     }

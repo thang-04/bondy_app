@@ -1,12 +1,122 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 
-class ProfileDetailScreen extends StatelessWidget {
+import '../../core/bondy_error_mapper.dart';
+import '../../core/bondy_exceptions.dart' show QuotaExceededException;
+import '../../models/discover/discover_profile_model.dart';
+import '../../services/api_client.dart';
+import '../../services/discover_service.dart';
+import '../../theme/app_theme.dart';
+import 'widgets/report_bottom_sheet.dart';
+
+class ProfileDetailScreen extends StatefulWidget {
   const ProfileDetailScreen({super.key});
 
   @override
+  State<ProfileDetailScreen> createState() => _ProfileDetailScreenState();
+}
+
+class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
+  late final DiscoverService _discoverService = DiscoverService(
+    apiClient: ApiClient(),
+  );
+  bool _isSubmitting = false;
+
+  DiscoverProfile? get _profile {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return args is DiscoverProfile ? args : null;
+  }
+
+  Future<void> _swipe(String action) async {
+    final profile = _profile;
+    if (profile == null || _isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      if (action == 'LIKE') {
+        await _discoverService.checkLikeQuota();
+      }
+      final result = await _discoverService.swipe(
+        targetUserId: profile.id,
+        action: action,
+      );
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      if (result.matched && result.matchId != null) {
+        navigator.pop(action);
+        if (result.conversationId != null) {
+          await navigator.pushNamed(
+            '/chat',
+            arguments: {
+              'chatId': result.conversationId,
+              'matchId': result.matchId,
+              'otherUserId': profile.id,
+              'name': profile.name,
+              'photo': profile.imageUrl.isNotEmpty ? profile.imageUrl : null,
+            },
+          );
+        } else {
+          await navigator.pushNamed(
+            '/match-confirm',
+            arguments: {'matchId': result.matchId},
+          );
+        }
+        return;
+      }
+      navigator.pop(action);
+    } on QuotaExceededException catch (e) {
+      // Test #14: hết quota ⇒ không pop màn detail.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      // Test #18: lỗi mạng ⇒ giữ nguyên màn hình, báo lỗi rõ ràng.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(BondyErrorMapper.message(e)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profile = _profile;
+    if (profile == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.person_off_outlined,
+                  size: 44,
+                  color: BondyColors.textHint,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Không tìm thấy hồ sơ.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: BondyColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -16,23 +126,38 @@ class ProfileDetailScreen extends StatelessWidget {
             leading: IconButton(
               icon: const CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.arrow_back_ios_new,
-                    size: 16, color: BondyColors.textPrimary),
+                child: Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 16,
+                  color: BondyColors.textPrimary,
+                ),
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: BondyColors.primaryLight,
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 40),
-                    Text('🌸', style: TextStyle(fontSize: 80)),
-                  ],
+            actions: [
+              IconButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) =>
+                              ReportBottomSheet(targetUserId: profile.id),
+                        );
+                      },
+                icon: const CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.flag_outlined,
+                    size: 18,
+                    color: BondyColors.textPrimary,
+                  ),
                 ),
               ),
-            ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(background: _buildHero(profile)),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -40,82 +165,24 @@ class ProfileDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Minh Anh, 25',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: BondyColors.primaryLight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '✅ Đã xác thực',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: BondyColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '${profile.name}, ${profile.age}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '📍 Hà Nội • 🌿 Đang chữa lành',
+                    profile.distance,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       color: BondyColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Match compatibility
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: BondyColors.primaryLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.favorite,
-                            color: BondyColors.primary),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '85% đồng điệu cảm xúc',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: BondyColors.primary,
-                              ),
-                            ),
-                            Text(
-                              'Dựa trên khảo sát tâm lý',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                color: BondyColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildCompatibility(profile),
                   const SizedBox(height: 24),
-                  // About
                   Text(
                     'Về tôi',
                     style: GoogleFonts.plusJakartaSans(
@@ -125,7 +192,9 @@ class ProfileDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tôi tin rằng mọi tổn thương đều cần thời gian để chữa lành. Đang tìm kiếm sự đồng điệu trong tâm hồn hơn là vẻ bề ngoài.',
+                    profile.bio.isEmpty
+                        ? 'Người này chưa thêm giới thiệu.'
+                        : profile.bio,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       color: BondyColors.textSecondary,
@@ -133,7 +202,6 @@ class ProfileDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Interests
                   Text(
                     'Sở thích',
                     style: GoogleFonts.plusJakartaSans(
@@ -142,52 +210,112 @@ class ProfileDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildTag('🎵 Âm nhạc'),
-                      _buildTag('📖 Đọc sách'),
-                      _buildTag('🧘 Thiền'),
-                      _buildTag('☕ Cà phê'),
-                      _buildTag('🌿 Thiên nhiên'),
-                      _buildTag('✍️ Viết lách'),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Emotional profile
-                  Text(
-                    'Hồ sơ cảm xúc',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  if (profile.tags.isEmpty)
+                    Text(
+                      'Chưa có sở thích.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: BondyColors.textSecondary,
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: profile.tags.map(_buildTag).toList(),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildEmotionRow('Giao tiếp', 'Nhẹ nhàng & tinh tế'),
-                  _buildEmotionRow('Tình trạng', 'Mới chia tay'),
-                  _buildEmotionRow('Tìm kiếm', 'Chữa lành & kết bạn'),
                   const SizedBox(height: 32),
-                  // Action buttons
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Bỏ qua'),
+                        child: OutlinedButton.icon(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => _swipe('PASS'),
+                          icon: const Icon(Icons.close),
+                          label: const Text('Bỏ qua'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          child: const Text('Kết nối'),
+                        child: ElevatedButton.icon(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => _swipe('LIKE'),
+                          icon: _isSubmitting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.favorite),
+                          label: const Text('Kết nối'),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHero(DiscoverProfile profile) {
+    if (profile.imageUrl.startsWith('http')) {
+      return Image.network(
+        profile.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _buildHeroPlaceholder(profile),
+      );
+    }
+
+    return _buildHeroPlaceholder(profile);
+  }
+
+  Widget _buildHeroPlaceholder(DiscoverProfile profile) {
+    final initial = profile.name.trim().isEmpty
+        ? 'B'
+        : profile.name.trim()[0].toUpperCase();
+    return Container(
+      color: BondyColors.primaryLight,
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 80,
+            fontWeight: FontWeight.w800,
+            color: BondyColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompatibility(DiscoverProfile profile) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: BondyColors.primaryLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.favorite, color: BondyColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '${profile.matchPercentage}% match',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: BondyColors.primary,
               ),
             ),
           ),
@@ -209,31 +337,6 @@ class ProfileDetailScreen extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmotionRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              color: BondyColors.textSecondary,
-            ),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }

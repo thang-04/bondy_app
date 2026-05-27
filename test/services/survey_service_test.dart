@@ -4,7 +4,6 @@ import 'package:bondy/services/survey_service.dart';
 import 'package:bondy/models/survey/survey_question_model.dart';
 import 'package:bondy/services/api_client.dart';
 import 'package:bondy/services/auth_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -16,21 +15,15 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
   });
 
-  tearDown(() {
-    debugDefaultTargetPlatformOverride = null;
-  });
-
-  test('uses Android emulator host when running on Android without override', () {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
-
-    expect(SurveyService.baseUrl, 'http://10.0.2.2:3000/api');
+  test('uses configured server when running without override', () {
+    expect(SurveyService.baseUrl, 'http://103.149.86.25:3000/api');
   });
 
   test('uses configured API base URL before platform defaults', () {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
-
     expect(
-      SurveyService.resolveBaseUrl(baseUrlOverride: 'https://api.example.com/api/'),
+      SurveyService.resolveBaseUrl(
+        baseUrlOverride: 'https://api.example.com/api/',
+      ),
       'https://api.example.com/api',
     );
   });
@@ -56,9 +49,7 @@ void main() {
       title: 'Goal',
       subtitle: '',
       type: 'SINGLE_CHOICE',
-      options: [
-        SurveyOption(id: 'option-id', title: 'A serious relationship'),
-      ],
+      options: [SurveyOption(id: 'option-id', title: 'A serious relationship')],
     );
 
     final payload = SurveyService.buildSubmitAnswers(
@@ -74,13 +65,19 @@ void main() {
   test('submits survey answers with bearer token', () async {
     const storage = FlutterSecureStorage();
     await storage.write(key: 'accessToken', value: 'access-token');
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
+    final authService = AuthService(
+      baseUrlOverride: 'https://api.example.com/api',
+      storage: storage,
+    );
     final apiClient = ApiClient(
       baseUrlOverride: 'https://api.example.com/api',
       authService: authService,
       client: MockClient((request) async {
         expect(request.method, 'POST');
-        expect(request.url.toString(), 'https://api.example.com/api/surveys/survey-id/submissions');
+        expect(
+          request.url.toString(),
+          'https://api.example.com/api/surveys/survey-id/submissions',
+        );
         expect(request.headers['authorization'], 'Bearer access-token');
         expect(jsonDecode(request.body), {
           'answers': [
@@ -92,22 +89,31 @@ void main() {
     );
     final service = SurveyService(apiClient: apiClient);
 
-    final result = await service.submitSurvey('survey-id', {'question-id': 'option-id'}, const [
-      SurveyQuestion(
-        id: 'question-id',
-        title: 'Goal',
-        subtitle: '',
-        type: 'SINGLE_CHOICE',
-        options: [SurveyOption(id: 'option-id', title: 'A serious relationship')],
-      ),
-    ]);
+    final result = await service.submitSurvey(
+      'survey-id',
+      {'question-id': 'option-id'},
+      const [
+        SurveyQuestion(
+          id: 'question-id',
+          title: 'Goal',
+          subtitle: '',
+          type: 'SINGLE_CHOICE',
+          options: [
+            SurveyOption(id: 'option-id', title: 'A serious relationship'),
+          ],
+        ),
+      ],
+    );
 
-    expect(result, (true, null));
+    expect(result, (true, null, null));
   });
 
   test('survey submission reports auth error when token is missing', () async {
     const storage = FlutterSecureStorage();
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
+    final authService = AuthService(
+      baseUrlOverride: 'https://api.example.com/api',
+      storage: storage,
+    );
     final apiClient = ApiClient(
       baseUrlOverride: 'https://api.example.com/api',
       authService: authService,
@@ -115,15 +121,21 @@ void main() {
     );
     final service = SurveyService(apiClient: apiClient);
 
-    final result = await service.submitSurvey('survey-id', {'question-id': 'option-id'}, const [
-      SurveyQuestion(
-        id: 'question-id',
-        title: 'Goal',
-        subtitle: '',
-        type: 'SINGLE_CHOICE',
-        options: [SurveyOption(id: 'option-id', title: 'A serious relationship')],
-      ),
-    ]);
+    final result = await service.submitSurvey(
+      'survey-id',
+      {'question-id': 'option-id'},
+      const [
+        SurveyQuestion(
+          id: 'question-id',
+          title: 'Goal',
+          subtitle: '',
+          type: 'SINGLE_CHOICE',
+          options: [
+            SurveyOption(id: 'option-id', title: 'A serious relationship'),
+          ],
+        ),
+      ],
+    );
 
     expect(result.$1, false);
     expect(result.$2, contains('đăng nhập'));

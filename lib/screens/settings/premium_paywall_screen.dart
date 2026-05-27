@@ -1,28 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 
-class PremiumPaywallScreen extends StatelessWidget {
+import '../healing/healing_stitch_style.dart';
+import '../../widgets/common/bondy_feedback.dart';
+import '../../services/subscription_service.dart';
+
+class PremiumPaywallScreen extends StatefulWidget {
   const PremiumPaywallScreen({super.key});
+
+  @override
+  State<PremiumPaywallScreen> createState() => _PremiumPaywallScreenState();
+}
+
+class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
+  final SubscriptionService _service = SubscriptionService();
+  String _selectedTier = 'PREMIUM';
+  bool _loading = false;
+  String? _currentTier;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final info = await _service.getMySubscription();
+      setState(() => _currentTier = info.tier);
+    } catch (_) {}
+  }
+
+  Future<void> _upgrade() async {
+    setState(() => _loading = true);
+    try {
+      await _service.upgrade(_selectedTier);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nâng cấp thành công (beta — chưa thu phí). Cảm ơn bạn đã thử Bondy Premium!',
+          ),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: HealingStitchColors.warmBackground,
       body: Stack(
         children: [
-          // Background Gradient / Illustration
           Container(
-            height: 380,
+            height: 320,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFFFB3A7), Colors.white],
+                colors: [Color(0xFFFFE5E5), HealingStitchColors.warmBackground],
               ),
             ),
             child: const Center(
-              child: Text('💎', style: TextStyle(fontSize: 100)),
+              child: Text('💎', style: TextStyle(fontSize: 88)),
             ),
           ),
           SafeArea(
@@ -30,9 +75,9 @@ class PremiumPaywallScreen extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: BondyColors.textPrimary),
-                    onPressed: () => Navigator.pop(context),
+                  child: HealingIconButton(
+                    icon: Icons.close,
+                    onTap: () => Navigator.pop(context),
                   ),
                 ),
                 Expanded(
@@ -40,71 +85,70 @@ class PremiumPaywallScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
-                        const SizedBox(height: 200),
+                        const SizedBox(height: 180),
                         Text(
                           'Mở khóa Bondy Premium',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: BondyColors.textPrimary,
-                            height: 1.2,
-                          ),
+                          style: healingText(size: 26, weight: FontWeight.w800),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Thấu hiểu tri kỷ, gắn kết bền lâu với trọn bộ tính năng nâng cao.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            color: BondyColors.textSecondary,
-                            height: 1.5,
-                          ),
+                          _currentTier != null
+                              ? 'Gói hiện tại: $_currentTier'
+                              : 'Thấu hiểu tri kỷ, gắn kết bền lâu.',
+                          style: healingText(color: HealingStitchColors.textMuted),
                           textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 40),
-
-                        // Features List
-                        _buildFeatureRow('Trò chuyện không giới hạn với Bondy Coach', Icons.check_circle),
-                        _buildFeatureRow('Kho bài giảng chữa lành chuyên sâu', Icons.check_circle),
-                        _buildFeatureRow('Báo cáo phân tích cảm xúc cặp đôi', Icons.check_circle),
-                        _buildFeatureRow('Gợi ý hẹn hò dành riêng cho hai bạn', Icons.check_circle),
-
-                        const SizedBox(height: 48),
-
-                        // Subscription Options
-                        _buildPlanOption('Hàng năm', '999.000đ / năm', 'Tiết kiệm 50%', true),
-                        const SizedBox(height: 12),
-                        _buildPlanOption('Hàng tháng', '159.000đ / tháng', null, false),
-
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: BondyColors.primary,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Bắt đầu dùng thử 7 ngày',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Dùng thử miễn phí, hủy bất cứ lúc nào.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: BondyColors.textSecondary,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: HealingStitchColors.coral.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Beta: nâng cấp miễn phí để dùng thử — chưa thu phí. '
+                            'Hãy gửi feedback cho Bondy sau khi trải nghiệm.',
+                            style: healingText(
+                              size: 13,
+                              color: HealingStitchColors.textMuted,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 24),
+                        _buildFeatureRow('Like không giới hạn'),
+                        _buildFeatureRow('Kho chữa lành Premium'),
+                        _buildFeatureRow('Báo cáo cảm xúc cặp đôi'),
+                        const SizedBox(height: 24),
+                        _planTile('PLUS', '159.000đ / tháng'),
+                        const SizedBox(height: 10),
+                        _planTile('PREMIUM', '999.000đ / năm', tag: 'Phổ biến'),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: HealingStitchColors.warmGradient,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _loading ? null : _upgrade,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                minimumSize: const Size(double.infinity, 52),
+                              ),
+                              child: Text(
+                                _loading ? 'Đang xử lý...' : 'Nâng cấp ngay',
+                                style: healingText(
+                                  weight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -117,79 +161,58 @@ class PremiumPaywallScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureRow(String text, IconData icon) {
+  Widget _buildFeatureRow(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, color: BondyColors.primary, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: BondyColors.textPrimary,
-              ),
-            ),
-          ),
+          const Icon(Icons.check_circle, color: HealingStitchColors.coral),
+          const SizedBox(width: 12),
+          Expanded(child: Text(text, style: healingText(weight: FontWeight.w600))),
         ],
       ),
     );
   }
 
-  Widget _buildPlanOption(String title, String price, String? tag, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFFE5F2) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? BondyColors.primary : const Color(0xFFE5E7EB),
-          width: 2,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
-                ),
-              ),
-              Text(
-                price,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: BondyColors.textSecondary,
-                ),
-              ),
-            ],
+  Widget _planTile(String tier, String price, {String? tag}) {
+    final selected = _selectedTier == tier;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTier = tier),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: selected ? HealingStitchColors.paleCoral : HealingStitchColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? HealingStitchColors.coral : HealingStitchColors.border,
+            width: selected ? 2 : 1,
           ),
-          if (tag != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: BondyColors.primary,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                tag,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tier, style: healingText(size: 16, weight: FontWeight.w800)),
+                  Text(price, style: healingText(color: HealingStitchColors.textMuted)),
+                ],
               ),
             ),
-        ],
+            if (tag != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: HealingStitchColors.coral.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  tag,
+                  style: healingText(size: 11, weight: FontWeight.w700, color: HealingStitchColors.coral),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

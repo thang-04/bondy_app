@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
+
+import '../healing/healing_stitch_style.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
+import '../../widgets/common/bondy_feedback.dart';
 
 class CouplesEmotionsCheckin extends StatefulWidget {
   const CouplesEmotionsCheckin({super.key});
@@ -11,6 +13,16 @@ class CouplesEmotionsCheckin extends StatefulWidget {
 
 class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
   String? _selectedEmoji;
+  final TextEditingController _noteController = TextEditingController();
+  final RelationshipViewModel _viewModel = RelationshipViewModel();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    _viewModel.dispose();
+    super.dispose();
+  }
 
   final List<Map<String, String>> _emotions = [
     {'emoji': '😊', 'label': 'Hạnh phúc'},
@@ -26,22 +38,19 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: HealingStitchColors.warmBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: HealingStitchColors.warmBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: BondyColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+        leading: HealingIconButton(
+          icon: Icons.close,
+          onTap: () => Navigator.pop(context),
         ),
         title: Text(
           'Check-in cảm xúc',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: BondyColors.textPrimary,
-          ),
+          style: healingText(size: 16, weight: FontWeight.w800),
         ),
+        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -53,20 +62,12 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                 children: [
                   Text(
                     'Hiện tại bạn đang cảm thấy như thế nào?',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: BondyColors.textPrimary,
-                      height: 1.3,
-                    ),
+                    style: healingText(size: 22, weight: FontWeight.w800, height: 1.3),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Cùng chia sẻ với đối phương để thấu hiểu nhau hơn nhé.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      color: BondyColors.textSecondary,
-                    ),
+                    style: healingText(size: 15, color: HealingStitchColors.textMuted),
                   ),
                   const SizedBox(height: 32),
                   GridView.builder(
@@ -103,10 +104,12 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                               const SizedBox(height: 8),
                               Text(
                                 emotion['label']!,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isSelected ? const Color(0xFFFF5252) : BondyColors.textPrimary,
+                                style: healingText(
+                                  size: 12,
+                                  weight: FontWeight.w600,
+                                  color: isSelected
+                                      ? HealingStitchColors.coral
+                                      : HealingStitchColors.textMain,
                                 ),
                               ),
                             ],
@@ -118,22 +121,16 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                   const SizedBox(height: 32),
                   Text(
                     'Để lại lời nhắn (tùy chọn)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: BondyColors.textPrimary,
-                    ),
+                    style: healingText(size: 16, weight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   TextField(
+                    controller: _noteController,
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText: 'Hôm nay tớ thấy...',
-                      hintStyle: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF9CA3AF),
-                      ),
                       filled: true,
-                      fillColor: const Color(0xFFF9FAFB),
+                      fillColor: HealingStitchColors.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -146,27 +143,51 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
           ),
           Padding(
             padding: const EdgeInsets.all(24),
-            child: ElevatedButton(
-              onPressed: _selectedEmoji == null
-                  ? null
-                  : () {
-                      // Show confirmation
-                      Navigator.pushNamed(context, '/relationship/confirmed');
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: BondyColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _selectedEmoji == null || _submitting
+                    ? null
+                    : HealingStitchColors.warmGradient,
+                color: _selectedEmoji == null || _submitting
+                    ? HealingStitchColors.border
+                    : null,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                'Chia sẻ với Hoan',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+              child: ElevatedButton(
+                onPressed: _selectedEmoji == null || _submitting
+                    ? null
+                    : () async {
+                        setState(() => _submitting = true);
+                        try {
+                          final mood =
+                              '${_selectedEmoji!} ${_emotions.firstWhere((e) => e['emoji'] == _selectedEmoji)['label']}';
+                          await _viewModel.submitCheckin(
+                            mood,
+                            note: _noteController.text.trim(),
+                          );
+                          if (!context.mounted) return;
+                          Navigator.pushNamed(context, '/relationship/confirmed');
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          BondyFeedback.showError(context, e);
+                        } finally {
+                          if (mounted) setState(() => _submitting = false);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  _submitting ? 'Đang gửi...' : 'Chia sẻ cảm xúc',
+                  style: healingText(
+                    weight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/auth_service.dart';
+import '../../services/onboarding_router.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
@@ -24,43 +26,73 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   bool _isUploading = false;
   
   
-  String get _baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:3000/api';
-    }
-    return 'http://10.0.2.2:3000/api';
+  String get _baseUrl => AuthService.resolveBaseUrl();
+
+  void _showSkipWarning() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Bỏ qua ảnh?',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Bạn sẽ không thể sử dụng tính năng khám phá và kết đôi nếu không có ảnh đại diện. Bạn có chắc muốn bỏ qua?',
+          style: GoogleFonts.plusJakartaSans(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Quay lại thêm ảnh', style: GoogleFonts.plusJakartaSans(color: BondyColors.primary, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              OnboardingRouter.navigateToNextStep(context);
+            },
+            child: Text('Bỏ qua', style: GoogleFonts.plusJakartaSans(color: BondyColors.textSecondary)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _uploadImagesAndContinue() async {
     final validImages = _images.where((img) => img != null).toList();
-    
-    // Nếu không có ảnh, vẫn cho phép đi tiếp để test (theo yêu cầu user)
+
     if (validImages.isEmpty) {
-      if (mounted) {
-        Navigator.of(context).pushNamed('/location-setup');
-      }
+      _showSkipWarning();
       return;
     }
 
     setState(() => _isUploading = true);
-    final dio = Dio(BaseOptions(baseUrl: _baseUrl));
+    final dio = Dio(BaseOptions(
+      baseUrl: _baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 60),
+    ));
     List<String> uploadedUrls = [];
 
     try {
-      // 1. Upload từng ảnh lên Storage qua Next.js Backend
+      final token = await AuthService().getToken();
+
       for (var img in validImages) {
         String fileName = img!.name;
         final bytes = await img.readAsBytes();
-        
+        final ext = fileName.split('.').last.toLowerCase();
+        final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+
         FormData formData = FormData.fromMap({
-          "file": MultipartFile.fromBytes(bytes, filename: fileName),
+          "file": MultipartFile.fromBytes(
+            bytes,
+            filename: fileName,
+            contentType: MediaType.parse(mimeType),
+          ),
         });
 
-        final token = await AuthService().getToken();
-
-        // Ghi chú: Cần bổ sung Authorization Header lấy từ Secure Storage nếu backend yêu cầu token
         Response response = await dio.post(
-          '/upload', 
+          '/upload',
           data: formData,
           options: Options(
             headers: {
@@ -68,35 +100,44 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
             },
           ),
         );
-        
+
         if (response.statusCode == 200 && response.data['success'] == true) {
           uploadedUrls.add(response.data['data']['url']);
         }
       }
 
-      // 2. Cập nhật mảng URL ảnh vào Profile người dùng
-      if (uploadedUrls.isNotEmpty) {
-        final token = await AuthService().getToken();
-        await dio.put(
-          '/profile/me', 
-          data: {"photos": uploadedUrls},
-          options: Options(
-            headers: {
-              if (token != null) 'Authorization': 'Bearer $token',
-            },
-          ),
-        );
+      if (uploadedUrls.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không có ảnh nào được tải lên thành công. Vui lòng thử lại.')),
+          );
+        }
+        return;
       }
 
-      // 3. Chuyển sang màn hình tiếp theo
+      // Save photos to profile — server accepts both "images" and "photos"
+      final token2 = await AuthService().getToken();
+      await dio.patch(
+        '/profile/me',
+        data: {"images": uploadedUrls},
+        options: Options(
+          headers: {
+            if (token2 != null) 'Authorization': 'Bearer $token2',
+          },
+        ),
+      );
+
       if (mounted) {
-        Navigator.of(context).pushNamed('/location-setup');
+        await OnboardingRouter.navigateToNextStep(context);
       }
     } catch (e) {
       debugPrint('Upload error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tải ảnh lên: $e')),
+          SnackBar(
+            content: const Text('Lỗi tải ảnh lên. Vui lòng thử lại.'),
+            action: SnackBarAction(label: 'Thử lại', onPressed: _uploadImagesAndContinue),
+          ),
         );
       }
     } finally {

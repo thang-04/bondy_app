@@ -1,6 +1,8 @@
 // lib/viewmodels/home/home_viewmodel.dart
 
 import 'package:flutter/material.dart';
+
+import '../../core/bondy_error_mapper.dart';
 import '../../models/home/home_widget_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/home_service.dart';
@@ -25,15 +27,15 @@ class HomeViewModel extends ChangeNotifier {
 
   final HomeService _service = HomeService();
 
-  Future<void> loadContent(String userId) async {
+  Future<void> loadContent() async {
     state = HomeLoading();
     notifyListeners();
 
     try {
-      final widgets = await _service.fetchHomeContent(userId);
+      final widgets = await _service.fetchHomeContent();
       state = HomeLoaded(widgets);
     } catch (e) {
-      state = HomeError(e.toString());
+      state = HomeError(BondyErrorMapper.message(e));
     }
 
     notifyListeners();
@@ -51,11 +53,11 @@ class HomeViewModel extends ChangeNotifier {
       return;
     }
 
-    await loadContent(userId);
+    await loadContent();
   }
 
-  /// Pull-to-refresh: load lại nội dung
-  Future<void> refresh(String userId) => loadContent(userId);
+  Future<void> refresh() => loadContent();
 
-  Future<void> refreshAuthenticated({AuthService? authService}) => loadAuthenticatedContent(authService: authService);
+  Future<void> refreshAuthenticated({AuthService? authService}) =>
+      loadAuthenticatedContent(authService: authService);
 }

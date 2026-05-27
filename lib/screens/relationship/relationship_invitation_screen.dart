@@ -1,98 +1,124 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
-import '../../theme/app_theme.dart';
 
-class RelationshipInvitationScreen extends StatelessWidget {
+import '../healing/healing_stitch_style.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
+import '../../widgets/common/bondy_feedback.dart';
+
+class RelationshipInvitationScreen extends StatefulWidget {
   const RelationshipInvitationScreen({super.key});
 
-  void _copyToClipboard(BuildContext context) {
-    Clipboard.setData(const ClipboardData(text: 'BONDY-365-LOVE'));
+  @override
+  State<RelationshipInvitationScreen> createState() =>
+      _RelationshipInvitationScreenState();
+}
+
+class _RelationshipInvitationScreenState extends State<RelationshipInvitationScreen> {
+  final RelationshipViewModel _viewModel = RelationshipViewModel();
+  final TextEditingController _acceptController = TextEditingController();
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInvite();
+  }
+
+  Future<void> _loadInvite() async {
+    setState(() => _loading = true);
+    try {
+      await _viewModel.createInvite();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _copyToClipboard(BuildContext context, String code) {
+    Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã sao chép mã mời!'),
-        backgroundColor: Color(0xFF4CAF50),
-      ),
+      const SnackBar(content: Text('Đã sao chép mã mời!')),
     );
+  }
+
+  Future<void> _acceptCode() async {
+    final code = _acceptController.text.trim();
+    if (code.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      await _viewModel.acceptInvite(code);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/relationship/confirmed');
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _acceptController.dispose();
+    _viewModel.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final code = _viewModel.inviteCode ?? '...';
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: HealingStitchColors.warmBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: HealingStitchColors.warmBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: BondyColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+        leading: HealingIconButton(
+          icon: Icons.arrow_back,
+          onTap: () => Navigator.pop(context),
         ),
-        title: Text(
-          'Mời tri kỷ',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: BondyColors.textPrimary,
-          ),
-        ),
+        title: Text('Mời tri kỷ', style: healingText(size: 16, weight: FontWeight.w800)),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const SizedBox(height: 12),
-            // Illustration
             Container(
               width: double.infinity,
-              height: 220,
+              height: 200,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3E5FF),
+                color: HealingStitchColors.paleCoral,
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Center(
-                child: Text('💌', style: TextStyle(fontSize: 80)),
-              ),
+              child: const Center(child: Text('💌', style: TextStyle(fontSize: 72))),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             Text(
               'Gắn kết hơn khi có nhau',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: BondyColors.textPrimary,
-                height: 1.3,
-              ),
+              style: healingText(size: 22, weight: FontWeight.w800),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              'Mời người ấy cùng sử dụng Bondy để chia sẻ cảm xúc, giải quyết mâu thuẫn và lưu giữ kỷ niệm nhé.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                color: BondyColors.textSecondary,
-                height: 1.5,
-              ),
+              'Gửi mã cho người yêu hoặc nhập mã họ gửi cho bạn.',
+              style: healingText(color: HealingStitchColors.textMuted),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 48),
-
-            // Code Display
+            const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: HealingStitchColors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                boxShadow: [healingSoftShadow()],
               ),
               child: Column(
                 children: [
                   Text(
                     'MÃ MỜI CỦA BẠN',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: BondyColors.textSecondary,
-                      letterSpacing: 1.2,
+                    style: healingText(
+                      size: 11,
+                      weight: FontWeight.w700,
+                      color: HealingStitchColors.textMuted,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -100,55 +126,57 @@ class RelationshipInvitationScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'BONDY-365-LOVE',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: BondyColors.primary,
+                        _loading && code == '...' ? 'Đang tạo...' : code,
+                        style: healingText(
+                          size: 20,
+                          weight: FontWeight.w800,
+                          color: HealingStitchColors.coral,
                         ),
                       ),
-                      const SizedBox(width: 8),
                       IconButton(
-                        onPressed: () => _copyToClipboard(context),
-                        icon: const Icon(Icons.copy, size: 20, color: BondyColors.primary),
+                        onPressed: code == '...'
+                            ? null
+                            : () => _copyToClipboard(context, code),
+                        icon: const Icon(Icons.copy, color: HealingStitchColors.coral),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: () {
-                // Share functionality
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: BondyColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
+            const SizedBox(height: 32),
+            TextField(
+              controller: _acceptController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                hintText: 'Nhập mã mời',
+                filled: true,
+                fillColor: HealingStitchColors.surface,
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Gửi lời mời ngay',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'Tôi đã nhận được mã mời từ người ấy',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: BondyColors.primary,
+            SizedBox(
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: HealingStitchColors.warmGradient,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _acceptCode,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    minimumSize: const Size(double.infinity, 52),
+                  ),
+                  child: Text(
+                    'Chấp nhận mã mời',
+                    style: healingText(weight: FontWeight.w700, color: Colors.white),
+                  ),
                 ),
               ),
             ),

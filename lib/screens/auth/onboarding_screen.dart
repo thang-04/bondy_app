@@ -17,29 +17,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   static const int _totalPages = 5;
 
-  // ─── Design System Colors (trích từ Stitch Tailwind Config) ───
-  static const Color _primary = Color(0xFFB70047);
-  static const Color _primaryContainer = Color(0xFFFF728F);
-  static const Color _secondaryContainer = Color(0xFFFFBDF4);
-  static const Color _tertiaryFixed = Color(0xFFFF955B);
-  static const Color _tertiaryContainer = Color(0xFFFF955B);
-  static const Color _background = Color(0xFFFBF5F7);
-  static const Color _surfaceContainerLow = Color(0xFFF5EFF1);
-  static const Color _surfaceContainerHighest = Color(0xFFE1DBDE);
-  static const Color _surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color _onSurface = Color(0xFF302E30);
-  static const Color _onSurfaceVariant = Color(0xFF5E5B5C);
-  static const Color _onPrimary = Color(0xFFFFEFF0);
-  static const Color _onSecondaryContainer = Color(0xFF7A1C78);
+  // ─── Design System Colors ──────────────────────────────────────────
+  // Aligned with the Bondy/Healing palette (coral → pink → purple) so the
+  // onboarding flow no longer ships its own deep-magenta + lavender palette
+  // that clashed with the rest of the app.
+  static const Color _primary = BondyColors.coral;
+  static const Color _primaryContainer = BondyColors.coralLight;
+  static const Color _secondaryContainer = BondyColors.paleCoral;
+  static const Color _tertiaryFixed = BondyColors.orange;
+  static const Color _tertiaryContainer = BondyColors.orange;
+  static const Color _background = BondyColors.background;
+  static const Color _surfaceContainerLow = BondyColors.backgroundCream;
+  static const Color _surfaceContainerHighest = BondyColors.divider;
+  static const Color _surfaceContainerLowest = BondyColors.surface;
+  static const Color _onSurface = BondyColors.textPrimary;
+  static const Color _onSurfaceVariant = BondyColors.textSecondary;
+  static const Color _onPrimary = Colors.white;
+  static const Color _onSecondaryContainer = BondyColors.pink;
   static const Color _onTertiaryFixedVariant = Color(0xFF632700);
-  static const Color _outlineVariant = Color(0xFFB0ACAE);
+  static const Color _outlineVariant = BondyColors.textHint;
 
-  // ─── Signature Gradient ───
-  static const LinearGradient _signatureGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFFF0066), Color(0xFFFF007F)],
-  );
+  // ─── Signature Gradient (Bondy brand) ───
+  static const LinearGradient _signatureGradient = BondyColors.signatureGradient;
 
   @override
   void dispose() {
@@ -150,8 +149,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             clipper: _AsymmetricClipper(),
             child: Container(
               color: _surfaceContainerLow,
-              child: Image.network(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBzKl1iOCB_xu9X5wIbM5OwjiCoLELtCLJoCaUAjziliENeDaK_CxUKOhWI6zK6ojcVc1Xk_cvDPgr2SL8klE18itsEb-4pEklaFT8P_ojnXzxAi9mySuPLihgxxUllq5nwiLRd_SIxxXSMWKLc_wQKD0hQW9MtGLt8gXu-RESO_LhO-x6S5baHD4Tg-PvKhbQA0HJFncJkJY48kBS0Wj5Z3CCtZtOGIXmH6TkZhqFB5J6kBMPUmyMf-ad3KU-zbvhidXWD-Cy8T5AR',
+              // Use a bundled asset so the onboarding hero doesn't break the
+              // first time Google rotates the CDN URL. Falls back to the
+              // surface tint if the asset is somehow missing.
+              child: Image.asset(
+                'assets/images/healing_stitch/stitch_healing_19.jpg',
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
@@ -523,8 +525,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ],
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: Image.network(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuD6F4XjvZV7hbWFY3nsj3CyEmep8DtfaIyv06NPDKzhr2_jMHnfJci91z7e8sFTDl_vS-85lrn7O1jytC8rCOWbSE-6PO8sdXb8zmEqLIrLl97ARVORAMRyBLjPL8EQ84j84S4dhtMl2gWy4w2aOlA3y-0PwtMC3eQuptW24Vleul3sOEwXrkLQVwZA_Cmyz1hDa8JJZLQmSTiGRPWZCYKZs2vjzgq8e7Ythdgsxqe8tHWP8VlnQ0QsIndBo0-xaNvRRw3SeCEPkODU',
+                        child: Image.asset(
+                          'assets/images/healing_stitch/stitch_healing_14.jpg',
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: _surfaceContainerLow,

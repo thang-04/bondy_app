@@ -99,6 +99,7 @@ class _FakeAuthService extends AuthService {
     return const {
       'id': 'user-id',
       'email': 'user@example.com',
+      'emailVerified': '2026-05-22T00:00:00.000Z',
       'profile': {
         'fullName': 'User',
         'gender': 'MALE',

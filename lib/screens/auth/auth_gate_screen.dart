@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
-import '../../theme/app_theme.dart';
+import '../../services/onboarding_router.dart';
+import '../healing/healing_stitch_style.dart';
 
 class AuthGateScreen extends StatefulWidget {
   final AuthService? authService;
@@ -25,7 +26,10 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   }
 
   Future<void> _restoreSession() async {
-    final result = await _authService.restoreSession();
+    final result = await _authService.restoreSession().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => const SessionRestoreResult.unauthenticated(),
+    );
     if (!mounted) return;
 
     final route = result.status == SessionRestoreStatus.authenticated
@@ -35,33 +39,39 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   }
 
   String _routeForUser(Map<String, dynamic> userData) {
-    final profile = userData['profile'];
-    final hasCompletedProfile =
-        profile is Map<String, dynamic> &&
-        profile['fullName'] != null &&
-        profile['gender'] != null &&
-        profile['birthDate'] != null;
-    return hasCompletedProfile ? '/home' : '/profile-setup';
+    final emailVerified = userData['emailVerified'] != null;
+    if (!emailVerified) {
+      return '/verify-email';
+    }
+
+    if (userData['profileComplete'] == true) {
+      if (userData['surveyComplete'] != true) {
+        return '/survey/intro';
+      }
+      return '/home';
+    }
+
+    final profileStatus = userData['profileCompletionStatus'];
+    if (profileStatus != null && profileStatus is Map<String, dynamic>) {
+      final nextAction = profileStatus['nextAction'] as String?;
+      return OnboardingRouter.routeForAction(nextAction);
+    }
+    return '/profile-setup';
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: BondyColors.background,
+    return Scaffold(
+      backgroundColor: HealingStitchColors.warmBackground,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Bondy',
-              style: TextStyle(
-                color: BondyColors.primary,
-                fontSize: 36,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            SizedBox(height: 32),
-            CircularProgressIndicator(color: BondyColors.primary),
+            Text('Bondy', style: healingText(size: 36, weight: FontWeight.w800, color: HealingStitchColors.coral)),
+            const SizedBox(height: 32),
+            const CircularProgressIndicator(color: HealingStitchColors.coral),
+            const SizedBox(height: 16),
+            Text('Đang khôi phục phiên...', style: healingText(color: HealingStitchColors.textMuted)),
           ],
         ),
       ),

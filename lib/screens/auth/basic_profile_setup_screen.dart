@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/onboarding_router.dart';
 import '../../services/profile_service.dart';
+import '../../core/bondy_error_mapper.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
 
@@ -60,15 +62,23 @@ class _BasicProfileSetupScreenState extends State<BasicProfileSetupScreen> {
         fullName: _nameController.text.trim(),
         gender: selectedGender,
         birthDate: selectedDate,
+        bio: _bioController.text.trim().isEmpty
+            ? null
+            : _bioController.text.trim(),
       );
 
       if (!mounted) return;
-      Navigator.of(context).pushNamed('/image-upload');
+      await OnboardingRouter.navigateToNextStep(context);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(BondyErrorMapper.message(error)),
+          backgroundColor: BondyColors.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
