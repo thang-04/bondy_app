@@ -219,7 +219,7 @@ class _MatchButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Transform.translate(
-                  offset: const Offset(0, -6),
+                  offset: const Offset(0, -14),
                   child: Stack(
                     clipBehavior: Clip.none,
                     alignment: Alignment.center,
@@ -296,76 +296,46 @@ class _MatchButton extends StatelessWidget {
 class BottomNavBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.95)
-      ..style = PaintingStyle.fill;
-
-    Paint shadowPaint = Paint()
-      ..color = const Color(0xFF5D4E46).withValues(alpha: 0.08)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-
-    Path path = Path();
-    
     final w = size.width;
     final h = size.height;
-    final r = 32.0; // corner radius
-    
-    final centerX = w / 2;
-    final curveWidth = 84.0;
-    final curveHeight = 5.0;
-    
-    path.moveTo(0, r);
-    path.quadraticBezierTo(0, 0, r, 0);
-    path.lineTo(centerX - curveWidth / 2 - 10, 0);
-    
-    // Smooth arch using cubic Beziers wrapping tightly
-    path.cubicTo(
-      centerX - curveWidth / 2 + 4, 0,
-      centerX - curveWidth / 2 + 10, -curveHeight,
-      centerX, -curveHeight,
-    );
-    path.cubicTo(
-      centerX + curveWidth / 2 - 10, -curveHeight,
-      centerX + curveWidth / 2 - 4, 0,
-      centerX + curveWidth / 2 + 10, 0,
-    );
-    
-    path.lineTo(w - r, 0);
-    path.quadraticBezierTo(w, 0, w, r);
-    path.lineTo(w, h);
-    path.lineTo(0, h);
-    path.close();
+    const r = 20.0; // corner radius góc trên
 
-    // Draw drop shadow
-    canvas.drawPath(path.shift(const Offset(0, -3)), shadowPaint);
-    
-    // Draw background fill
+    // Shadow
+    Paint shadowPaint = Paint()
+      ..color = const Color(0xFF5D4E46).withValues(alpha: 0.10)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+
+    // Background fill
+    Paint paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.97)
+      ..style = PaintingStyle.fill;
+
+    // Viền trên PHẲNG hoàn toàn (không có arch curve)
+    Path path = Path()
+      ..moveTo(0, r)
+      ..quadraticBezierTo(0, 0, r, 0)  // góc trên trái
+      ..lineTo(w - r, 0)
+      ..quadraticBezierTo(w, 0, w, r)  // góc trên phải
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+
+    canvas.drawPath(path.shift(const Offset(0, -2)), shadowPaint);
     canvas.drawPath(path, paint);
 
-    // Draw subtle cam outline on the upper lip
+    // Đường kẻ mỏng viền trên
     Paint strokePaint = Paint()
-      ..color = BondyBottomNavBar._outline.withValues(alpha: 0.4)
+      ..color = BondyBottomNavBar._outline.withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-      
-    Path strokePath = Path();
-    strokePath.moveTo(0, r);
-    strokePath.quadraticBezierTo(0, 0, r, 0);
-    strokePath.lineTo(centerX - curveWidth / 2 - 10, 0);
-    strokePath.cubicTo(
-      centerX - curveWidth / 2 + 4, 0,
-      centerX - curveWidth / 2 + 10, -curveHeight,
-      centerX, -curveHeight,
-    );
-    strokePath.cubicTo(
-      centerX + curveWidth / 2 - 10, -curveHeight,
-      centerX + curveWidth / 2 - 4, 0,
-      centerX + curveWidth / 2 + 10, 0,
-    );
-    strokePath.lineTo(w - r, 0);
-    strokePath.quadraticBezierTo(w, 0, w, r);
-    
+      ..strokeWidth = 1.0;
+
+    Path strokePath = Path()
+      ..moveTo(0, r)
+      ..quadraticBezierTo(0, 0, r, 0)
+      ..lineTo(w - r, 0)
+      ..quadraticBezierTo(w, 0, w, r);
+
     canvas.drawPath(strokePath, strokePaint);
   }
 
