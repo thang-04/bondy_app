@@ -41,7 +41,7 @@ class BondyBottomNavBar extends StatelessWidget {
   static const double _barHeight = 58.0;
 
   /// Nút Match nhô lên trên viền nav bar bao nhiêu pixel
-  static const double _fabElevation = 28.0;
+  static const double _fabElevation = 30.0;
 
   /// reservedHeight để các màn hình tính padding bottom
   static const double reservedHeightWithoutSafeArea = _barHeight + _fabElevation;
@@ -187,7 +187,7 @@ class BondyBottomNavBar extends StatelessWidget {
           // 3. Label "Match" bên dưới FAB, nằm trong bar
           // ──────────────────────────────────────────────
           Positioned(
-            bottom: 6,
+            bottom: 25,
             left: 0,
             right: 0,
             child: Center(
