@@ -115,6 +115,7 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
                           hintText: 'Email của bạn',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
+                          autofocus: true,
                           onChanged: (value) {
                             context.read<AuthViewModel>().validateEmail(value);
                           },
@@ -124,6 +125,7 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
                           key: const Key('auth_continue_button'),
                           text: auth.isLoading ? 'Đang gửi...' : 'Tiếp tục',
                           isLoading: auth.isLoading,
+                          borderRadius: 30,
                           onPressed: auth.isValid && !auth.isLoading
                               ? () {
                                   context.read<AuthViewModel>().sendOtpAndNavigate(
@@ -153,6 +155,7 @@ class _SignUpEmailField extends StatefulWidget {
   final TextInputType? keyboardType;
   final IconData prefixIcon;
   final ValueChanged<String> onChanged;
+  final bool autofocus;
 
   const _SignUpEmailField({
     super.key,
@@ -161,6 +164,7 @@ class _SignUpEmailField extends StatefulWidget {
     required this.onChanged,
     required this.prefixIcon,
     this.keyboardType,
+    this.autofocus = false,
   });
 
   @override
@@ -192,7 +196,7 @@ class _SignUpEmailFieldState extends State<_SignUpEmailField> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: _isFocused ? BondyColors.primary : BondyColors.divider,
           width: _isFocused ? 1.5 : 1,
@@ -211,21 +215,25 @@ class _SignUpEmailFieldState extends State<_SignUpEmailField> {
       child: TextField(
         controller: widget.controller,
         focusNode: _focusNode,
+        autofocus: widget.autofocus,
         keyboardType: widget.keyboardType,
         autocorrect: false,
         onChanged: widget.onChanged,
         decoration: InputDecoration(
           hintText: widget.hintText,
-          prefixIcon: Icon(
-            widget.prefixIcon,
-            color: _isFocused ? BondyColors.primary : BondyColors.textHint,
-            size: 22,
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Icon(
+              widget.prefixIcon,
+              color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+              size: 22,
+            ),
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
+            horizontal: 20,
             vertical: 18,
           ),
           hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),

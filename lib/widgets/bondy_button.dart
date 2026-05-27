@@ -14,6 +14,7 @@ class BondyButton extends StatelessWidget {
   final bool isOutlined;
   final bool isLoading;
   final IconData? icon;
+  final double borderRadius;
 
   const BondyButton({
     super.key,
@@ -22,6 +23,7 @@ class BondyButton extends StatelessWidget {
     this.isOutlined = false,
     this.isLoading = false,
     this.icon,
+    this.borderRadius = 14,
   });
 
   @override
@@ -29,6 +31,9 @@ class BondyButton extends StatelessWidget {
     if (isLoading) {
       return ElevatedButton(
         onPressed: null,
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+        ),
         child: const SizedBox(
           height: 24,
           width: 24,
@@ -42,6 +47,9 @@ class BondyButton extends StatelessWidget {
     if (isOutlined) {
       return OutlinedButton(
         onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+        ),
         child: icon == null
             ? Text(text)
             : Row(
@@ -58,6 +66,7 @@ class BondyButton extends StatelessWidget {
       label: text,
       icon: icon ?? Icons.arrow_forward,
       onTap: onPressed,
+      borderRadius: borderRadius,
     );
   }
 }

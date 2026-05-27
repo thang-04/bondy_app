@@ -208,6 +208,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 key: Key('otp_digit_$index'),
                                 controller: _controllers[index],
                                 focusNode: _focusNodes[index],
+                                autofocus: index == 0,
                                 textAlign: TextAlign.center,
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
@@ -231,7 +232,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.zero,
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: BorderSide(
                                       color: isFilled
                                           ? BondyColors.primary
@@ -239,7 +240,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: BorderSide(
                                       color: isFilled
                                           ? BondyColors.primary
@@ -247,7 +248,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: const BorderSide(
                                       color: BondyColors.primary,
                                       width: 2,
@@ -297,6 +298,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         BondyButton(
                           key: const Key('otp_confirm_button'),
                           text: isLoading ? 'Đang xác nhận...' : 'Xác nhận',
+                          borderRadius: 30,
                           onPressed: _isComplete && !isLoading
                               ? () {
                                   final otp = _controllers

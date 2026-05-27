@@ -124,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           hintText: 'Email của bạn',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
+                          autofocus: true,
                           onChanged: (_) => _validate(),
                         ),
                         const SizedBox(height: 16),
@@ -157,6 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: const Key('login_submit_button'),
                           text: auth.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
                           isLoading: auth.isLoading,
+                          borderRadius: 30,
                           onPressed: auth.isValid && !auth.isLoading
                               ? () => context.read<AuthViewModel>().loginAndNavigate(
                                   context,
@@ -186,6 +188,7 @@ class _AuthField extends StatefulWidget {
   final bool obscureText;
   final IconData prefixIcon;
   final ValueChanged<String> onChanged;
+  final bool autofocus;
 
   const _AuthField({
     super.key,
@@ -195,6 +198,7 @@ class _AuthField extends StatefulWidget {
     required this.prefixIcon,
     this.keyboardType,
     this.obscureText = false,
+    this.autofocus = false,
   });
 
   @override
@@ -204,10 +208,12 @@ class _AuthField extends StatefulWidget {
 class _AuthFieldState extends State<_AuthField> {
   final FocusNode _focusNode = FocusNode();
   bool _isFocused = false;
+  late bool _obscureText;
 
   @override
   void initState() {
     super.initState();
+    _obscureText = widget.obscureText;
     _focusNode.addListener(() {
       setState(() {
         _isFocused = _focusNode.hasFocus;
@@ -226,7 +232,7 @@ class _AuthFieldState extends State<_AuthField> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: _isFocused ? BondyColors.primary : BondyColors.divider,
           width: _isFocused ? 1.5 : 1,
@@ -245,22 +251,45 @@ class _AuthFieldState extends State<_AuthField> {
       child: TextField(
         controller: widget.controller,
         focusNode: _focusNode,
+        autofocus: widget.autofocus,
         keyboardType: widget.keyboardType,
         autocorrect: false,
-        obscureText: widget.obscureText,
+        obscureText: _obscureText,
         onChanged: widget.onChanged,
         decoration: InputDecoration(
           hintText: widget.hintText,
-          prefixIcon: Icon(
-            widget.prefixIcon,
-            color: _isFocused ? BondyColors.primary : BondyColors.textHint,
-            size: 22,
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Icon(
+              widget.prefixIcon,
+              color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+              size: 22,
+            ),
           ),
+          suffixIcon: widget.obscureText
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: IconButton(
+                    icon: Icon(
+                      _obscureText
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  ),
+                )
+              : null,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
+            horizontal: 20,
             vertical: 18,
           ),
           hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),

@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/bondy_logo.dart';
+import '../../widgets/common/bondy_feedback.dart';
+import '../../widgets/common/bondy_widgets.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
   final String email;
@@ -18,8 +21,6 @@ class SetNewPasswordScreen extends StatefulWidget {
 class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   String? _confirmError;
 
   @override
@@ -52,205 +53,314 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
     final auth = context.watch<AuthViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Bondy',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: BondyColors.textPrimary,
+      backgroundColor: BondyColors.background,
+      body: Stack(
+        children: [
+          // Background blurs
+          Positioned(
+            top: -48,
+            right: -48,
+            child: IgnorePointer(
+              child: Container(
+                width: 256,
+                height: 256,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: BondyColors.primary.withValues(alpha: 0.08),
+                ),
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'Đặt mật khẩu mới',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
+          Positioned(
+            bottom: -96,
+            left: -96,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF92348E).withValues(alpha: 0.12),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                email.isEmpty
-                    ? 'Nhập mật khẩu mới cho tài khoản'
-                    : 'Nhập mật khẩu mới cho tài khoản',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: BondyColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              _PasswordField(
-                controller: _passwordController,
-                hintText: 'Mật khẩu mới',
-                isObscured: _obscurePassword,
-                onToggleVisibility: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-                onChanged: (_) {
-                  _validateConfirmPassword();
-                },
-              ),
-              const SizedBox(height: 12),
-              _PasswordField(
-                controller: _confirmPasswordController,
-                hintText: 'Xác nhận mật khẩu mới',
-                isObscured: _obscureConfirmPassword,
-                onToggleVisibility: () {
-                  setState(() {
-                    _obscureConfirmPassword = !_obscureConfirmPassword;
-                  });
-                },
-                onChanged: (_) {
-                  _validateConfirmPassword();
-                },
-                errorText: _confirmError,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.lock_outline,
-                    size: 16,
-                    color: BondyColors.textSecondary,
+            ),
+          ),
+          // Scrollable Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Tối thiểu 6 ký tự',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: BondyColors.textSecondary,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        // Small glowing logo header
+                        const Center(
+                          child: BondyLogo(size: 140),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Đặt mật khẩu mới',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Nhập mật khẩu mới để thiết lập lại quyền truy cập tài khoản.',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            color: BondyColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+                        _SetNewPasswordTextField(
+                          key: const Key('set_new_password_field'),
+                          controller: _passwordController,
+                          hintText: 'Mật khẩu mới (tối thiểu 6 ký tự)',
+                          prefixIcon: Icons.lock_outlined,
+                          obscureText: true,
+                          autofocus: true,
+                          onChanged: (_) {
+                            _validateConfirmPassword();
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _SetNewPasswordTextField(
+                          key: const Key('set_new_password_confirm_field'),
+                          controller: _confirmPasswordController,
+                          hintText: 'Xác nhận mật khẩu mới',
+                          prefixIcon: Icons.lock_clock_outlined,
+                          obscureText: true,
+                          onChanged: (_) {
+                            _validateConfirmPassword();
+                          },
+                          errorText: _confirmError,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: BondyColors.textSecondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tối thiểu 6 ký tự',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: BondyColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        BondyInlineError(message: auth.errorMessage),
+                        const SizedBox(height: 24),
+                        BondyButton(
+                          key: const Key('set_new_password_submit_button'),
+                          text: auth.isLoading ? 'Đang xác nhận...' : 'Xác nhận',
+                          isLoading: auth.isLoading,
+                          borderRadius: 30,
+                          onPressed: _isValid && _confirmError == null && !auth.isLoading
+                              ? () async {
+                                  final authViewModel = context.read<AuthViewModel>();
+                                  final success = await authViewModel.setPasswordEmailAndNavigate(
+                                    context,
+                                    email,
+                                    _passwordController.text,
+                                  );
+                                  if (success && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Đặt lại mật khẩu thành công!'),
+                                      ),
+                                    );
+                                    Navigator.of(context).pushNamedAndRemoveUntil(
+                                      '/login',
+                                      (route) => route.isFirst,
+                                    );
+                                  }
+                                }
+                              : () {},
+                        ),
+                        const SizedBox(height: 48),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              if (auth.errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  auth.errorMessage!,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: BondyColors.error,
-                    fontSize: 13,
                   ),
                 ),
               ],
-              const Spacer(),
-              BondyButton(
-                key: const Key('set_new_password_submit_button'),
-                text: auth.isLoading ? 'Đang xác nhận...' : 'Xác nhận',
-                isLoading: auth.isLoading,
-                onPressed: _isValid && _confirmError == null && !auth.isLoading
-                    ? () async {
-                        final authViewModel = context.read<AuthViewModel>();
-                        final success = await authViewModel.setPasswordEmailAndNavigate(
-                          context,
-                          email,
-                          _passwordController.text,
-                        );
-                        if (success && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đặt lại mật khẩu thành công!'),
-                            ),
-                          );
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/login',
-                            (route) => route.isFirst,
-                          );
-                        }
-                      }
-                    : () {},
-              ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _PasswordField extends StatelessWidget {
+class _SetNewPasswordTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
-  final bool isObscured;
-  final VoidCallback onToggleVisibility;
+  final bool obscureText;
+  final IconData prefixIcon;
   final ValueChanged<String> onChanged;
+  final bool autofocus;
   final String? errorText;
 
-  const _PasswordField({
+  const _SetNewPasswordTextField({
+    super.key,
     required this.controller,
     required this.hintText,
-    required this.isObscured,
-    required this.onToggleVisibility,
     required this.onChanged,
+    required this.prefixIcon,
+    this.obscureText = false,
+    this.autofocus = false,
     this.errorText,
   });
 
   @override
+  State<_SetNewPasswordTextField> createState() => _SetNewPasswordTextFieldState();
+}
+
+class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscureText;
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasError = widget.errorText != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: errorText != null ? BondyColors.error : BondyColors.divider,
+              color: hasError
+                  ? BondyColors.error
+                  : (_isFocused ? BondyColors.primary : BondyColors.divider),
+              width: _isFocused ? 1.5 : 1,
             ),
-            color: Colors.white,
+            color: _isFocused ? Colors.white : BondyColors.surface,
+            boxShadow: _isFocused
+                ? [
+                    BoxShadow(
+                      color: hasError
+                          ? BondyColors.error.withValues(alpha: 0.08)
+                          : BondyColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [bondySoftShadow(0.02)],
           ),
           child: TextField(
-            controller: controller,
-            obscureText: isObscured,
+            controller: widget.controller,
+            focusNode: _focusNode,
+            autofocus: widget.autofocus,
+            obscureText: _obscureText,
             autocorrect: false,
-            onChanged: onChanged,
+            onChanged: widget.onChanged,
             decoration: InputDecoration(
-              hintText: hintText,
+              hintText: widget.hintText,
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Icon(
+                  widget.prefixIcon,
+                  color: hasError
+                      ? BondyColors.error
+                      : (_isFocused ? BondyColors.primary : BondyColors.textHint),
+                  size: 22,
+                ),
+              ),
+              suffixIcon: widget.obscureText
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon: Icon(
+                          _obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: hasError
+                              ? BondyColors.error
+                              : (_isFocused ? BondyColors.primary : BondyColors.textHint),
+                          size: 22,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureText = !_obscureText;
+                          });
+                        },
+                      ),
+                    )
+                  : null,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
+                horizontal: 20,
                 vertical: 18,
               ),
-              hintStyle: GoogleFonts.plusJakartaSans(color: BondyColors.textHint),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isObscured ? Icons.visibility_off : Icons.visibility,
-                  color: BondyColors.textSecondary,
-                ),
-                onPressed: onToggleVisibility,
-              ),
+              hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
             ),
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.manrope(
               fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              color: BondyColors.textPrimary,
             ),
           ),
         ),
-        if (errorText != null) ...[
+        if (hasError) ...[
           const SizedBox(height: 6),
-          Text(
-            errorText!,
-            style: GoogleFonts.plusJakartaSans(
-              color: BondyColors.error,
-              fontSize: 12,
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Text(
+              widget.errorText!,
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

@@ -225,27 +225,29 @@ class HealingGradientButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback? onTap;
+  final double borderRadius;
 
   const HealingGradientButton({
     super.key,
     required this.label,
     this.icon = Icons.arrow_forward,
     this.onTap,
+    this.borderRadius = 14,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(borderRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(borderRadius),
         child: Ink(
           height: 54,
           decoration: BoxDecoration(
             gradient: HealingStitchColors.warmGradient,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: [healingGlowShadow(HealingStitchColors.orange)],
           ),
           child: Row(

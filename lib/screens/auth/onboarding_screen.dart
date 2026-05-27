@@ -97,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: GestureDetector(
                 onTap: _finishOnboarding,
                 child: Text(
-                  'Skip',
+                  'Bỏ qua',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -202,7 +202,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Spacer(flex: 2),
                 Text(
-                  'Start your journey',
+                  'Bắt đầu hành trình',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 36,
@@ -214,7 +214,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Meet people who truly understand you',
+                  'Gặp gỡ những người thực sự thấu hiểu bạn',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 18,
@@ -225,7 +225,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const Spacer(flex: 3),
                 _buildPageIndicator(0),
                 const SizedBox(height: 24),
-                _buildPrimaryCTA('Get Started'),
+                _buildPrimaryCTA('Bắt đầu ngay'),
                 SizedBox(height: MediaQuery.of(context).padding.bottom + 32),
               ],
             ),
@@ -347,7 +347,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   children: [
                     Text(
-                      "You're not alone in this journey",
+                      'Bạn không đơn độc trên hành trình',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 30,
@@ -359,7 +359,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Bondy understands your emotions and recommends connections that truly fit you.',
+                      'Bondy thấu hiểu cảm xúc của bạn và gợi ý những kết nối thực sự phù hợp.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 16,
@@ -392,7 +392,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             child: _buildFloatingCard(
                               icon: Icons.handshake,
                               iconBgColor: _tertiaryContainer,
-                              text: 'Ready for meaningful relationships',
+                              text: 'Sẵn sàng cho mối quan hệ ý nghĩa',
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               iconSize: 16,
@@ -414,7 +414,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               icon: Icons.forum,
                               iconBgColor: _secondaryContainer,
                               iconColor: _onSecondaryContainer,
-                              text: 'People who value deep conversations',
+                              text: 'Trân trọng trò chuyện sâu sắc',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -434,7 +434,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             child: _buildFloatingCard(
                               icon: Icons.auto_awesome,
                               iconBgColor: _primaryContainer,
-                              text: 'Matches your emotional energy',
+                              text: 'Đồng điệu với năng lượng cảm xúc',
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               isHighlighted: true,
@@ -453,7 +453,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     _buildPageIndicator(1),
                     const SizedBox(height: 24),
-                    _buildPrimaryCTA('Continue'),
+                    _buildPrimaryCTA('Tiếp tục'),
                     SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                   ],
                 ),
@@ -529,10 +529,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Transform.rotate(
                       angle: 0.07, // ~4 degrees
                       child: _buildGlassInfoCard(
-                        label: 'Compatibility',
+                        label: 'Độ tương thích',
                         labelIcon: Icons.psychology,
                         progressPercent: 0.88,
-                        subtitle: 'Deep emotional sync',
+                        subtitle: 'Đồng điệu cảm xúc sâu sắc',
                       ),
                     ),
                   ),
@@ -556,7 +556,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        'Shared Values',
+                        'Giá trị chung',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -576,7 +576,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Match beyond appearance',
+                  'Kết nối ngoài vẻ bề ngoài',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 36,
@@ -590,12 +590,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Feature rows
                 _buildFeatureRow(
                   icon: Icons.favorite,
-                  text: 'Personality-based matching',
+                  text: 'Ghép đôi dựa trên tính cách',
                 ),
                 const SizedBox(height: 16),
                 _buildFeatureRow(
                   icon: Icons.insights,
-                  text: 'Smart relationship insights',
+                  text: 'Thấu hiểu mối quan hệ thông minh',
                 ),
               ],
             ),
@@ -608,7 +608,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 _buildPageIndicator(2),
                 const SizedBox(height: 32),
-                _buildPrimaryCTA('Continue'),
+                _buildPrimaryCTA('Tiếp tục'),
               ],
             ),
           ),
@@ -735,7 +735,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      'Safe & private',
+                      'An toàn & Riêng tư',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 44,
@@ -751,14 +751,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       icon: Icons.check_circle,
                       iconBgColor: _secondaryContainer,
                       iconColor: _onSecondaryContainer,
-                      text: 'Verified profiles',
+                      text: 'Hồ sơ đã xác minh',
                     ),
                     const SizedBox(height: 16),
                     _buildTrustFeatureRow(
                       icon: Icons.security,
                       iconBgColor: _primaryContainer.withValues(alpha: 0.3),
                       iconColor: _primary,
-                      text: 'Secure conversations',
+                      text: 'Trò chuyện bảo mật',
                     ),
                   ],
                 ),
@@ -775,7 +775,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         _buildPageIndicator(3),
                         const SizedBox(height: 32),
-                        _buildPrimaryCTA('Continue'),
+                        _buildPrimaryCTA('Tiếp tục'),
                       ],
                     ),
                   ),
@@ -974,7 +974,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Find real\nconnections',
+                      'Kết nối\nchân thực',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 44,
@@ -994,16 +994,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 1.5,
                         ),
                         children: [
-                          const TextSpan(text: 'Not just swipes, but '),
+                          const TextSpan(text: 'Không chỉ là vuốt, mà là sự '),
                           TextSpan(
-                            text: 'meaningful',
+                            text: 'đồng điệu',
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               color: _primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const TextSpan(text: ' matches'),
+                          const TextSpan(text: ' ý nghĩa'),
                         ],
                       ),
                     ),
@@ -1018,7 +1018,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     _buildPageIndicator(4),
                     const SizedBox(height: 32),
-                    _buildPrimaryCTA('Continue'),
+                    _buildPrimaryCTA('Tiếp tục'),
                   ],
                 ),
               ),
@@ -1298,7 +1298,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'AI Insight',
+                    'Thấu hiểu AI',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -1309,7 +1309,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                '"You both prioritize creative growth and quiet mornings."',
+                '"Cả hai bạn đều trân trọng sự phát triển sáng tạo và những buổi sáng bình yên."',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,

@@ -214,6 +214,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                 key: Key('verify_otp_digit_$index'),
                                 controller: _controllers[index],
                                 focusNode: _focusNodes[index],
+                                autofocus: index == 0,
                                 enabled: !_isExpired,
                                 textAlign: TextAlign.center,
                                 keyboardType: TextInputType.number,
@@ -240,7 +241,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.zero,
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: BorderSide(
                                       color: isFilled
                                           ? BondyColors.primary
@@ -248,7 +249,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: BorderSide(
                                       color: isFilled
                                           ? BondyColors.primary
@@ -256,7 +257,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(24),
                                     borderSide: const BorderSide(
                                       color: BondyColors.primary,
                                       width: 2,
@@ -301,6 +302,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                   ? 'Mã đã hết hạn'
                                   : 'Xác nhận',
                           isLoading: isLoading,
+                          borderRadius: 30,
                           onPressed: _isComplete && !_isExpired && !isLoading
                               ? _handleVerify
                               : () {},
