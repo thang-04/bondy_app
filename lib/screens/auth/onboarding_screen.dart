@@ -153,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               // first time Google rotates the CDN URL. Falls back to the
               // surface tint if the asset is somehow missing.
               child: Image.asset(
-                'assets/images/healing_stitch/stitch_healing_19.jpg',
+                'assets/images/healing_stitch/stitch_journey_hero.jpg',
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
@@ -251,9 +251,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Positioned(
           top: topPadding + 96,
           right: 24,
-          child: _buildGlassCircle(
-            icon: Icons.shield_outlined,
-            iconColor: const Color(0xFF994100),
+          child: _HealingPulse(
+            child: _buildGlassCircle(
+              icon: Icons.shield_outlined,
+              iconColor: const Color(0xFF994100),
+            ),
           ),
         ),
       ],
@@ -1425,4 +1427,49 @@ class _AsymmetricClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _HealingPulse extends StatefulWidget {
+  final Widget child;
+
+  const _HealingPulse({required this.child});
+
+  @override
+  State<_HealingPulse> createState() => _HealingPulseState();
+}
+
+class _HealingPulseState extends State<_HealingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: widget.child,
+    );
+  }
 }
