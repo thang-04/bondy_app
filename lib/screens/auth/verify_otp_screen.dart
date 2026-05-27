@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/bondy_logo.dart';
+import '../../widgets/common/bondy_widgets.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final String email;
@@ -19,7 +21,11 @@ class VerifyOtpScreen extends StatefulWidget {
 }
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
-  final _otpController = TextEditingController();
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isComplete = false;
 
   static const int _initialSeconds = 300; // 5 minutes
@@ -70,9 +76,13 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     if (!mounted || !success) return;
 
     setState(() {
-      _otpController.clear();
+      for (final controller in _controllers) {
+        controller.clear();
+      }
+      _focusNodes.first.requestFocus();
       _remainingSeconds = _initialSeconds;
       _isExpired = false;
+      _isComplete = false;
     });
     _startCountdown();
   }
@@ -80,7 +90,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   Future<void> _handleVerify() async {
     if (_isExpired) return;
 
-    final otp = _otpController.text.trim();
+    final otp = _controllers.map((c) => c.text).join();
     if (otp.length != 6) return;
 
     final auth = context.read<AuthViewModel>();
@@ -100,7 +110,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    _otpController.dispose();
+    for (var c in _controllers) {
+      c.dispose();
+    }
+    for (var f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -109,141 +124,214 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final isLoading = context.watch<AuthViewModel>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Bondy',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: BondyColors.textPrimary,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'Xác thực mã OTP',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Nhập mã đã gửi đến ${widget.email}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: BondyColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 40),
-              Container(
+      backgroundColor: BondyColors.background,
+      body: Stack(
+        children: [
+          // Background blurs
+          Positioned(
+            top: -48,
+            right: -48,
+            child: IgnorePointer(
+              child: Container(
+                width: 256,
+                height: 256,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: BondyColors.divider),
-                  color: Colors.white,
-                ),
-                child: TextField(
-                  key: const Key('verify_otp_input'),
-                  controller: _otpController,
-                  enabled: !_isExpired,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(6),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _isComplete = value.length == 6;
-                    });
-                  },
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 4,
-                  ),
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    hintText: '------',
-                    hintStyle: GoogleFonts.plusJakartaSans(
-                      color: BondyColors.textHint,
-                      fontSize: 20,
-                      letterSpacing: 8,
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 18,
-                    ),
-                  ),
+                  shape: BoxShape.circle,
+                  color: BondyColors.primary.withValues(alpha: 0.08),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Countdown timer
-              if (_isExpired)
-                Text(
-                  'Mã đã hết hạn. Vui lòng yêu cầu mã mới.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: BondyColors.error,
-                  ),
-                )
-              else
-                Text(
-                  'Mã hết hạn sau: $_formattedTime',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: BondyColors.textSecondary,
-                  ),
-                ),
-              const Spacer(),
-              BondyButton(
-                key: const Key('verify_otp_confirm_button'),
-                text: isLoading
-                    ? 'Đang xác thực...'
-                    : _isExpired
-                        ? 'Mã đã hết hạn'
-                        : 'Xác nhận',
-                isLoading: isLoading,
-                onPressed: _isComplete && !_isExpired && !isLoading
-                    ? _handleVerify
-                    : () {},
-              ),
-              const SizedBox(height: 16),
-              // Resend button
-              Center(
-                child: TextButton(
-                  key: const Key('verify_otp_resend_button'),
-                  onPressed: !_isExpired && !isLoading ? _handleResend : null,
-                  child: Text(
-                    'Chưa nhận được mã? Gửi lại',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: _isExpired
-                          ? BondyColors.textHint
-                          : BondyColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: -96,
+            left: -96,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF92348E).withValues(alpha: 0.12),
+                ),
+              ),
+            ),
+          ),
+          // Scrollable Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        // Small glowing logo header
+                        const Center(
+                          child: BondyLogo(size: 140),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Xác thực mã OTP',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Nhập mã 6 số đã được gửi đến email ${widget.email} của bạn.',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            color: BondyColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+                        // OTP fields
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(6, (index) {
+                            final isFilled = _controllers[index].text.isNotEmpty;
+                            return SizedBox(
+                              width: 48,
+                              height: 58,
+                              child: TextField(
+                                key: Key('verify_otp_digit_$index'),
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                enabled: !_isExpired,
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(1),
+                                ],
+                                onChanged: (value) {
+                                  if (value.isNotEmpty && index < 5) {
+                                    _focusNodes[index + 1].requestFocus();
+                                  }
+                                  if (value.isEmpty && index > 0) {
+                                    _focusNodes[index - 1].requestFocus();
+                                  }
+                                  setState(() {
+                                    _isComplete = _controllers.every((c) => c.text.isNotEmpty);
+                                  });
+                                },
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: BondyColors.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.zero,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isFilled
+                                          ? BondyColors.primary
+                                          : BondyColors.divider,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isFilled
+                                          ? BondyColors.primary
+                                          : BondyColors.divider,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: BondyColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: isFilled
+                                      ? BondyColors.primaryLight.withValues(alpha: 0.4)
+                                      : Colors.white,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 24),
+                        // Countdown timer
+                        Center(
+                          child: _isExpired
+                              ? Text(
+                                  'Mã đã hết hạn. Vui lòng yêu cầu mã mới.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: BondyColors.error,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                )
+                              : Text(
+                                  'Mã hết hạn sau: $_formattedTime',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: BondyColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 48),
+                        BondyButton(
+                          key: const Key('verify_otp_confirm_button'),
+                          text: isLoading
+                              ? 'Đang xác thực...'
+                              : _isExpired
+                                  ? 'Mã đã hết hạn'
+                                  : 'Xác nhận',
+                          isLoading: isLoading,
+                          onPressed: _isComplete && !_isExpired && !isLoading
+                              ? _handleVerify
+                              : () {},
+                        ),
+                        const SizedBox(height: 20),
+                        // Resend button
+                        Center(
+                          child: TextButton(
+                            key: const Key('verify_otp_resend_button'),
+                            onPressed: !_isExpired && !isLoading ? _handleResend : null,
+                            child: Text(
+                              'Chưa nhận được mã? Gửi lại',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _isExpired
+                                    ? BondyColors.textHint
+                                    : BondyColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

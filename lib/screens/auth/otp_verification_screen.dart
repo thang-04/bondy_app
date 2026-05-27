@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/bondy_logo.dart';
+import '../../widgets/common/bondy_widgets.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final int resendCooldownSeconds;
@@ -116,153 +118,209 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final isLoading = context.watch<AuthViewModel>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'Nhập mã xác thực',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
+      backgroundColor: BondyColors.background,
+      body: Stack(
+        children: [
+          // Background blurs
+          Positioned(
+            top: -48,
+            right: -48,
+            child: IgnorePointer(
+              child: Container(
+                width: 256,
+                height: 256,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: BondyColors.primary.withValues(alpha: 0.08),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Mã gồm 6 số đã được gửi đến\nemail của bạn.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: BondyColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 40),
-              // OTP fields
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 50,
-                    height: 60,
-                    child: TextField(
-                      key: Key('otp_digit_$index'),
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(1),
-                      ],
-                      onChanged: (value) {
-                        if (value.isNotEmpty && index < 5) {
-                          _focusNodes[index + 1].requestFocus();
-                        }
-                        if (value.isEmpty && index > 0) {
-                          _focusNodes[index - 1].requestFocus();
-                        }
-                        setState(() {});
-                      },
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.zero,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: _controllers[index].text.isNotEmpty
-                                ? BondyColors.primary
-                                : BondyColors.divider,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: _controllers[index].text.isNotEmpty
-                                ? BondyColors.primary
-                                : BondyColors.divider,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: BondyColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: _controllers[index].text.isNotEmpty
-                            ? BondyColors.primaryLight
-                            : Colors.white,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
-              // Resend
-              Center(
-                child: _canResend
-                    ? TextButton(
-                        key: const Key('otp_resend_button'),
-                        onPressed: isLoading
-                            ? null
-                            : () => _handleResend(
-                                email: email,
-                                flow: flow,
-                                password: password,
-                              ),
-                        child: Text(
-                          'Gửi lại mã',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: BondyColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        key: const Key('otp_resend_countdown'),
-                        'Gửi lại mã sau ${_resendSeconds}s',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: BondyColors.textHint,
-                          fontSize: 14,
-                        ),
-                      ),
-              ),
-              const Spacer(),
-              BondyButton(
-                key: const Key('otp_confirm_button'),
-                text: isLoading ? 'Đang xác nhận...' : 'Xác nhận',
-                onPressed: _isComplete && !isLoading
-                    ? () {
-                        final otp = _controllers
-                            .map((controller) => controller.text)
-                            .join();
-                        context.read<AuthViewModel>().verifyOtpAndNavigate(
-                          context,
-                          email,
-                          otp,
-                          flow,
-                        );
-                      }
-                    : () {},
-              ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: -96,
+            left: -96,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF92348E).withValues(alpha: 0.12),
+                ),
+              ),
+            ),
+          ),
+          // Scrollable Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        // Small glowing logo header
+                        const Center(
+                          child: BondyLogo(size: 140),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Nhập mã xác thực',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Mã gồm 6 số đã được gửi đến email $email của bạn.',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            color: BondyColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+                        // OTP fields
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(6, (index) {
+                            final isFilled = _controllers[index].text.isNotEmpty;
+                            return SizedBox(
+                              width: 48,
+                              height: 58,
+                              child: TextField(
+                                key: Key('otp_digit_$index'),
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(1),
+                                ],
+                                onChanged: (value) {
+                                  if (value.isNotEmpty && index < 5) {
+                                    _focusNodes[index + 1].requestFocus();
+                                  }
+                                  if (value.isEmpty && index > 0) {
+                                    _focusNodes[index - 1].requestFocus();
+                                  }
+                                  setState(() {});
+                                },
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: BondyColors.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.zero,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isFilled
+                                          ? BondyColors.primary
+                                          : BondyColors.divider,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isFilled
+                                          ? BondyColors.primary
+                                          : BondyColors.divider,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: BondyColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: isFilled
+                                      ? BondyColors.primaryLight.withValues(alpha: 0.4)
+                                      : Colors.white,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 24),
+                        // Resend
+                        Center(
+                          child: _canResend
+                              ? TextButton(
+                                  key: const Key('otp_resend_button'),
+                                  onPressed: isLoading
+                                      ? null
+                                      : () => _handleResend(
+                                            email: email,
+                                            flow: flow,
+                                            password: password,
+                                          ),
+                                  child: Text(
+                                    'Gửi lại mã',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: BondyColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  key: const Key('otp_resend_countdown'),
+                                  'Gửi lại mã sau ${_resendSeconds}s',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: BondyColors.textHint,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 48),
+                        BondyButton(
+                          key: const Key('otp_confirm_button'),
+                          text: isLoading ? 'Đang xác nhận...' : 'Xác nhận',
+                          onPressed: _isComplete && !isLoading
+                              ? () {
+                                  final otp = _controllers
+                                      .map((controller) => controller.text)
+                                      .join();
+                                  context.read<AuthViewModel>().verifyOtpAndNavigate(
+                                    context,
+                                    email,
+                                    otp,
+                                    flow,
+                                  );
+                                }
+                              : () {},
+                        ),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

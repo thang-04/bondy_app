@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
+import '../../widgets/bondy_logo.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../../widgets/common/bondy_widgets.dart';
 
@@ -38,88 +40,151 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: BondyColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'Đăng nhập',
-                style: bondyText(size: 28, weight: FontWeight.w800),
+      body: Stack(
+        children: [
+          // Background blurs
+          Positioned(
+            top: -48,
+            right: -48,
+            child: IgnorePointer(
+              child: Container(
+                width: 256,
+                height: 256,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: BondyColors.primary.withValues(alpha: 0.08),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Nhập email và mật khẩu để tiếp tục.',
-                style: bondyText(size: 14, color: BondyColors.textSecondary),
+            ),
+          ),
+          Positioned(
+            bottom: -96,
+            left: -96,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF92348E).withValues(alpha: 0.12),
+                ),
               ),
-              const SizedBox(height: 32),
-              _AuthField(
-                key: const Key('login_email_field'),
-                controller: _emailController,
-                hintText: 'Email của bạn',
-                keyboardType: TextInputType.emailAddress,
-                onChanged: (_) => _validate(),
-              ),
-              const SizedBox(height: 12),
-              _AuthField(
-                key: const Key('login_password_field'),
-                controller: _passwordController,
-                hintText: 'Mật khẩu',
-                obscureText: true,
-                onChanged: (_) => _validate(),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/forgot-password'),
-                  child: Text(
-                    'Quên mật khẩu?',
-                    style: bondyText(
-                      weight: FontWeight.w700,
-                      color: BondyColors.primary,
+            ),
+          ),
+          // Scrollable Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        // Small glowing logo header
+                        const Center(
+                          child: BondyLogo(size: 140),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Đăng nhập',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Nhập email và mật khẩu để tiếp tục kết nối đồng điệu cảm xúc.',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            color: BondyColors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+                        _AuthField(
+                          key: const Key('login_email_field'),
+                          controller: _emailController,
+                          hintText: 'Email của bạn',
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: Icons.email_outlined,
+                          onChanged: (_) => _validate(),
+                        ),
+                        const SizedBox(height: 16),
+                        _AuthField(
+                          key: const Key('login_password_field'),
+                          controller: _passwordController,
+                          hintText: 'Mật khẩu',
+                          obscureText: true,
+                          prefixIcon: Icons.lock_outlined,
+                          onChanged: (_) => _validate(),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pushNamed('/forgot-password'),
+                            child: Text(
+                              'Quên mật khẩu?',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w700,
+                                color: BondyColors.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        BondyInlineError(message: auth.errorMessage),
+                        const SizedBox(height: 24),
+                        BondyButton(
+                          key: const Key('login_submit_button'),
+                          text: auth.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
+                          isLoading: auth.isLoading,
+                          onPressed: auth.isValid && !auth.isLoading
+                              ? () => context.read<AuthViewModel>().loginAndNavigate(
+                                  context,
+                                  _emailController.text,
+                                  _passwordController.text,
+                                )
+                              : () {},
+                        ),
+                        const SizedBox(height: 48),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              BondyInlineError(message: auth.errorMessage),
-              const SizedBox(height: 24),
-              BondyButton(
-                key: const Key('login_submit_button'),
-                text: auth.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
-                isLoading: auth.isLoading,
-                onPressed: auth.isValid && !auth.isLoading
-                    ? () => context.read<AuthViewModel>().loginAndNavigate(
-                        context,
-                        _emailController.text,
-                        _passwordController.text,
-                      )
-                    : () {},
-              ),
-              const SizedBox(height: 32),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _AuthField extends StatelessWidget {
+class _AuthField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final IconData prefixIcon;
   final ValueChanged<String> onChanged;
 
   const _AuthField({
@@ -127,27 +192,70 @@ class _AuthField extends StatelessWidget {
     required this.controller,
     required this.hintText,
     required this.onChanged,
+    required this.prefixIcon,
     this.keyboardType,
     this.obscureText = false,
   });
 
   @override
+  State<_AuthField> createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<_AuthField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: BondyColors.divider),
-        color: BondyColors.surface,
-        boxShadow: [bondySoftShadow(0.03)],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _isFocused ? BondyColors.primary : BondyColors.divider,
+          width: _isFocused ? 1.5 : 1,
+        ),
+        color: _isFocused ? Colors.white : BondyColors.surface,
+        boxShadow: _isFocused
+            ? [
+                BoxShadow(
+                  color: BondyColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [bondySoftShadow(0.02)],
       ),
       child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
+        controller: widget.controller,
+        focusNode: _focusNode,
+        keyboardType: widget.keyboardType,
         autocorrect: false,
-        obscureText: obscureText,
-        onChanged: onChanged,
+        obscureText: widget.obscureText,
+        onChanged: widget.onChanged,
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: widget.hintText,
+          prefixIcon: Icon(
+            widget.prefixIcon,
+            color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+            size: 22,
+          ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -155,9 +263,13 @@ class _AuthField extends StatelessWidget {
             horizontal: 16,
             vertical: 18,
           ),
-          hintStyle: bondyText(color: BondyColors.textHint),
+          hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
         ),
-        style: bondyText(size: 16, weight: FontWeight.w500),
+        style: GoogleFonts.manrope(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: BondyColors.textPrimary,
+        ),
       ),
     );
   }

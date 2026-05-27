@@ -40,14 +40,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // ─── Signature Gradient (Bondy brand) ───
   static const LinearGradient _signatureGradient = BondyColors.signatureGradient;
 
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentPage);
+  }
+
   @override
   void dispose() {
+    _pageController.dispose();
     super.dispose();
   }
 
   void _onNext() {
     if (_currentPage < _totalPages - 1) {
-      setState(() => _currentPage++);
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+      );
     } else {
       _finishOnboarding();
     }
@@ -57,53 +69,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     Navigator.pushReplacementNamed(context, '/welcome');
   }
 
-  /// Lấy widget trang hiện tại dựa trên index
-  Widget _getCurrentPage() {
-    switch (_currentPage) {
-      case 0:
-        return _buildStartJourneyPage();
-      case 1:
-        return _buildEmotionalHealingPage();
-      case 2:
-        return _buildValuePropositionPage();
-      case 3:
-        return _buildTrustSafetyPage();
-      case 4:
-        return _buildWelcomePage();
-      default:
-        return _buildStartJourneyPage();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _background,
       body: Stack(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            reverseDuration: const Duration(milliseconds: 500),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeOutCubic,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              // child.key == ValueKey(_currentPage) xác định đây là trang sắp vào
-              final isIncoming = child.key == ValueKey(_currentPage);
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: isIncoming ? const Offset(0.1, 0.0) : const Offset(-0.1, 0.0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
-              );
+          PageView(
+            controller: _pageController,
+            onPageChanged: (page) {
+              setState(() => _currentPage = page);
             },
-            child: KeyedSubtree(
-              key: ValueKey<int>(_currentPage),
-              child: _getCurrentPage(),
-            ),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              _buildStartJourneyPage(),
+              _buildEmotionalHealingPage(),
+              _buildValuePropositionPage(),
+              _buildTrustSafetyPage(),
+              _buildWelcomePage(),
+            ],
           ),
           // Nút Skip (góc trên phải)
           if (_currentPage < _totalPages - 1)
