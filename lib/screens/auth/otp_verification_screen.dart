@@ -8,7 +8,6 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/bondy_button.dart';
 import '../../widgets/bondy_logo.dart';
-import '../../widgets/common/bondy_widgets.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final int resendCooldownSeconds;
