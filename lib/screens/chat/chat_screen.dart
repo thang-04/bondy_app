@@ -57,6 +57,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _partnerTyping = false;
   bool _wsConnected = false;
   bool _isRecording = false;
+  bool _showEmojiKeyboard = false;
   final ImagePicker _imagePicker = ImagePicker();
   StreamSubscription<ChatRealtimeEvent>? _realtimeSub;
 
@@ -621,6 +622,54 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
             ),
             const SizedBox(height: 8),
+            if (_showEmojiKeyboard) ...[
+              SizedBox(
+                height: 38,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    '❤️', '😂', '👍', '😍', '🔥', '😭', '😮', '👏', '🎉', '✨', '🙌', '💯', '🤣', '🤔', '🙏', '🌸', '☕', '🍕', '🍰', '🎈'
+                  ].map((emoji) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () {
+                          final text = _controller.text;
+                          final selection = _controller.selection;
+                          int start = selection.start;
+                          int end = selection.end;
+                          if (start < 0 || end < 0) {
+                            start = text.length;
+                            end = text.length;
+                          }
+                          final newText = text.replaceRange(start, end, emoji);
+                          _controller.text = newText;
+                          _controller.selection = TextSelection.fromPosition(
+                            TextPosition(offset: start + emoji.length),
+                          );
+                          setState(() {});
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 IconButton(
@@ -642,24 +691,53 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       setState(() {});
                       _onTextChanged(value);
                     },
+                    onTap: () {
+                      if (_showEmojiKeyboard) {
+                        setState(() {
+                          _showEmojiKeyboard = false;
+                        });
+                      }
+                    },
                     onSubmitted: (_) {
                       _sendMessage();
                     },
                     enabled: !_isSending && _chatId != null,
                     decoration: InputDecoration(
                       hintText: 'Nhập tin nhắn...',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                        horizontal: 16,
+                        vertical: 8,
                       ),
                       hintStyle: GoogleFonts.plusJakartaSans(
                         color: BondyColors.textHint,
                       ),
                       filled: true,
                       fillColor: BondyColors.background,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showEmojiKeyboard
+                              ? Icons.keyboard_alt_outlined
+                              : Icons.sentiment_satisfied_alt_outlined,
+                          color: BondyColors.primary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _showEmojiKeyboard = !_showEmojiKeyboard;
+                          });
+                        },
+                      ),
                     ),
                     style: GoogleFonts.plusJakartaSans(fontSize: 14),
                   ),

@@ -8,10 +8,12 @@ class AIPromptsConfig {
   ];
 
   static const List<String> deeperPrompts = [
-    'Điều gì khiến bạn thấy thoải mái nhất khi ở bên một người?',
-    'Điều gì làm bạn vui vẻ và tự hào nhất trong tuần này?',
-    'Kỷ niệm đáng nhớ nhất thời thơ ấu của bạn là gì?',
-    'Một ngày hoàn hảo đối với bạn sẽ trông như thế nào?',
+    'Thoải mái nhất khi bên ai?',
+    'Niềm vui lớn nhất tuần này?',
+    'Kỷ niệm thơ ấu đáng nhớ?',
+    'Ngày hoàn hảo của bạn?',
+    'Vibe hôm nay thế nào?',
+    'Bài hát yêu thích lúc này?',
   ];
 
   static const List<Map<String, String>> mockDateSuggestions = [
