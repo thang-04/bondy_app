@@ -19,6 +19,7 @@ import '../../core/bondy_error_mapper.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../../theme/app_theme.dart';
 import '../healing/healing_stitch_style.dart';
+import '../../core/ai_prompts_config.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -252,26 +253,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _sendEmoji(String emoji) async {
-    final chatId = _chatId;
-    if (chatId == null) return;
-    setState(() => _isSending = true);
-    try {
-      final message = await _chatService.sendMessage(
-        chatId,
-        emoji,
-        messageType: 'EMOJI',
-      );
-      if (!mounted) return;
-      setState(() => _messages.add(message));
-      _scrollToBottom();
-    } catch (e) {
-      if (!mounted) return;
-      BondyFeedback.showError(context, e);
-    } finally {
-      if (mounted) setState(() => _isSending = false);
-    }
-  }
+
 
   void _readRouteArguments() {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -605,23 +587,40 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: 40,
-              child: ListView(
+              height: 42,
+              child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: ['❤️', '😊', '🙏', '💬', '✨']
-                    .map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          label: Text(e),
-                          onPressed: _isSending ? null : () => _sendEmoji(e),
+                itemCount: AIPromptsConfig.deeperPrompts.length,
+                itemBuilder: (context, index) {
+                  final prompt = AIPromptsConfig.deeperPrompts[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      avatar: const Icon(Icons.psychology, size: 16, color: BondyColors.primary),
+                      label: Text(
+                        prompt,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: BondyColors.textPrimary,
                         ),
                       ),
-                    )
-                    .toList(),
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: BondyColors.primary.withValues(alpha: 0.2)),
+                      onPressed: () {
+                        setState(() {
+                          _controller.text = prompt;
+                        });
+                        _controller.selection = TextSelection.fromPosition(
+                          TextPosition(offset: _controller.text.length),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 IconButton(
@@ -631,8 +630,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 IconButton(
                   onPressed: _isSending ? null : _toggleVoiceRecording,
                   icon: Icon(
-                    _isRecording ? Icons.stop_circle : Icons.mic_none,
-                    color: _isRecording ? Colors.red : null,
+                     _isRecording ? Icons.stop_circle : Icons.mic_none,
+                     color: _isRecording ? Colors.red : null,
                   ),
                 ),
                 Expanded(

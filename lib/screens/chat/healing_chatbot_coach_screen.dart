@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
 import '../../services/safety_guardrails_service.dart';
+import '../../widgets/chat/date_suggestions_widget.dart';
+import '../../core/ai_prompts_config.dart';
 
 class HealingChatbotCoachScreen extends StatefulWidget {
   const HealingChatbotCoachScreen({super.key});
@@ -28,6 +30,26 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
   bool _showOverlay = false;
   String? _pendingMessage;
   bool _showSafetyWarning = false;
+  bool _didReadArguments = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didReadArguments) return;
+    _didReadArguments = true;
+    _readRouteArguments();
+  }
+
+  void _readRouteArguments() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic> && args.containsKey('initialMessage')) {
+        final initMsg = args['initialMessage'] as String;
+        args.remove('initialMessage');
+        _proceedWithMessage(initMsg);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -213,16 +235,90 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
-          _messages.add(_BotMessage(
-            'Cảm ơn bạn đã chia sẻ với mình. Mình ở đây lắng nghe bạn.',
-            false,
-          ));
+          if (message.contains('mệt mỏi')) {
+            _messages.add(_BotMessage(
+              'Mình nghe đây. Cảm giác mệt mỏi là một tín hiệu từ cơ thể bảo bạn cần nghỉ ngơi. Hãy cho bản thân một khoảng lặng nhé. 🌿',
+              false,
+            ));
+          } else if (message.contains('mở đầu')) {
+            _messages.add(_BotMessage(
+              'Để mở đầu câu chuyện tự nhiên, bạn có thể gửi một câu hỏi nhẹ nhàng như: "Cuối tuần của bạn thường diễn ra như thế nào?" hoặc khen một bức ảnh đáng yêu của họ nhé! ✨',
+              false,
+            ));
+          } else if (message.contains('mục tiêu')) {
+            _messages.add(_BotMessage(
+              'Trong tình yêu, việc xác định rõ mong muốn của bản thân là rất tốt. Bạn muốn tìm kiếm một mối quan hệ lâu dài, hay đơn giản là một người bạn đồng hành thấu hiểu? 🌸',
+              false,
+            ));
+          } else {
+            _messages.add(_BotMessage(
+              'Cuối tuần sắp đến rồi, hai bạn hãy thử dành thời gian chất lượng bên nhau nhé! Dưới đây là một vài địa điểm hẹn hò cực kỳ phù hợp được đề xuất riêng cho hai bạn: 🗺️',
+              false,
+            ));
+            _messages.add(_BotMessage(
+              '',
+              false,
+              messageType: 'DATE_SUGGESTION',
+            ));
+          }
         });
       }
     });
   }
 
   Widget _buildBubble(_BotMessage msg) {
+    if (msg.messageType == 'DATE_SUGGESTION') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  'B',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: DateSuggestionsWidget(
+                places: AIPromptsConfig.mockDateSuggestions,
+                onShare: (name) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã chia sẻ địa điểm: $name')),
+                  );
+                },
+                onSave: (name) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã lưu địa điểm: $name')),
+                  );
+                },
+                onMap: (name) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đang mở bản đồ cho: $name')),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -463,6 +559,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
 class _BotMessage {
   final String text;
   final bool isUser;
+  final String messageType;
 
-  _BotMessage(this.text, this.isUser);
+  _BotMessage(this.text, this.isUser, {this.messageType = 'TEXT'});
 }
