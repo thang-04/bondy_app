@@ -153,8 +153,8 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       children: [
         mainContent,
         Positioned(
-          bottom: widget.embedded ? 150 : 24,
-          right: 16,
+          bottom: widget.embedded ? 100 : 24,
+          right: 24,
           child: FloatingActionButton(
             onPressed: () {
               showModalBottomSheet(

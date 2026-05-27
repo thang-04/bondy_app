@@ -57,8 +57,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _onNext() {
     if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
       );
     } else {
       _finishOnboarding();
@@ -75,19 +75,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: _background,
       body: Stack(
         children: [
-          PageView(
+          PageView.builder(
             controller: _pageController,
             onPageChanged: (page) {
               setState(() => _currentPage = page);
             },
             physics: const BouncingScrollPhysics(),
-            children: [
-              _buildStartJourneyPage(),
-              _buildEmotionalHealingPage(),
-              _buildValuePropositionPage(),
-              _buildTrustSafetyPage(),
-              _buildWelcomePage(),
-            ],
+            itemCount: _totalPages,
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  double value = 1.0;
+                  if (_pageController.position.hasContentDimensions) {
+                    value = (_pageController.page ?? 0) - index;
+                  } else {
+                    value = (_currentPage) - index.toDouble();
+                  }
+
+                  // Hiệu ứng mờ dần (opacity)
+                  final double opacity = (1.0 - value.abs()).clamp(0.0, 1.0);
+                  
+                  // Hiệu ứng trượt chậm (parallax offset): giảm tốc độ dịch chuyển 
+                  // của trang xuống còn 45% chiều rộng màn hình để hòa quyện với hiệu ứng fade.
+                  final double screenWidth = MediaQuery.of(context).size.width;
+                  final double translation = value * screenWidth * 0.45;
+
+                  return Opacity(
+                    opacity: opacity,
+                    child: Transform.translate(
+                      offset: Offset(translation, 0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildPageByIndex(index),
+              );
+            },
           ),
           // Nút Skip (góc trên phải)
           if (_currentPage < _totalPages - 1)
@@ -202,7 +226,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 const Spacer(flex: 2),
                 Text(
-                  'Bắt đầu hành trình',
+                  'Khởi Đầu Hành Trình',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 36,
@@ -214,7 +238,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Gặp gỡ những người thực sự thấu hiểu bạn',
+                  'Khám phá các tính năng tuyệt vời của Bondy để quản lý sức khỏe tinh thần của bạn.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 18,
@@ -347,7 +371,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Bạn không đơn độc trên hành trình',
+                      'Theo Dõi Cảm Xúc',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 30,
@@ -359,7 +383,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Bondy thấu hiểu cảm xúc của bạn và gợi ý những kết nối thực sự phù hợp.',
+                      'Ghi lại cảm xúc hàng ngày và nhận gợi ý cải thiện sức khỏe.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 16,
@@ -576,7 +600,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Kết nối ngoài vẻ bề ngoài',
+                  'Kết Nối Cộng Đồng',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 36,
@@ -584,6 +608,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     color: _onSurface,
                     height: 1.1,
                     letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Tham gia cộng đồng, chia sẻ và nhận hỗ trợ từ những người cùng quan tâm.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: _onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1391,6 +1425,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildPageByIndex(int index) {
+    switch (index) {
+      case 0:
+        return _buildStartJourneyPage();
+      case 1:
+        return _buildEmotionalHealingPage();
+      case 2:
+        return _buildValuePropositionPage();
+      case 3:
+        return _buildTrustSafetyPage();
+      case 4:
+        return _buildWelcomePage();
+      default:
+        return const SizedBox.shrink();
+    }
   }
 }
 

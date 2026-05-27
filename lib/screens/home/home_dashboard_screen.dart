@@ -1086,7 +1086,7 @@ class _AskBondyFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 60),
+      padding: const EdgeInsets.only(bottom: 84, right: 8),
       child: Material(
         color: Colors.transparent,
         elevation: 0,

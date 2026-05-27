@@ -83,7 +83,7 @@ class BondyTheme {
           backgroundColor: BondyColors.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: GoogleFonts.manrope(
             fontSize: 16,
             fontWeight: FontWeight.w700,

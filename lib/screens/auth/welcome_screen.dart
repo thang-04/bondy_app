@@ -70,32 +70,36 @@ class WelcomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  // Primary gradient button
-                  GestureDetector(
-                    key: const Key('welcome_otp_button'),
-                    onTap: () => Navigator.of(context).pushNamed('/sign-up'),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: BondyColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: BondyColors.primary.withValues(alpha: 0.25),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Tạo tài khoản mới',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.3,
+                  // Primary gradient button with Material ripple effect
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: const Key('welcome_otp_button'),
+                      onTap: () => Navigator.of(context).pushNamed('/sign-up'),
+                      borderRadius: BorderRadius.circular(30),
+                      child: Ink(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: BondyColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: BondyColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Tạo tài khoản mới',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
                       ),
@@ -110,9 +114,9 @@ class WelcomeScreen extends StatelessWidget {
                       onPressed: () =>
                           Navigator.of(context).pushNamed('/login'),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: BondyColors.primary),
+                        side: const BorderSide(color: BondyColors.primary, width: 1.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: Text(
@@ -126,13 +130,13 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   // Security badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.verified_user,
+                        Icons.shield_outlined,
                         size: 14,
                         color: BondyColors.textSecondary.withValues(alpha: 0.6),
                       ),
@@ -141,11 +145,11 @@ class WelcomeScreen extends StatelessWidget {
                         'BẢO MẬT & AN TOÀN',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                           color: BondyColors.textSecondary.withValues(
                             alpha: 0.6,
                           ),
-                          letterSpacing: 1.2,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ],

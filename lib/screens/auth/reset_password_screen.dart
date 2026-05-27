@@ -137,7 +137,7 @@ class _ResetField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(color: BondyColors.divider),
         color: Colors.white,
       ),
@@ -151,6 +151,8 @@ class _ResetField extends StatelessWidget {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
+          filled: false,
+          fillColor: Colors.transparent,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 18,

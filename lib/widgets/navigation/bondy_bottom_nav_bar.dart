@@ -193,6 +193,9 @@ class BondyBottomNavBar extends StatelessWidget {
             child: Center(
               child: Text(
                 'Match',
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -272,6 +275,7 @@ class _NavItem extends StatelessWidget {
           Text(
             label,
             maxLines: 1,
+            softWrap: false,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: GoogleFonts.plusJakartaSans(

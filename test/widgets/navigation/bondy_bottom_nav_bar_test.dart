@@ -27,7 +27,7 @@ void main() {
     );
 
     for (final label in [
-      'Discover',
+      'Home',
       'Healing',
       'Match',
       'Matches',

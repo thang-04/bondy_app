@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _AuthField(
                           key: const Key('login_email_field'),
                           controller: _emailController,
-                          hintText: 'Email của bạn',
+                          hintText: 'Nhập địa chỉ email của bạn',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
                           autofocus: true,
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _AuthField(
                           key: const Key('login_password_field'),
                           controller: _passwordController,
-                          hintText: 'Mật khẩu',
+                          hintText: 'Nhập mật khẩu',
                           obscureText: true,
                           prefixIcon: Icons.lock_outlined,
                           onChanged: (_) => _validate(),
@@ -288,6 +288,8 @@ class _AuthFieldState extends State<_AuthField> {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
+          filled: false,
+          fillColor: Colors.transparent,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,

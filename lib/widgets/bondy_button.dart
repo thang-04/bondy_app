@@ -23,7 +23,7 @@ class BondyButton extends StatelessWidget {
     this.isOutlined = false,
     this.isLoading = false,
     this.icon,
-    this.borderRadius = 14,
+    this.borderRadius = 30,
   });
 
   @override
