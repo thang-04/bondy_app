@@ -92,6 +92,8 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, widget.embedded ? 165 : 24),
         children: [
+          _buildHeaderTitle(context),
+          const SizedBox(height: 12),
           _buildSearchField(),
           const SizedBox(height: 16),
           if (_pendingMatches.isNotEmpty) ...[
@@ -199,6 +201,30 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
 
     return scaffold;
+  }
+
+  Widget _buildHeaderTitle(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Danh sách kết đôi',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.tune, color: Color(0xFF0F172A), size: 24),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tính năng lọc đang được phát triển')),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildSearchField() {

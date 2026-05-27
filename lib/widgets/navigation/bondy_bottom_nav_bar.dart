@@ -309,23 +309,23 @@ class BottomNavBarPainter extends CustomPainter {
     final r = 32.0; // corner radius
     
     final centerX = w / 2;
-    final curveWidth = 96.0;
-    final curveHeight = 22.0;
+    final curveWidth = 80.0;
+    final curveHeight = 18.0;
     
     path.moveTo(0, r);
     path.quadraticBezierTo(0, 0, r, 0);
-    path.lineTo(centerX - curveWidth / 2 - 12, 0);
+    path.lineTo(centerX - curveWidth / 2 - 10, 0);
     
-    // Smooth arch using cubic Beziers
+    // Smooth arch using cubic Beziers wrapping tightly
     path.cubicTo(
-      centerX - curveWidth / 2 + 10, 0,
-      centerX - curveWidth / 2 + 20, -curveHeight,
+      centerX - curveWidth / 2 + 8, 0,
+      centerX - curveWidth / 2 + 16, -curveHeight,
       centerX, -curveHeight,
     );
     path.cubicTo(
-      centerX + curveWidth / 2 - 20, -curveHeight,
-      centerX + curveWidth / 2 - 10, 0,
-      centerX + curveWidth / 2 + 12, 0,
+      centerX + curveWidth / 2 - 16, -curveHeight,
+      centerX + curveWidth / 2 - 8, 0,
+      centerX + curveWidth / 2 + 10, 0,
     );
     
     path.lineTo(w - r, 0);
@@ -349,16 +349,16 @@ class BottomNavBarPainter extends CustomPainter {
     Path strokePath = Path();
     strokePath.moveTo(0, r);
     strokePath.quadraticBezierTo(0, 0, r, 0);
-    strokePath.lineTo(centerX - curveWidth / 2 - 12, 0);
+    strokePath.lineTo(centerX - curveWidth / 2 - 10, 0);
     strokePath.cubicTo(
-      centerX - curveWidth / 2 + 10, 0,
-      centerX - curveWidth / 2 + 20, -curveHeight,
+      centerX - curveWidth / 2 + 8, 0,
+      centerX - curveWidth / 2 + 16, -curveHeight,
       centerX, -curveHeight,
     );
     strokePath.cubicTo(
-      centerX + curveWidth / 2 - 20, -curveHeight,
-      centerX + curveWidth / 2 - 10, 0,
-      centerX + curveWidth / 2 + 12, 0,
+      centerX + curveWidth / 2 - 16, -curveHeight,
+      centerX + curveWidth / 2 - 8, 0,
+      centerX + curveWidth / 2 + 10, 0,
     );
     strokePath.lineTo(w - r, 0);
     strokePath.quadraticBezierTo(w, 0, w, r);
