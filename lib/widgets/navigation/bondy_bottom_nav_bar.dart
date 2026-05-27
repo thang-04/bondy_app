@@ -41,7 +41,7 @@ class BondyBottomNavBar extends StatelessWidget {
   static const double _barHeight = 58.0;
 
   /// Nút Match nhô lên trên viền nav bar bao nhiêu pixel
-  static const double _fabElevation = 30.0;
+  static const double _fabElevation = 35.0;
 
   /// reservedHeight để các màn hình tính padding bottom
   static const double reservedHeightWithoutSafeArea = _barHeight + _fabElevation;
@@ -101,8 +101,8 @@ class BondyBottomNavBar extends StatelessWidget {
                         child: _NavItem(
                           index: 2,
                           currentIndex: currentIndex,
-                          icon: Icons.chat_bubble_outline_rounded,
-                          activeIcon: Icons.chat_bubble_rounded,
+                          icon: Icons.forum_outlined,
+                          activeIcon: Icons.forum_rounded,
                           label: 'Matches',
                           onTap: () => onTabSelected?.call(2),
                           showBadge: hasMatchBadge,
@@ -113,8 +113,8 @@ class BondyBottomNavBar extends StatelessWidget {
                         child: _NavItem(
                           index: 3,
                           currentIndex: currentIndex,
-                          icon: Icons.person_outline_rounded,
-                          activeIcon: Icons.person_rounded,
+                          icon: Icons.person_2_outlined,
+                          activeIcon: Icons.person_2_rounded,
                           label: 'Profile',
                           onTap: () => onTabSelected?.call(3),
                         ),
