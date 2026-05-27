@@ -1,0 +1,1015 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../models/discover/discover_profile_model.dart';
+import '../../models/user_profile_model.dart';
+import '../../services/profile_service.dart';
+import '../../services/auth_service.dart';
+import '../../core/bondy_error_mapper.dart';
+import '../../core/bondy_exceptions.dart' show QuotaExceededException;
+import '../../widgets/common/bondy_feedback.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
+import '../healing/healing_mode_dashboard_screen.dart';
+import '../chat/matches_list_screen.dart';
+import '../healing/healing_stitch_style.dart';
+import '../../viewmodels/community/community_viewmodel.dart';
+import '../../widgets/community/community_profile_card.dart';
+import '../../services/discover_service.dart';
+import '../auth/interests_setup_screen.dart';
+import 'home_dashboard_screen.dart';
+
+class MainShellScreen extends StatefulWidget {
+  final ProfileService? profileService;
+  final int initialIndex;
+
+  const MainShellScreen({
+    super.key,
+    this.profileService,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<MainShellScreen> createState() => _MainShellScreenState();
+}
+
+class _MainShellScreenState extends State<MainShellScreen> {
+  late int _currentIndex;
+  late final ProfileService _profileService;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _profileService = widget.profileService ?? ProfileService();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: BondyColors.background,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          HomeDashboardScreen(
+            onNavigateToHealing: () => setState(() => _currentIndex = 1),
+            onNavigateToMatches: () => setState(() => _currentIndex = 2),
+            onNavigateToProfile: () => setState(() => _currentIndex = 3),
+          ),
+          HealingModeDashboardScreen(
+            isActive: _currentIndex == 1,
+            showBottomNavigation: false,
+          ),
+          const _MatchesTab(),
+          _ProfileTab(profileService: _profileService),
+        ],
+      ),
+      extendBody: true,
+      bottomNavigationBar: BondyBottomNavBar(
+        currentIndex: _currentIndex,
+        onTabSelected: (index) => setState(() => _currentIndex = index),
+        onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
+      ),
+    );
+  }
+}
+
+// Legacy _HomeTab replaced by HomeDashboardScreen (see home_dashboard_screen.dart).
+
+// ===== HEALING TAB =====
+// ignore: unused_element
+class _HealingTab extends StatelessWidget {
+  const _HealingTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hành trình Chữa lành',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: BondyColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Week tabs
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildWeekTab('Tuần 1', true),
+                  _buildWeekTab('Tuần 2', false),
+                  _buildWeekTab('Tuần 3', false),
+                  _buildWeekTab('Tuần 4', false),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Today card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: BondyColors.primaryGradient,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hôm nay',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sẵn sàng cho một ngày mới?',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Activities
+            Text(
+              'Hoạt động nhẹ nhàng hôm nay',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildActivityCard('📝', 'Viết nhật ký cảm xúc', '5 phút', false),
+            const SizedBox(height: 8),
+            _buildActivityCard('🧘', 'Bài tập hít thở', '3 phút', true),
+            const SizedBox(height: 8),
+            _buildActivityCard('💭', 'Suy ngẫm tích cực', '10 phút', false),
+            const SizedBox(height: 24),
+            // Audio library
+            Text(
+              'Thư viện âm thanh',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed('/content'),
+              child: _buildAudioCard(
+                '🎵',
+                'Nhạc nền thư giãn',
+                '15 phút • Ambient',
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed('/content'),
+              child: _buildAudioCard(
+                '🎙️',
+                'Audio chữa lành',
+                '10 phút • Giọng đọc',
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed('/content'),
+              child: _buildAudioCard('🔒', 'Thiền định sâu', 'Premium'),
+            ),
+            const SizedBox(height: 24),
+            // Bondy Coach section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.psychology,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Bondy Coach',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cảm thấy muốn chia sẻ? Mình lắng nghe bạn.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pushNamed('/chatbot'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Nói chuyện với Bondy',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF6366F1),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Weekly progress
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: BondyColors.cardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tiến độ tuần này',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: List.generate(7, (index) {
+                      final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                      final completed = index < 2;
+                      return Column(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: completed
+                                  ? BondyColors.primary
+                                  : BondyColors.divider,
+                              shape: BoxShape.circle,
+                            ),
+                            child: completed
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            days[index],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: BondyColors.textHint,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildWeekTab(String label, bool isActive) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: isActive ? BondyColors.primary : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isActive ? BondyColors.primary : BondyColors.divider,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isActive ? Colors.white : BondyColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildActivityCard(
+    String emoji,
+    String title,
+    String duration,
+    bool completed,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: BondyColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    decoration: completed ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                Text(
+                  duration,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: BondyColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (completed)
+            const Icon(Icons.check_circle, color: BondyColors.primary)
+          else
+            const Icon(Icons.play_circle_outline, color: BondyColors.textHint),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildAudioCard(String emoji, String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: BondyColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: BondyColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.play_arrow, color: BondyColors.primary),
+        ],
+      ),
+    );
+  }
+}
+
+// ===== COMMUNITY TAB =====
+class _MatchesTab extends StatelessWidget {
+  const _MatchesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MatchesListScreen(embedded: true);
+  }
+}
+
+class _CommunityTab extends StatefulWidget {
+  const _CommunityTab();
+
+  @override
+  State<_CommunityTab> createState() => _CommunityTabState();
+}
+
+class _CommunityTabState extends State<_CommunityTab> {
+  late final CommunityViewModel _viewModel;
+  final DiscoverService _discoverService = DiscoverService();
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = CommunityViewModel();
+    _viewModel.loadFeed();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _viewModel,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: HealingStitchColors.warmBackground,
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _viewModel.loadFeed,
+              color: HealingStitchColors.coral,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cộng đồng',
+                      style: healingText(size: 24, weight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tìm người đồng điệu với bạn',
+                      style: healingText(
+                        size: 14,
+                        color: HealingStitchColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_viewModel.isLoading)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
+                          child: CircularProgressIndicator(
+                            color: HealingStitchColors.coral,
+                          ),
+                        ),
+                      )
+                    else if (_viewModel.errorMessage != null)
+                      BondyErrorBanner(
+                        message: _viewModel.errorMessage!,
+                        onRetry: _viewModel.loadFeed,
+                      )
+                    else if (_viewModel.profiles.isEmpty)
+                      Text(
+                        'Chưa có gợi ý. Hoàn thiện hồ sơ và quay lại sau nhé.',
+                        style: healingText(
+                          color: HealingStitchColors.textMuted,
+                        ),
+                      )
+                    else
+                      ..._viewModel.profiles.map(
+                        (profile) => CommunityProfileCard(
+                          profile: profile,
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pushNamed('/profile-detail', arguments: profile),
+                          onConnect: () => _handleConnect(profile),
+                          onSkip: () => _handleSkip(profile),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleConnect(DiscoverProfile profile) async {
+    try {
+      final result = await _discoverService.swipe(
+        targetUserId: profile.id,
+        action: 'LIKE',
+      );
+      if (!mounted) return;
+      // Test #3, #12: chỉ cần matched=true là match thật — chat đã được server
+      // tạo sẵn trong cùng transaction. Nếu chưa có conversationId thì rơi về
+      // match-confirm thay vì báo nhầm "đã gửi lượt thích".
+      if (result.matched && result.matchId != null) {
+        if (result.conversationId != null) {
+          _showMatchModal(
+            context,
+            profile: profile,
+            matchId: result.matchId!,
+            chatId: result.conversationId!,
+          );
+        } else {
+          await Navigator.of(context).pushNamed(
+            '/match-confirm',
+            arguments: {'matchId': result.matchId},
+          );
+        }
+      } else {
+        // Test #11: one-way like ⇒ chỉ báo đã gửi, KHÔNG bảo "đã kết nối".
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Đã gửi lượt thích. Khi cả hai cùng thích nhau, Bondy sẽ mở chat.',
+            ),
+          ),
+        );
+      }
+      await _viewModel.loadFeed();
+    } on QuotaExceededException catch (e) {
+      // Test #14: hết lượt like ⇒ không ghi nhận, không xóa card khỏi feed.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      // Test #18: lỗi mạng / lỗi server ⇒ báo rõ ràng, KHÔNG báo đã like.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(BondyErrorMapper.message(e)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleSkip(DiscoverProfile profile) async {
+    try {
+      await _discoverService.swipe(targetUserId: profile.id, action: 'PASS');
+      if (!mounted) return;
+      await _viewModel.loadFeed();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(BondyErrorMapper.message(e)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showMatchModal(
+    BuildContext context, {
+    required DiscoverProfile profile,
+    required String matchId,
+    required String chatId,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.favorite, size: 56, color: BondyColors.primary),
+              const SizedBox(height: 16),
+              Text(
+                'Co ket noi moi!',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: BondyColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Ban va ${profile.name} da thich nhau. Chat da san sang.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  color: BondyColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.of(context).pushNamed(
+                    '/chat',
+                    arguments: {
+                      'chatId': chatId,
+                      'matchId': matchId,
+                      'otherUserId': profile.id,
+                      'name': profile.name,
+                      'photo': profile.imageUrl.isNotEmpty
+                          ? profile.imageUrl
+                          : null,
+                    },
+                  );
+                },
+                child: const Text('Nhan tin ngay'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(
+                  'De sau',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: BondyColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===== PROFILE TAB =====
+class _ProfileTab extends StatefulWidget {
+  final ProfileService profileService;
+
+  const _ProfileTab({required this.profileService});
+
+  @override
+  State<_ProfileTab> createState() => _ProfileTabState();
+
+  static Widget _buildStat(String value, String label) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: BondyColors.primaryLight,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: BondyColors.primary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                color: BondyColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildMenuItem(
+    IconData icon,
+    String label,
+    VoidCallback onTap,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        leading: Icon(icon, color: BondyColors.textPrimary),
+        title: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: BondyColors.textHint),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _ProfileTabState extends State<_ProfileTab> {
+  UserProfileModel? _profile;
+  Map<String, dynamic> _stats = {};
+  bool _isLoading = true;
+  String? _errorMessage;
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        widget.profileService.getProfile(),
+        widget.profileService.getProfileStats(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _profile = results[0] as UserProfileModel;
+        _stats = results[1] as Map<String, dynamic>;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = BondyErrorMapper.message(error));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc muốn đăng xuất?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    await _authService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (_) => false);
+  }
+
+  Future<void> _openEditProfile() async {
+    final changed = await Navigator.of(context).pushNamed('/edit-profile');
+    if (changed == true) {
+      await _loadProfile();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _loadProfile,
+        color: BondyColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              _buildProfileHeader(),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  _ProfileTab._buildStat(
+                    '${_stats['streakDays'] ?? 0}',
+                    'Ngày streak',
+                  ),
+                  _ProfileTab._buildStat(
+                    '${_stats['matchCount'] ?? 0}',
+                    'Kết nối',
+                  ),
+                  _ProfileTab._buildStat(
+                    '${_stats['weeklyActivities'] ?? 0}',
+                    'Tuần này',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              if (_errorMessage != null)
+                BondyErrorBanner(
+                  message: _errorMessage!,
+                  onRetry: _loadProfile,
+                ),
+              _ProfileTab._buildMenuItem(
+                Icons.person_outline,
+                'Chỉnh sửa hồ sơ',
+                _openEditProfile,
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.favorite_outline,
+                'Sở thích',
+                () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const InterestsSetupScreen(fromProfile: true),
+                  ),
+                ),
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.favorite_outline,
+                'Mối quan hệ của tôi',
+                () => Navigator.of(context).pushNamed('/relationship/home'),
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.star_outline,
+                'Bondy Premium',
+                () => Navigator.of(context).pushNamed('/settings/premium'),
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.lock_outline,
+                'Đổi mật khẩu',
+                () => Navigator.of(
+                  context,
+                ).pushNamed('/settings/change-password'),
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.shield_outlined,
+                'Quyền riêng tư',
+                () => Navigator.of(context).pushNamed('/settings/privacy'),
+              ),
+              _ProfileTab._buildMenuItem(
+                Icons.notifications_outlined,
+                'Thông báo',
+                () {},
+              ),
+              _ProfileTab._buildMenuItem(Icons.help_outline, 'Trợ giúp', () {}),
+              _ProfileTab._buildMenuItem(Icons.info_outline, 'Về Bondy', () {}),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: _logout,
+                child: Text(
+                  'Đăng xuất',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: BondyColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    final profile = _profile;
+    final displayName =
+        profile?.displayName ??
+        (_isLoading ? 'Đang tải...' : 'Người dùng Bondy');
+    final subtitle = profile == null
+        ? (_isLoading
+              ? 'Đang tải thông tin tài khoản'
+              : 'Kéo xuống để tải lại hồ sơ')
+        : [
+            if (profile.email.isNotEmpty) profile.email,
+            if (profile.bio?.isNotEmpty == true) profile.bio!,
+            if (profile.city?.isNotEmpty == true) profile.city!,
+          ].join('\n');
+
+    return Column(
+      children: [
+        _buildAvatar(profile, displayName),
+        const SizedBox(height: 12),
+        Text(
+          displayName,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            color: BondyColors.textSecondary,
+          ),
+        ),
+        if (_isLoading) ...[
+          const SizedBox(height: 16),
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAvatar(UserProfileModel? profile, String displayName) {
+    final avatarUrl =
+        profile?.image ??
+        (profile?.photos.isNotEmpty == true ? profile!.photos.first : null);
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: BondyColors.primaryLight,
+        shape: BoxShape.circle,
+        border: Border.all(color: BondyColors.primary, width: 3),
+      ),
+      child: avatarUrl == null
+          ? _avatarPlaceholder(displayName)
+          : ClipOval(
+              child: Image.network(
+                avatarUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _avatarPlaceholder(displayName),
+              ),
+            ),
+    );
+  }
+
+  Widget _avatarPlaceholder(String displayName) {
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+    return Center(
+      child: Text(
+        initial,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 34,
+          fontWeight: FontWeight.w700,
+          color: BondyColors.primary,
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen community feed (navigated from Home).
+class CommunityFeedScreen extends StatelessWidget {
+  const CommunityFeedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Cộng đồng')),
+      body: const _CommunityTab(),
+    );
+  }
+}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cho phép cleartext HTTP cho dev/staging server. Máy thật Android 9+ chặn
+  HTTP trừ khi config rõ ràng cho từng domain — kể cả khi đã đặt
+  usesCleartextTraffic="true" trên <application>, một số ROM (MIUI, ColorOS,
+  ...) vẫn dùng config này để duyệt.
+
+  Khi đẩy lên production: thay base-config bằng HTTPS-only và chỉ giữ các IP
+  LAN/loopback trong domain-config dev.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="false">192.168.0.0</domain>
+        <domain includeSubdomains="false">192.168.1.1</domain>
+    </domain-config>
+</network-security-config>
