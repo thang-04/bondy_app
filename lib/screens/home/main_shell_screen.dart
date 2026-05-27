@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/profile_service.dart';
@@ -9,6 +10,7 @@ import '../../core/bondy_exceptions.dart' show QuotaExceededException;
 import '../../widgets/common/bondy_feedback.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../healing/healing_mode_dashboard_screen.dart';
 import '../chat/matches_list_screen.dart';
 import '../healing/healing_stitch_style.dart';
@@ -41,10 +43,15 @@ class _MainShellScreenState extends State<MainShellScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _profileService = widget.profileService ?? ProfileService();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ChatViewModel>().fetchChats();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final totalUnread = context.watch<ChatViewModel>().totalUnreadCount;
     return Scaffold(
       backgroundColor: BondyColors.background,
       body: IndexedStack(
@@ -68,6 +75,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
         currentIndex: _currentIndex,
         onTabSelected: (index) => setState(() => _currentIndex = index),
         onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
+        hasMatchBadge: totalUnread > 0,
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
@@ -11,6 +12,7 @@ import '../../services/block_service.dart';
 import '../../services/chat_service.dart';
 import '../../services/chat_realtime_service.dart';
 import '../../services/match_service.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../widgets/chat/voice_message_bubble.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -56,6 +58,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isTypingSent = false;
   bool _partnerTyping = false;
   bool _wsConnected = false;
+  bool _isPartnerOnline = false;
+  DateTime? _partnerLastSeenAt;
   bool _isRecording = false;
   bool _showEmojiKeyboard = false;
   final ImagePicker _imagePicker = ImagePicker();
@@ -133,8 +137,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         if (_messages.any((m) => m.id == msg.id)) return;
         setState(() => _messages.add(msg));
         _scrollToBottom();
-        if (msg.senderId != _currentUserId && !msg.isRead) {
-          _chatService.markAsRead(msg.id);
+        final chatId = _chatId;
+        if (msg.senderId != _currentUserId && !msg.isRead && chatId != null) {
+          _chatService.markAllAsRead(chatId).then((_) {
+            if (mounted) {
+              context.read<ChatViewModel>().clearUnread(chatId);
+            }
+          }).catchError((_) {});
         }
         break;
       case ChatRealtimeEventKind.typing:
@@ -143,6 +152,28 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() => _partnerTyping = isTyping);
         break;
       case ChatRealtimeEventKind.read:
+        final readerId = event.data['readerId']?.toString();
+        final allRead = event.data['allRead'] == true;
+        if (allRead) {
+          if (readerId == _currentUserId) return;
+          setState(() {
+            for (var i = 0; i < _messages.length; i++) {
+              if (_messages[i].senderId == _currentUserId &&
+                  !_messages[i].isRead) {
+                _messages[i] = ChatMessage(
+                  id: _messages[i].id,
+                  content: _messages[i].content,
+                  senderId: _messages[i].senderId,
+                  isRead: true,
+                  createdAt: _messages[i].createdAt,
+                  messageType: _messages[i].messageType,
+                  deliveryStatus: _messages[i].deliveryStatus,
+                );
+              }
+            }
+          });
+          break;
+        }
         final messageId = event.data['messageId']?.toString();
         if (messageId == null) return;
         setState(() {
@@ -181,6 +212,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           }
         });
         break;
+      case ChatRealtimeEventKind.presence:
+        final eventUserId = event.data['userId']?.toString();
+        if (eventUserId == _currentUserId) return;
+        final isOnline = event.data['isOnline'] == true;
+        final lastSeenRaw = event.data['lastSeenAt']?.toString();
+        final lastSeen = lastSeenRaw != null ? DateTime.tryParse(lastSeenRaw) : null;
+        setState(() {
+          _isPartnerOnline = isOnline;
+          _partnerLastSeenAt = lastSeen ?? _partnerLastSeenAt;
+        });
+        final chatId = _chatId;
+        if (chatId != null) {
+          context.read<ChatViewModel>().updatePartnerPresence(
+                chatId: chatId,
+                isOnline: isOnline,
+                lastSeenAt: lastSeenRaw,
+              );
+        }
+        break;
       case ChatRealtimeEventKind.connected:
         setState(() => _wsConnected = true);
         break;
@@ -198,9 +248,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (added.isEmpty) return;
       setState(() => _messages.addAll(added));
       _scrollToBottom();
-      for (final message in added) {
-        if (message.senderId != _currentUserId && !message.isRead) {
-          await _chatService.markAsRead(message.id);
+      final hasIncoming =
+          added.any((m) => m.senderId != _currentUserId && !m.isRead);
+      if (hasIncoming) {
+        await _chatService.markAllAsRead(chatId);
+        if (mounted) {
+          context.read<ChatViewModel>().clearUnread(chatId);
         }
       }
       if (!_wsConnected) {
@@ -266,6 +319,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ? args['name'] as String
           : _displayName;
       _photo = args['photo'] as String?;
+      _isPartnerOnline = args['isOnline'] as bool? ?? false;
+      final rawLastSeen = args['lastSeenAt'] as String?;
+      if (rawLastSeen != null) {
+        _partnerLastSeenAt = DateTime.tryParse(rawLastSeen);
+      }
     } else if (args is String) {
       _chatId = args;
     }
@@ -283,6 +341,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _loadMessages();
       final chatId = _chatId;
       if (chatId != null) {
+        // Bulk mark-as-read on entering the room (single API call instead of
+        // one PUT per message). Backend broadcasts a 'read allRead' event so
+        // the other side flips ticks in one shot.
+        try {
+          await _chatService.markAllAsRead(chatId);
+          if (mounted) {
+            context.read<ChatViewModel>().clearUnread(chatId);
+          }
+        } catch (_) {}
+        // Fetch presence snapshot once — WebSocket presence events keep it
+        // fresh after this.
+        try {
+          final presence = await _chatService.fetchPartnerPresence(chatId);
+          if (mounted) {
+            setState(() {
+              _isPartnerOnline = presence.isOnline;
+              final raw = presence.lastSeenAt;
+              if (raw != null) _partnerLastSeenAt = DateTime.tryParse(raw);
+            });
+          }
+        } catch (_) {}
         await _connectRealtime(chatId);
       }
       _startPolling();
@@ -325,11 +404,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         ..addAll(messages);
     });
     _scrollToBottom();
-    for (final message in messages) {
-      if (message.senderId != _currentUserId && !message.isRead) {
-        await _chatService.markAsRead(message.id);
-      }
-    }
   }
 
   void _onTextChanged(String value) {
@@ -509,15 +583,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       color: BondyColors.textPrimary,
                     ),
                   ),
-                  Text(
-                    _partnerTyping ? 'Đang nhập...' : 'Đang kết nối',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: _partnerTyping
-                          ? BondyColors.primary
-                          : BondyColors.textSecondary,
-                    ),
-                  ),
+                  _buildPresenceSubtitle(),
                 ],
               ),
             ),
@@ -1010,5 +1076,37 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final hour = value.hour.toString().padLeft(2, '0');
     final minute = value.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+
+  Widget _buildPresenceSubtitle() {
+    String text;
+    Color color;
+    if (_partnerTyping) {
+      text = 'Đang nhập...';
+      color = BondyColors.primary;
+    } else if (!_wsConnected) {
+      text = 'Đang kết nối...';
+      color = BondyColors.textSecondary;
+    } else if (_isPartnerOnline) {
+      text = 'Đang hoạt động';
+      color = const Color(0xFF22C55E);
+    } else {
+      text = _formatLastSeen(_partnerLastSeenAt);
+      color = BondyColors.textSecondary;
+    }
+    return Text(
+      text,
+      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: color),
+    );
+  }
+
+  String _formatLastSeen(DateTime? lastSeenAt) {
+    if (lastSeenAt == null) return 'Ngoại tuyến';
+    final diff = DateTime.now().difference(lastSeenAt);
+    if (diff.inSeconds < 60) return 'Hoạt động vừa xong';
+    if (diff.inMinutes < 60) return 'Hoạt động ${diff.inMinutes} phút trước';
+    if (diff.inHours < 24) return 'Hoạt động ${diff.inHours} giờ trước';
+    if (diff.inDays < 7) return 'Hoạt động ${diff.inDays} ngày trước';
+    return 'Ngoại tuyến';
   }
 }

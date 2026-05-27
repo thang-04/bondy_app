@@ -7,6 +7,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'theme/app_theme.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
+import 'viewmodels/chat/chat_viewmodel.dart';
 import 'viewmodels/survey/survey_viewmodel.dart';
 import 'services/analytics_service.dart';
 
@@ -150,6 +151,7 @@ class BondyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => SurveyViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
       child: MaterialApp(
         title: 'Bondy',

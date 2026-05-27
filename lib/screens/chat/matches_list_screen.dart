@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../services/api_client.dart';
 import '../../services/chat_service.dart';
 import '../../services/match_service.dart';
 import '../../theme/app_theme.dart';
 import '../../core/ai_prompts_config.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../widgets/chat/ask_bondy_bottom_sheet.dart';
 
 class MatchesListScreen extends StatefulWidget {
@@ -21,11 +23,8 @@ class MatchesListScreen extends StatefulWidget {
 
 class _MatchesListScreenState extends State<MatchesListScreen> {
   late final ApiClient _apiClient = ApiClient();
-  late final ChatService _chatService = ChatService(_apiClient);
   late final MatchService _matchService = MatchService(_apiClient);
-  List<ChatMatch> _chats = [];
   List<PendingMatch> _pendingMatches = [];
-  bool _isLoading = true;
   String? _errorMessage;
   Timer? _refreshTimer;
   final _searchController = TextEditingController();
@@ -49,40 +48,36 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
   }
 
   Future<void> _loadAll({bool silent = false}) async {
+    final chatVM = context.read<ChatViewModel>();
     if (!silent) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+      setState(() => _errorMessage = null);
     }
-
     try {
-      final results = await Future.wait([
-        _chatService.listChats(),
-        _matchService.listMatches(),
+      await Future.wait([
+        chatVM.fetchChats(),
+        _matchService.listMatches().then((matches) {
+          if (!mounted) return;
+          setState(() {
+            _pendingMatches =
+                matches.where((m) => m.needsConfirmation).toList();
+          });
+        }),
       ]);
       if (!mounted) return;
-      final allMatches = results[1] as List<PendingMatch>;
-      setState(() {
-        _chats = results[0] as List<ChatMatch>;
-        _pendingMatches = allMatches.where((m) => m.needsConfirmation).toList();
-        _errorMessage = null;
-      });
+      setState(() => _errorMessage = null);
     } catch (_) {
       if (!mounted) return;
       if (!silent) {
         setState(() => _errorMessage = 'Không thể tải danh sách tin nhắn.');
-      }
-    } finally {
-      if (mounted && !silent) {
-        setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredChats = _chats.where((chat) {
+    final chatVM = context.watch<ChatViewModel>();
+    final isLoading = chatVM.isLoading;
+    final filteredChats = chatVM.chats.where((chat) {
       final name = chat.otherUser.displayName.toLowerCase();
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
@@ -120,7 +115,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          if (_isLoading)
+          if (isLoading && filteredChats.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),
@@ -498,12 +493,38 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                   ],
                 ),
               ),
-        trailing: Text(
-          _formatTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 11,
-            color: BondyColors.textHint,
-          ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _formatTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: BondyColors.textHint,
+              ),
+            ),
+            if (chat.unreadCount > 0) ...[
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF97316),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         onTap: () => Navigator.of(context).pushNamed(
           '/chat',
@@ -513,6 +534,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
             'otherUserId': chat.otherUser.id,
             'name': displayName,
             'photo': chat.otherUser.photo,
+            'isOnline': chat.otherUser.isOnline,
+            'lastSeenAt': chat.otherUser.lastSeenAt,
+            'presenceStatus': chat.otherUser.presenceStatus,
           },
         ),
       ),

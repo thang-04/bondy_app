@@ -8,6 +8,7 @@ class ChatMatch {
   final String matchId;
   final ChatOtherUser otherUser;
   final ChatLastMessage? lastMessage;
+  final int unreadCount;
   final DateTime updatedAt;
 
   ChatMatch({
@@ -15,8 +16,24 @@ class ChatMatch {
     required this.matchId,
     required this.otherUser,
     this.lastMessage,
+    this.unreadCount = 0,
     required this.updatedAt,
   });
+
+  ChatMatch copyWith({
+    ChatOtherUser? otherUser,
+    ChatLastMessage? lastMessage,
+    int? unreadCount,
+  }) {
+    return ChatMatch(
+      id: id,
+      matchId: matchId,
+      otherUser: otherUser ?? this.otherUser,
+      lastMessage: lastMessage ?? this.lastMessage,
+      unreadCount: unreadCount ?? this.unreadCount,
+      updatedAt: updatedAt,
+    );
+  }
 
   factory ChatMatch.fromJson(Map<String, dynamic> json) {
     return ChatMatch(
@@ -26,6 +43,7 @@ class ChatMatch {
       lastMessage: json['lastMessage'] != null
           ? ChatLastMessage.fromJson(json['lastMessage'] as Map<String, dynamic>)
           : null,
+      unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
@@ -36,13 +54,35 @@ class ChatOtherUser {
   final String firstName;
   final String lastName;
   final String? photo;
+  final bool isOnline;
+  final String? lastSeenAt;
+  final String? presenceStatus;
 
   ChatOtherUser({
     required this.id,
     required this.firstName,
     required this.lastName,
     this.photo,
+    this.isOnline = false,
+    this.lastSeenAt,
+    this.presenceStatus,
   });
+
+  ChatOtherUser copyWith({
+    bool? isOnline,
+    String? lastSeenAt,
+    String? presenceStatus,
+  }) {
+    return ChatOtherUser(
+      id: id,
+      firstName: firstName,
+      lastName: lastName,
+      photo: photo,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      presenceStatus: presenceStatus ?? this.presenceStatus,
+    );
+  }
 
   factory ChatOtherUser.fromJson(Map<String, dynamic> json) {
     return ChatOtherUser(
@@ -50,10 +90,36 @@ class ChatOtherUser {
       firstName: json['firstName'] as String? ?? '',
       lastName: json['lastName'] as String? ?? '',
       photo: rewriteMediaUrl(json['photo'] as String?),
+      isOnline: json['isOnline'] as bool? ?? false,
+      lastSeenAt: json['lastSeenAt'] as String?,
+      presenceStatus: json['presenceStatus'] as String?,
     );
   }
 
   String get displayName => '$firstName $lastName'.trim();
+}
+
+class PartnerPresence {
+  final String userId;
+  final bool isOnline;
+  final String? lastSeenAt;
+  final String? presenceStatus;
+
+  PartnerPresence({
+    required this.userId,
+    required this.isOnline,
+    this.lastSeenAt,
+    this.presenceStatus,
+  });
+
+  factory PartnerPresence.fromJson(Map<String, dynamic> json) {
+    return PartnerPresence(
+      userId: json['userId'] as String? ?? '',
+      isOnline: json['isOnline'] as bool? ?? false,
+      lastSeenAt: json['lastSeenAt'] as String?,
+      presenceStatus: json['presenceStatus'] as String?,
+    );
+  }
 }
 
 class ChatLastMessage {
@@ -201,5 +267,22 @@ class ChatService {
       body: {'status': status},
       authenticated: true,
     );
+  }
+
+  Future<PartnerPresence> fetchPartnerPresence(String chatId) async {
+    final response = await _apiClient.get(
+      '/chats/$chatId/presence',
+      authenticated: true,
+    );
+    return PartnerPresence.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  Future<int> markAllAsRead(String chatId) async {
+    final response = await _apiClient.put(
+      '/chats/$chatId/read',
+      authenticated: true,
+    );
+    final data = response['data'] as Map<String, dynamic>? ?? {};
+    return (data['updatedCount'] as num?)?.toInt() ?? 0;
   }
 }

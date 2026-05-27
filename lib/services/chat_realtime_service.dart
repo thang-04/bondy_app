@@ -5,7 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'auth_service.dart';
 
-enum ChatRealtimeEventKind { message, typing, read, delivery, connected }
+enum ChatRealtimeEventKind { message, typing, read, delivery, presence, connected }
 
 class ChatRealtimeEvent {
   final ChatRealtimeEventKind kind;
@@ -55,6 +55,9 @@ class ChatRealtimeService {
           break;
         case 'delivery':
           _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.delivery, data: data));
+          break;
+        case 'presence':
+          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.presence, data: data));
           break;
         case 'connected':
           _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.connected, data: data));
