@@ -25,6 +25,8 @@ class DiscoverProfile {
   final List<String> tags;
   final int matchPercentage;
   final String imageUrl;
+  final List<String> photos;
+  final String? datingGoal;
 
   const DiscoverProfile({
     required this.id,
@@ -37,18 +39,27 @@ class DiscoverProfile {
     required this.tags,
     required this.matchPercentage,
     required this.imageUrl,
+    this.photos = const [],
+    this.datingGoal,
   });
 
   factory DiscoverProfile.fromJson(Map<String, dynamic> json) {
-    final photos = (json['photos'] as List<dynamic>?) ?? [];
+    final photosRaw = (json['photos'] as List<dynamic>?) ?? [];
+    final List<String> photosList = [];
     Map<String, dynamic>? primaryPhoto;
     Map<String, dynamic>? fallbackPhoto;
-    for (final photo in photos) {
+    for (final photo in photosRaw) {
       if (photo is! Map<String, dynamic>) continue;
+      final url = photo['url']?.toString();
+      if (url != null && url.isNotEmpty) {
+        final rewritten = rewriteMediaUrl(url);
+        if (rewritten != null) {
+          photosList.add(rewritten);
+        }
+      }
       fallbackPhoto ??= photo;
       if (photo['isPrimary'] == true) {
         primaryPhoto = photo;
-        break;
       }
     }
 
@@ -76,6 +87,8 @@ class DiscoverProfile {
                 fallbackPhoto?['url']?.toString(),
           ) ??
           '',
+      photos: photosList,
+      datingGoal: json['datingGoal']?.toString(),
     );
   }
 }
