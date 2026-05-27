@@ -218,51 +218,54 @@ class _MatchButton extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: buttonSize,
-                      height: buttonSize,
-                      decoration: BoxDecoration(
-                        gradient: gradient,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFFF7E5F,
-                            ).withValues(alpha: 0.35),
-                            blurRadius: 22,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                Transform.translate(
+                  offset: const Offset(0, -18),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: buttonSize,
+                        height: buttonSize,
+                        decoration: BoxDecoration(
+                          gradient: gradient,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFFF7E5F,
+                              ).withValues(alpha: 0.35),
+                              blurRadius: 22,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.favorite_rounded,
+                          color: Colors.white,
+                          size: buttonSize * 0.46,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.favorite_rounded,
-                        color: Colors.white,
-                        size: buttonSize * 0.46,
-                      ),
-                    ),
-                    if (hasBadge)
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: BondyBottomNavBar._primary,
-                              width: 2,
+                      if (hasBadge)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: BondyBottomNavBar._primary,
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 5),
                 FittedBox(
@@ -309,8 +312,8 @@ class BottomNavBarPainter extends CustomPainter {
     final r = 32.0; // corner radius
     
     final centerX = w / 2;
-    final curveWidth = 80.0;
-    final curveHeight = 18.0;
+    final curveWidth = 84.0;
+    final curveHeight = 12.0;
     
     path.moveTo(0, r);
     path.quadraticBezierTo(0, 0, r, 0);
