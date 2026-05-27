@@ -97,7 +97,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Không tìm thấy hồ sơ.',
-                  textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: BondyColors.textSecondary,
@@ -111,10 +110,44 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     }
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isSubmitting ? null : () => _swipe('LIKE'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFFFF4B8B), Color(0xFFFF6B6B)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x66FF4B8B),
+                blurRadius: 15,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: _isSubmitting
+              ? const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : const Icon(Icons.favorite, color: Colors.white, size: 28),
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 380,
             pinned: true,
             leading: IconButton(
               icon: const CircleAvatar(
@@ -150,7 +183,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                 ),
               ),
             ],
-            flexibleSpace: FlexibleSpaceBar(background: _buildHero(profile)),
+            flexibleSpace: FlexibleSpaceBar(
+              background: _buildHero(profile),
+            ),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -158,22 +193,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${profile.name}, ${profile.age}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    profile.distance,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      color: BondyColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  _buildIcebreaker(profile),
+                  const SizedBox(height: 24),
                   _buildCompatibility(profile),
                   const SizedBox(height: 24),
                   Text(
@@ -217,39 +238,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       runSpacing: 8,
                       children: profile.tags.map(_buildTag).toList(),
                     ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => _swipe('PASS'),
-                          icon: const Icon(Icons.close),
-                          label: const Text('Bỏ qua'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => _swipe('LIKE'),
-                          icon: _isSubmitting
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.favorite),
-                          label: const Text('Kết nối'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                  _buildPhotoGallery(profile),
+                  const SizedBox(height: 24),
+                  _buildDatingGoal(profile),
+                  const SizedBox(height: 120), // Padding for Floating Action Button
                 ],
               ),
             ),
@@ -260,16 +253,101 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildHero(DiscoverProfile profile) {
-    if (profile.imageUrl.startsWith('http')) {
-      return Image.network(
-        profile.imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
-            _buildHeroPlaceholder(profile),
-      );
-    }
+    final imageChild = profile.imageUrl.startsWith('http')
+        ? Image.network(
+            profile.imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildHeroPlaceholder(profile),
+          )
+        : _buildHeroPlaceholder(profile);
 
-    return _buildHeroPlaceholder(profile);
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(40),
+        bottomRight: Radius.circular(40),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          imageChild,
+          // Dark gradient overlay
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.75),
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.45, 0.8],
+              ),
+            ),
+          ),
+          // Name, Age and Distance Overlay
+          Positioned(
+            bottom: 24,
+            left: 24,
+            right: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '${profile.name}, ${profile.age}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        profile.distance,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildHeroPlaceholder(DiscoverProfile profile) {
@@ -291,12 +369,158 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     );
   }
 
+  Widget _buildIcebreaker(DiscoverProfile profile) {
+    final icebreakerText = profile.prompts.isNotEmpty 
+        ? '"${profile.prompts.first.prompt}: ${profile.prompts.first.answer}"'
+        : '"Hãy thử hỏi ${profile.name} về những hoạt động cuối tuần yêu thích của cô ấy nhé."';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        border: Border.all(color: const Color(0xFFE0E7FF)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF4F46E5), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GỢI Ý MỞ LỜI',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF4F46E5),
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  icebreakerText,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF4B5563),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoGallery(DiscoverProfile profile) {
+    if (profile.photos.length <= 1) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Hình ảnh',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: profile.photos.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: 120,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: NetworkImage(profile.photos[index]),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatingGoal(DiscoverProfile profile) {
+    final goalText = profile.datingGoal ?? 'Mối quan hệ lâu dài';
+    final goalSubtitle = profile.datingGoal != null ? 'Mong muốn kết nối nghiêm túc' : 'Muốn tìm người bạn đời';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Mục tiêu',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.favorite_rounded, color: Color(0xFFFF4B8B), size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      goalText,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      goalSubtitle,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCompatibility(DiscoverProfile profile) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: BondyColors.primaryLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
