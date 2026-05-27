@@ -219,7 +219,7 @@ class _MatchButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Transform.translate(
-                  offset: const Offset(0, -18),
+                  offset: const Offset(0, -6),
                   child: Stack(
                     clipBehavior: Clip.none,
                     alignment: Alignment.center,
@@ -313,7 +313,7 @@ class BottomNavBarPainter extends CustomPainter {
     
     final centerX = w / 2;
     final curveWidth = 84.0;
-    final curveHeight = 12.0;
+    final curveHeight = 5.0;
     
     path.moveTo(0, r);
     path.quadraticBezierTo(0, 0, r, 0);
@@ -321,13 +321,13 @@ class BottomNavBarPainter extends CustomPainter {
     
     // Smooth arch using cubic Beziers wrapping tightly
     path.cubicTo(
-      centerX - curveWidth / 2 + 8, 0,
-      centerX - curveWidth / 2 + 16, -curveHeight,
+      centerX - curveWidth / 2 + 4, 0,
+      centerX - curveWidth / 2 + 10, -curveHeight,
       centerX, -curveHeight,
     );
     path.cubicTo(
-      centerX + curveWidth / 2 - 16, -curveHeight,
-      centerX + curveWidth / 2 - 8, 0,
+      centerX + curveWidth / 2 - 10, -curveHeight,
+      centerX + curveWidth / 2 - 4, 0,
       centerX + curveWidth / 2 + 10, 0,
     );
     
@@ -354,13 +354,13 @@ class BottomNavBarPainter extends CustomPainter {
     strokePath.quadraticBezierTo(0, 0, r, 0);
     strokePath.lineTo(centerX - curveWidth / 2 - 10, 0);
     strokePath.cubicTo(
-      centerX - curveWidth / 2 + 8, 0,
-      centerX - curveWidth / 2 + 16, -curveHeight,
+      centerX - curveWidth / 2 + 4, 0,
+      centerX - curveWidth / 2 + 10, -curveHeight,
       centerX, -curveHeight,
     );
     strokePath.cubicTo(
-      centerX + curveWidth / 2 - 16, -curveHeight,
-      centerX + curveWidth / 2 - 8, 0,
+      centerX + curveWidth / 2 - 10, -curveHeight,
+      centerX + curveWidth / 2 - 4, 0,
       centerX + curveWidth / 2 + 10, 0,
     );
     strokePath.lineTo(w - r, 0);
