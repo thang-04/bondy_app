@@ -302,7 +302,6 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final bool isNewChat = chat.lastMessage == null || chat.lastMessage!.content.isEmpty;
     final int seed = chat.id.hashCode;
     final String icebreaker = AIPromptsConfig.icebreakers[seed % AIPromptsConfig.icebreakers.length];
-    final lastMessage = isNewChat ? 'Gợi ý mở lời: "$icebreaker"' : chat.lastMessage!.content;
 
     return Card(
       elevation: 0,
@@ -327,7 +326,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        lastMessage,
+                        'Gợi ý mở lời: "$icebreaker"',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
@@ -340,14 +339,41 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                   ],
                 ),
               )
-            : Text(
-                lastMessage,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: BondyColors.textSecondary,
+            : Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      chat.lastMessage!.content,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: BondyColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.local_florist, size: 12, color: BondyColors.primary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Gợi ý hâm nóng: "$icebreaker"',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: BondyColors.primary.withValues(alpha: 0.7),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
         trailing: Text(
           _formatTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
