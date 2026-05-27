@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Bottom navigation matching the home_bondy.html mockup:
-///   - White surface with frosted feel + 32 px rounded top
-///   - Active tab = primary coral; inactive = on-surface muted
-///   - Center "MATCH" button = gradient circle floating above the bar
+/// Bottom navigation - kiểu BottomAppBar notched FAB:
+///   - Viền trên PHẲNG, sát với icon (Discover, Healing, Matches, Profile)
+///   - Nút Match (trái tim) LỒI HẲN lên trên khỏi nav bar
+///   - Viền trên CONG VÒNG THEO hình tròn của nút Match (convex arch)
 ///
-/// 5 tabs (Discover · Healing · MATCH · Matches · Profile). `index` is the
-/// logical screen index in MainShellScreen (0..3 for the four side tabs);
-/// the center button calls [onMatchTap] and doesn't change the index.
+/// 5 tabs: Discover · Healing · [MATCH FAB] · Matches · Profile
 class BondyBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTabSelected;
@@ -23,91 +21,196 @@ class BondyBottomNavBar extends StatelessWidget {
     this.hasMatchBadge = false,
   });
 
-  // Palette mirrors home_bondy.html (Material 3 expressive)
-  static const _primary = Color(0xFFFF6B6B);
-  static const _onMuted = Color(0xFF5D4E46);
-  static const _outline = Color(0xFFFFD9C0);
+  // Bảng màu
+  static const _primary  = Color(0xFFFF6B6B);
+  static const _onMuted  = Color(0xFF5D4E46);
+  static const _outline  = Color(0xFFFFD9C0);
   static const _gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFFF6B6B), Color(0xFFFFB28E)],
   );
-  static const _itemHeight = 60.0;
-  static const _matchItemHeight = 84.0;
-  static const reservedHeightWithoutSafeArea = _matchItemHeight + 20.0;
+
+  /// Kích thước nút Match (đường kính)
+  static const double _fabSize = 56.0;
+
+  /// Bán kính notch trên painter (lớn hơn fabSize/2 một chút để có margin)
+  static const double _notchRadius = _fabSize / 2 + 6.0;
+
+  /// Chiều cao khu vực icon + label bên dưới
+  static const double _barHeight = 58.0;
+
+  /// Nút Match nhô lên trên viền nav bar bao nhiêu pixel
+  static const double _fabElevation = 28.0;
+
+  /// reservedHeight để các màn hình tính padding bottom
+  static const double reservedHeightWithoutSafeArea = _barHeight + _fabElevation;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: BottomNavBarPainter(),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: SizedBox(
-            height: _matchItemHeight,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: _NavItem(
-                    index: 0,
-                    currentIndex: currentIndex,
-                    icon: Icons.explore_outlined,
-                    activeIcon: Icons.explore,
-                    label: 'Discover',
-                    onTap: () => onTabSelected?.call(0),
+    return SizedBox(
+      // Tổng chiều cao widget = bar + phần FAB nhô lên
+      height: _barHeight + _fabElevation,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ──────────────────────────────────────────────
+          // 1. Nền nav bar với đường viền cong theo FAB
+          // ──────────────────────────────────────────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: CustomPaint(
+              painter: _NotchedNavPainter(
+                notchRadius: _notchRadius,
+                cornerRadius: 20.0,
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: _barHeight,
+                  child: Row(
+                    children: [
+                      // Discover
+                      Expanded(
+                        child: _NavItem(
+                          index: 0,
+                          currentIndex: currentIndex,
+                          icon: Icons.explore_outlined,
+                          activeIcon: Icons.explore,
+                          label: 'Discover',
+                          onTap: () => onTabSelected?.call(0),
+                        ),
+                      ),
+                      // Healing
+                      Expanded(
+                        child: _NavItem(
+                          index: 1,
+                          currentIndex: currentIndex,
+                          icon: Icons.self_improvement_outlined,
+                          activeIcon: Icons.self_improvement,
+                          label: 'Healing',
+                          onTap: () => onTabSelected?.call(1),
+                        ),
+                      ),
+                      // Khoảng trống giữa cho FAB
+                      const Expanded(child: SizedBox()),
+                      // Matches
+                      Expanded(
+                        child: _NavItem(
+                          index: 2,
+                          currentIndex: currentIndex,
+                          icon: Icons.forum_outlined,
+                          activeIcon: Icons.forum,
+                          label: 'Matches',
+                          onTap: () => onTabSelected?.call(2),
+                          showBadge: hasMatchBadge,
+                        ),
+                      ),
+                      // Profile
+                      Expanded(
+                        child: _NavItem(
+                          index: 3,
+                          currentIndex: currentIndex,
+                          icon: Icons.person_outline,
+                          activeIcon: Icons.person,
+                          label: 'Profile',
+                          onTap: () => onTabSelected?.call(3),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: _NavItem(
-                    index: 1,
-                    currentIndex: currentIndex,
-                    icon: Icons.self_improvement_outlined,
-                    activeIcon: Icons.self_improvement,
-                    label: 'Healing',
-                    onTap: () => onTabSelected?.call(1),
-                  ),
-                ),
-                Expanded(
-                  child: _MatchButton(
-                    onTap:
-                        onMatchTap ??
-                        () => Navigator.of(context).pushNamed('/discover'),
-                    hasBadge: hasMatchBadge,
-                    gradient: _gradient,
-                  ),
-                ),
-                Expanded(
-                  child: _NavItem(
-                    index: 2,
-                    currentIndex: currentIndex,
-                    icon: Icons.forum_outlined,
-                    activeIcon: Icons.forum,
-                    label: 'Matches',
-                    onTap: () => onTabSelected?.call(2),
-                    showBadge: hasMatchBadge,
-                  ),
-                ),
-                Expanded(
-                  child: _NavItem(
-                    index: 3,
-                    currentIndex: currentIndex,
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    label: 'Profile',
-                    onTap: () => onTabSelected?.call(3),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+
+          // ──────────────────────────────────────────────
+          // 2. Nút Match (FAB) lồi lên trên
+          // ──────────────────────────────────────────────
+          Positioned(
+            // Canh giữa màn hình
+            left: 0,
+            right: 0,
+            // Nằm ở phía trên: bottom của FAB = _barHeight - (_fabSize/2 - _fabElevation/2)
+            bottom: _barHeight - _fabSize / 2 + _fabElevation / 2 - 4,
+            child: Center(
+              child: GestureDetector(
+                onTap: onMatchTap ?? () {},
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: _fabSize,
+                  height: _fabSize,
+                  decoration: BoxDecoration(
+                    gradient: _gradient,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF7E5F).withValues(alpha: 0.45),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.favorite_rounded,
+                        color: Colors.white,
+                        size: _fabSize * 0.46,
+                      ),
+                      if (hasMatchBadge)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: _primary, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ──────────────────────────────────────────────
+          // 3. Label "Match" bên dưới FAB, nằm trong bar
+          // ──────────────────────────────────────────────
+          Positioned(
+            bottom: 6,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'Match',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// NavItem
+// ──────────────────────────────────────────────────────────────────────────────
 class _NavItem extends StatelessWidget {
   final int index;
   final int currentIndex;
@@ -137,209 +240,154 @@ class _NavItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        height: BondyBottomNavBar._itemHeight,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SizedBox(
-              width: 32,
-              height: 32,
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  Icon(isActive ? activeIcon : icon, color: color, size: 24),
-                  if (showBadge)
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: BondyBottomNavBar._primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(isActive ? activeIcon : icon, color: color, size: 22),
+                if (showBadge)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: BondyBottomNavBar._primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 5),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                  letterSpacing: 0,
-                ),
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MatchButton extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool hasBadge;
-  final Gradient gradient;
+// ──────────────────────────────────────────────────────────────────────────────
+// Painter: viền trên phẳng 2 bên, cong VỒM LÊN theo hình tròn FAB ở giữa
+// ──────────────────────────────────────────────────────────────────────────────
+class _NotchedNavPainter extends CustomPainter {
+  final double notchRadius;  // bán kính vùng cong quanh FAB
+  final double cornerRadius; // bán kính góc 2 bên nav bar
 
-  const _MatchButton({
-    required this.onTap,
-    required this.hasBadge,
-    required this.gradient,
+  const _NotchedNavPainter({
+    required this.notchRadius,
+    required this.cornerRadius,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final buttonSize = (constraints.maxWidth - 2)
-            .clamp(52.0, 62.0)
-            .toDouble();
-
-        return GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            height: BondyBottomNavBar._matchItemHeight,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Transform.translate(
-                  offset: const Offset(0, -14),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: buttonSize,
-                        height: buttonSize,
-                        decoration: BoxDecoration(
-                          gradient: gradient,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFFFF7E5F,
-                              ).withValues(alpha: 0.35),
-                              blurRadius: 22,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.favorite_rounded,
-                          color: Colors.white,
-                          size: buttonSize * 0.46,
-                        ),
-                      ),
-                      if (hasBadge)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: BondyBottomNavBar._primary,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 5),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Match',
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.visible,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: BondyBottomNavBar._primary,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class BottomNavBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    const r = 20.0; // corner radius góc trên
+    final cx = w / 2; // tâm X của FAB
+    final r  = cornerRadius;
+    final nr = notchRadius;
 
     // Shadow
-    Paint shadowPaint = Paint()
-      ..color = const Color(0xFF5D4E46).withValues(alpha: 0.10)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF5D4E46).withValues(alpha: 0.12)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    // Background fill
-    Paint paint = Paint()
+    // Fill
+    final fillPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.97)
       ..style = PaintingStyle.fill;
 
-    // Viền trên PHẲNG hoàn toàn (không có arch curve)
-    Path path = Path()
-      ..moveTo(0, r)
-      ..quadraticBezierTo(0, 0, r, 0)  // góc trên trái
-      ..lineTo(w - r, 0)
-      ..quadraticBezierTo(w, 0, w, r)  // góc trên phải
-      ..lineTo(w, h)
-      ..lineTo(0, h)
-      ..close();
-
-    canvas.drawPath(path.shift(const Offset(0, -2)), shadowPaint);
-    canvas.drawPath(path, paint);
-
-    // Đường kẻ mỏng viền trên
-    Paint strokePaint = Paint()
-      ..color = BondyBottomNavBar._outline.withValues(alpha: 0.35)
+    // Stroke (viền mỏng)
+    final strokePaint = Paint()
+      ..color = BondyBottomNavBar._outline.withValues(alpha: 0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.2;
 
-    Path strokePath = Path()
-      ..moveTo(0, r)
-      ..quadraticBezierTo(0, 0, r, 0)
-      ..lineTo(w - r, 0)
-      ..quadraticBezierTo(w, 0, w, r);
+    // ── Vẽ path ──────────────────────────────────────────────────────────
+    // Bắt đầu từ góc dưới trái → đi lên → sang phải → đi lên theo vòm FAB
+    // → đi xuống → đi tiếp sang phải → góc dưới phải
+
+    // Điểm bắt đầu vòm cong: cách tâm FAB một khoảng nr theo mỗi bên
+    // Khoảng cách ngang từ tâm FAB tới điểm tiếp xúc của đường thẳng + vòm
+    final archHalfWidth = nr + 8.0;
+    final archTop = -(nr * 0.55); // đỉnh vòm nhô lên bao nhiêu pixel phía trên nav bar
+
+    final path = Path();
+
+    // Góc dưới trái
+    path.moveTo(0, h);
+
+    // Cạnh trái → góc trên trái (bo tròn)
+    path.lineTo(0, r);
+    path.quadraticBezierTo(0, 0, r, 0);
+
+    // Đường thẳng trên → đến điểm bắt đầu vòm trái
+    path.lineTo(cx - archHalfWidth, 0);
+
+    // Vòm cong lên (cubic Bezier mượt mà)
+    // Đi từ cx-archHalfWidth lên đỉnh vòm (cx, archTop) rồi xuống cx+archHalfWidth
+    path.cubicTo(
+      cx - archHalfWidth * 0.55, 0,     // control point 1
+      cx - nr * 0.6,              archTop, // control point 2 (gần đỉnh trái)
+      cx,                         archTop, // đỉnh vòm
+    );
+    path.cubicTo(
+      cx + nr * 0.6,              archTop, // control point 1 (gần đỉnh phải)
+      cx + archHalfWidth * 0.55,  0,     // control point 2
+      cx + archHalfWidth,         0,     // điểm kết thúc vòm phải
+    );
+
+    // Đường thẳng trên → góc trên phải (bo tròn)
+    path.lineTo(w - r, 0);
+    path.quadraticBezierTo(w, 0, w, r);
+
+    // Cạnh phải → góc dưới phải
+    path.lineTo(w, h);
+    path.close();
+
+    // Vẽ shadow → fill → stroke
+    canvas.drawPath(path.shift(const Offset(0, -2)), shadowPaint);
+    canvas.drawPath(path, fillPaint);
+
+    // Stroke chỉ vẽ viền trên (không vẽ đáy)
+    final strokePath = Path();
+    strokePath.moveTo(r, 0);
+    strokePath.lineTo(cx - archHalfWidth, 0);
+    strokePath.cubicTo(
+      cx - archHalfWidth * 0.55, 0,
+      cx - nr * 0.6,              archTop,
+      cx,                         archTop,
+    );
+    strokePath.cubicTo(
+      cx + nr * 0.6,              archTop,
+      cx + archHalfWidth * 0.55,  0,
+      cx + archHalfWidth,         0,
+    );
+    strokePath.lineTo(w - r, 0);
 
     canvas.drawPath(strokePath, strokePaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_NotchedNavPainter old) =>
+      old.notchRadius != notchRadius || old.cornerRadius != cornerRadius;
 }
-
