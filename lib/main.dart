@@ -45,6 +45,7 @@ import 'screens/discover/softened_discover_screen.dart';
 import 'screens/chat/matches_list_screen.dart';
 import 'screens/chat/chat_screen.dart';
 import 'screens/chat/healing_chatbot_coach_screen.dart';
+import 'screens/chat/bondy_ai_chat_screen.dart';
 import 'screens/chat/active_chat_deeper_prompts_screen.dart';
 
 // Healing screens
@@ -208,6 +209,7 @@ class BondyApp extends StatelessWidget {
           '/matches': (context) => const MatchesListScreen(),
           '/chat': (context) => const ChatScreen(),
           '/chatbot': (context) => const HealingChatbotCoachScreen(),
+          '/bondy-ai': (context) => const BondyAIChatScreen(),
           '/healing/daily': (context) => const HealingDailyScreen(),
           '/healing/article-detail': (context) =>
               const HealingArticleDetailScreen(),

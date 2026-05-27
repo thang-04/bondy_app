@@ -90,7 +90,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final body = RefreshIndicator(
       onRefresh: _loadAll,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, widget.embedded ? 110 : 24),
+        padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, widget.embedded ? 165 : 24),
         children: [
           _buildSearchField(),
           const SizedBox(height: 16),
@@ -149,7 +149,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       children: [
         mainContent,
         Positioned(
-          bottom: widget.embedded ? 100 : 24,
+          bottom: widget.embedded ? 150 : 24,
           right: 16,
           child: FloatingActionButton(
             onPressed: () {
@@ -161,7 +161,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                   onSubmit: (msg) {
                     Navigator.pop(context);
                     Navigator.of(context).pushNamed(
-                      '/chatbot',
+                      '/bondy-ai',
                       arguments: {'initialMessage': msg},
                     ).then((_) => _loadAll(silent: true));
                   },
