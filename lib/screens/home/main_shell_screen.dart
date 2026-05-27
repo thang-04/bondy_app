@@ -575,21 +575,11 @@ class _CommunityTabState extends State<_CommunityTab> {
     } on QuotaExceededException catch (e) {
       // Test #14: hết lượt like ⇒ không ghi nhận, không xóa card khỏi feed.
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: Colors.red,
-        ),
-      );
+      BondyFeedback.showError(context, e, fallback: e.message);
     } catch (e) {
       // Test #18: lỗi mạng / lỗi server ⇒ báo rõ ràng, KHÔNG báo đã like.
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(BondyErrorMapper.message(e)),
-          backgroundColor: Colors.red,
-        ),
-      );
+      BondyFeedback.showError(context, e);
     }
   }
 
@@ -600,12 +590,7 @@ class _CommunityTabState extends State<_CommunityTab> {
       await _viewModel.loadFeed();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(BondyErrorMapper.message(e)),
-          backgroundColor: Colors.red,
-        ),
-      );
+      BondyFeedback.showError(context, e);
     }
   }
 

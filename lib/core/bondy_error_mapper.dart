@@ -94,7 +94,20 @@ class BondyErrorMapper {
   }
 
   static String _clean(String? value) {
-    final text = (value ?? '').trim();
+    var text = (value ?? '').trim();
+    
+    // Loại bỏ các tiền tố Exception/Error phổ biến để lấy thông báo thực tế
+    if (text.toLowerCase().startsWith('exception:')) {
+      text = text.substring(10).trim();
+    } else if (text.toLowerCase().startsWith('exception')) {
+      text = text.substring(9).trim();
+    }
+    if (text.toLowerCase().startsWith('error:')) {
+      text = text.substring(6).trim();
+    } else if (text.toLowerCase().startsWith('error')) {
+      text = text.substring(5).trim();
+    }
+
     if (text.isEmpty) return 'Đã xảy ra lỗi. Vui lòng thử lại.';
     if (_looksLikeTechnicalDump(text)) {
       return 'Đã xảy ra lỗi. Vui lòng thử lại.';
@@ -104,13 +117,12 @@ class BondyErrorMapper {
 
   static bool _looksLikeTechnicalDump(String text) {
     final lower = text.toLowerCase();
-    return lower.contains('exception:') ||
-        lower.contains('error:') && lower.contains('failed host lookup') ||
-        lower.startsWith('instance of ') ||
-        lower.contains('stacktrace') ||
+    return lower.contains('stacktrace') ||
         lower.contains('dart:') ||
         lower.contains('clientexception') ||
         lower.contains('socketexception') ||
-        text.length > 180;
+        lower.contains('failed host lookup') ||
+        lower.startsWith('instance of ') ||
+        text.length > 200;
   }
 }

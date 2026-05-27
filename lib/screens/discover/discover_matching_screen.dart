@@ -10,6 +10,7 @@ import '../../services/discover_service.dart';
 import '../../services/onboarding_router.dart';
 import '../../viewmodels/discover/discover_viewmodel.dart';
 import '../../widgets/match/new_match_receipt_sheet.dart';
+import '../../widgets/common/bondy_feedback.dart';
 import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
 
@@ -110,9 +111,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
       final message =
           _viewModel.errorMessage ??
           'Không gửi được thao tác. Vui lòng thử lại.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
+      BondyFeedback.showError(context, message);
       return;
     }
 

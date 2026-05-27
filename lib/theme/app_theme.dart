@@ -138,7 +138,7 @@ class BondyTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        backgroundColor: HealingStitchColors.pink,
+        backgroundColor: const Color(0xFF2D2A26),
         contentTextStyle: GoogleFonts.manrope(color: Colors.white),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(

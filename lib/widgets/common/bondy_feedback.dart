@@ -13,10 +13,33 @@ class BondyFeedback {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text, style: healingText(size: 14, color: Colors.white)),
-          backgroundColor: HealingStitchColors.pink,
+          content: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFFF8E53), // Cam sáng nổi bật
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: healingText(
+                    size: 14,
+                    color: Colors.white,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF2D2A26), // Màu tối sang trọng dễ đọc
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFF3F3A34), width: 1),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );

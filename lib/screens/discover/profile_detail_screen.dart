@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/bondy_error_mapper.dart';
 import '../../core/bondy_exceptions.dart' show QuotaExceededException;
 import '../../models/discover/discover_profile_model.dart';
 import '../../services/api_client.dart';
 import '../../services/discover_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/bondy_feedback.dart';
 import 'widgets/report_bottom_sheet.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
@@ -67,18 +67,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     } on QuotaExceededException catch (e) {
       // Test #14: hết quota ⇒ không pop màn detail.
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
-      );
+      BondyFeedback.showError(context, e, fallback: e.message);
     } catch (e) {
       // Test #18: lỗi mạng ⇒ giữ nguyên màn hình, báo lỗi rõ ràng.
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(BondyErrorMapper.message(e)),
-          backgroundColor: Colors.red,
-        ),
-      );
+      BondyFeedback.showError(context, e);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
