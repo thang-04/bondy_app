@@ -1,0 +1,32 @@
+@startuml UC11_Sequence
+!theme plain
+
+title UC11 - Admin Review Profile Sequence
+
+actor Admin as A
+participant "Admin Service" as Admin
+participant "Moderation Repository" as DB
+participant "Profile Service" as Profile
+
+A -> Admin : GET /admin/profiles/pending
+Admin -> DB : Query pending profiles
+DB --> Admin : list
+Admin --> A : profiles
+
+A -> Admin : POST /admin/profiles/{id}/review
+Admin -> Profile : Load profile
+Profile --> Admin : profile data
+Admin -> DB : Update moderation status
+DB --> Admin : saved
+Admin -> DB : Log action
+DB --> Admin : logged
+Admin --> A : 200 review complete
+
+note right of Admin
+  Actions:
+  - approve
+  - warn
+  - reject (future)
+end note
+
+@enduml

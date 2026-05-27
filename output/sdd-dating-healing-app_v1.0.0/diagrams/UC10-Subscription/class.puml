@@ -1,0 +1,54 @@
+@startuml UC10_Class
+!theme plain
+
+title UC10 - Subscription Class Diagram
+
+class Subscription {
+  +id: BigInt
+  +userId: BigInt
+  +tier: SubscriptionTier
+  +status: SubscriptionStatus
+  +startDate: Date
+  +endDate: Date
+  +isMock: Boolean
+  +upgrade()
+  +cancel()
+}
+
+class SubscriptionService {
+  +getUserSubscription(userId)
+  +checkFeatureAccess(userId, feature)
+  +upgrade(userId, tier)
+  +cancel(userId)
+}
+
+enum SubscriptionTier {
+  FREE
+  PLUS
+  PREMIUM
+  ELITE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+class Feature {
+  +name: String
+  +requiredTier: SubscriptionTier
+  +dailyLimit: Int
+}
+
+class Paywall {
+  +feature: String
+  +message: String
+  +upgradeOptions: List<Tier>
+}
+
+SubscriptionService --> Subscription
+SubscriptionService --> Feature
+SubscriptionService --> Paywall
+
+@enduml

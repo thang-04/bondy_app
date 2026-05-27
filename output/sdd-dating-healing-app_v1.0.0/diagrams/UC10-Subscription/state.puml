@@ -1,0 +1,36 @@
+@startuml UC10_State
+!theme plain
+
+title UC10 - Subscription State
+
+[*] --> Free : register
+
+state Free {
+  [*] --> Basic : default tier
+  Basic --> Plus : upgrade
+  Basic --> [*] : cancel (N/A)
+}
+
+state Plus {
+  [*] --> Active : payment confirmed
+  Active --> Premium : upgrade
+  Active --> Free : downgrade/cancel
+}
+
+state Premium {
+  [*] --> Active : payment confirmed
+  Active --> Elite : upgrade
+  Active --> Plus : downgrade
+}
+
+state Elite {
+  [*] --> Active : payment confirmed
+  Active --> Premium : downgrade
+}
+
+note right of Active
+  Auto-renewal
+  or mock status
+end note
+
+@enduml

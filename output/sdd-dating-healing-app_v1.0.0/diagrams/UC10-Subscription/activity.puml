@@ -1,0 +1,20 @@
+@startuml UC10_Activity
+!theme plain
+
+title UC10 - Feature Access Check Activity
+
+start
+:User attempts restricted action;
+:Identify required tier;
+:Check user current tier;
+if (Tier sufficient?) then (yes)
+  :Allow action;
+  :Execute;
+else
+  :Show paywall;
+  :Display upgrade options;
+  :User chooses to upgrade or cancel;
+endif
+stop
+
+@enduml

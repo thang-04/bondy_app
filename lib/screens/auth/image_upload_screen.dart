@@ -1,0 +1,350 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import '../../services/auth_service.dart';
+
+import '../../theme/app_theme.dart';
+import '../../widgets/bondy_button.dart';
+
+class ImageUploadScreen extends StatefulWidget {
+  const ImageUploadScreen({super.key});
+
+  @override
+  State<ImageUploadScreen> createState() => _ImageUploadScreenState();
+}
+
+class _ImageUploadScreenState extends State<ImageUploadScreen> {
+  final List<XFile?> _images = List.generate(6, (index) => null);
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
+  
+  
+  String get _baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    }
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  Future<void> _uploadImagesAndContinue() async {
+    final validImages = _images.where((img) => img != null).toList();
+    
+    // Nếu không có ảnh, vẫn cho phép đi tiếp để test (theo yêu cầu user)
+    if (validImages.isEmpty) {
+      if (mounted) {
+        Navigator.of(context).pushNamed('/location-setup');
+      }
+      return;
+    }
+
+    setState(() => _isUploading = true);
+    final dio = Dio(BaseOptions(baseUrl: _baseUrl));
+    List<String> uploadedUrls = [];
+
+    try {
+      // 1. Upload từng ảnh lên Storage qua Next.js Backend
+      for (var img in validImages) {
+        String fileName = img!.name;
+        final bytes = await img.readAsBytes();
+        
+        FormData formData = FormData.fromMap({
+          "file": MultipartFile.fromBytes(bytes, filename: fileName),
+        });
+
+        final token = await AuthService().getToken();
+
+        // Ghi chú: Cần bổ sung Authorization Header lấy từ Secure Storage nếu backend yêu cầu token
+        Response response = await dio.post(
+          '/upload', 
+          data: formData,
+          options: Options(
+            headers: {
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          ),
+        );
+        
+        if (response.statusCode == 200 && response.data['success'] == true) {
+          uploadedUrls.add(response.data['data']['url']);
+        }
+      }
+
+      // 2. Cập nhật mảng URL ảnh vào Profile người dùng
+      if (uploadedUrls.isNotEmpty) {
+        final token = await AuthService().getToken();
+        await dio.put(
+          '/profile/me', 
+          data: {"photos": uploadedUrls},
+          options: Options(
+            headers: {
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          ),
+        );
+      }
+
+      // 3. Chuyển sang màn hình tiếp theo
+      if (mounted) {
+        Navigator.of(context).pushNamed('/location-setup');
+      }
+    } catch (e) {
+      debugPrint('Upload error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi tải ảnh lên: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _pickImage(int index) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        imageQuality: 70,
+      );
+
+      if (image != null) {
+        setState(() {
+          _images[index] = image;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        _showPhotoPermissionDialog();
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images[index] = null;
+    });
+  }
+
+  void _showPhotoPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Quyền truy cập ảnh',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Bondy cần quyền truy cập thư viện ảnh để bạn có thể tải lên ảnh của mình. Vui lòng cấp quyền trong Cài đặt.',
+          style: GoogleFonts.plusJakartaSans(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Hủy',
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: Text(
+              'Mở Cài đặt',
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoSlot(int index, bool isProfile) {
+    final XFile? image = _images[index];
+    final bool isEmpty = image == null;
+
+    return GestureDetector(
+      onTap: () => isEmpty ? _pickImage(index) : null,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: isEmpty ? BondyColors.primaryLight.withValues(alpha: 0.3) : BondyColors.primaryLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isEmpty ? BondyColors.divider : BondyColors.primary,
+                width: isEmpty ? 1 : 2,
+              ),
+            ),
+            child: isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate_rounded,
+                          color: isProfile ? BondyColors.primary : BondyColors.textHint,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isProfile ? 'Ảnh đại diện' : 'Thêm ảnh',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: isProfile ? FontWeight.w600 : FontWeight.w500,
+                            color: isProfile ? BondyColors.primary : BondyColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: kIsWeb 
+                      ? Image.network(
+                          image.path,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : Image.file(
+                          File(image.path),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                  ),
+          ),
+          if (!isEmpty)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          /* if (isProfile && isEmpty)
+             Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: BondyColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '*Bắt buộc',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+             ) */
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                'Thêm ảnh của bạn',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: BondyColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+               Text(
+                'Thêm ít nhất 1 ảnh đại diện và 2 ảnh giới thiệu để mọi người hiểu thêm về bạn nhé.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: BondyColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.75,
+                  children: [
+                    _buildPhotoSlot(0, true),
+                    for (int i = 1; i < 6; i++) _buildPhotoSlot(i, false),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Text(
+                      '${_images.where((img) => img != null).length}/6 ảnh',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: BondyColors.textSecondary,
+                      ),
+                   ),
+                ]
+              ),
+              const SizedBox(height: 16),
+              _isUploading 
+                ? const Center(child: CircularProgressIndicator()) 
+                : BondyButton(
+                    text: 'Tiếp tục',
+                    onPressed: _uploadImagesAndContinue,
+                  ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,66 @@
+@startuml UC02_Class
+!theme plain
+
+title UC02 - Profile Management Class Diagram
+
+class Profile {
+  +id: BigInt
+  +userId: BigInt
+  +displayName: String
+  +dateOfBirth: Date
+  +gender: Gender
+  +orientation: Orientation
+  +bio: Text
+  +locationCity: String
+  +relationshipGoal: RelationshipGoal
+  +interests: List<String>
+  +isVisible: Boolean
+  +createProfile()
+  +updateProfile()
+  +toggleVisibility()
+  +deleteProfile()
+}
+
+class Photo {
+  +id: BigInt
+  +profileId: BigInt
+  +url: String
+  +moderationStatus: ModerationStatus
+  +isPrimary: Boolean
+  +upload()
+  +delete()
+  +setPrimary()
+}
+
+class MatchingPreference {
+  +id: BigInt
+  +userId: BigInt
+  +minAge: Int
+  +maxAge: Int
+  +maxDistanceKm: Int
+  +preferredGenders: List<Gender>
+  +preferredGoals: List<RelationshipGoal>
+  +dealBreakers: List<String>
+  +updatePreferences()
+}
+
+enum Gender {
+  MALE, FEMALE, NON_BINARY, OTHER
+}
+
+enum Orientation {
+  STRAIGHT, GAY, LESBIAN, BISEXUAL, QUEER, OTHER
+}
+
+enum RelationshipGoal {
+  CASUAL, DATING, SERIOUS, MARRIAGE
+}
+
+enum ModerationStatus {
+  APPROVED, PENDING, REJECTED
+}
+
+Profile --> Photo : has many
+Profile --> MatchingPreference : has one
+
+@enduml

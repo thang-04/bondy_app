@@ -1,0 +1,24 @@
+@startuml UC11_Activity
+!theme plain
+
+title UC11 - Process Report Activity
+
+start
+:Admin opens report queue;
+:Select pending report;
+:Review report details;
+:View reporter evidence;
+:View reported user profile;
+:Decide action;
+if (Valid report?) then (yes)
+  :Take moderation action;
+  :Warn/Suspend target;
+  :Mark report resolved;
+else
+  :Dismiss report;
+  :Mark report resolved;
+endif
+:Log action for audit;
+stop
+
+@enduml

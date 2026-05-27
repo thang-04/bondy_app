@@ -1,0 +1,26 @@
+@startuml UC04_Use_Case
+!theme plain
+
+title UC04 - Swipe Actions Use Case
+
+left to right direction
+
+actor Customer as C
+
+package "Swipe Actions" {
+  usecase "UC04-01: Like Profile" as UC04_01
+  usecase "UC04-02: Pass Profile" as UC04_02
+  usecase "UC04-03: Report Profile" as UC04_03
+  usecase "UC04-04: Check Like Limit" as UC04_04
+}
+
+C --> UC04_01 : Tap like
+C --> UC04_02 : Tap pass
+C --> UC04_03 : Tap report
+
+note right of UC04_01
+  Free: 20 likes/day
+  Paid: TBD
+end note
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml UC04_State
+!theme plain
+
+title UC04 - Like Action State
+
+[*] --> Idle : no action
+
+state Idle {
+  [*] --> Liking : user taps like
+  Liking --> Recorded : saved to DB
+  Liking --> Paywalled : limit exceeded
+
+  state Recorded {
+    [*] --> NoMatchYet : waiting
+    NoMatchYet --> Matched : reverse like
+    NoMatchYet --> [*] : timeout/no action
+  }
+
+  state Paywalled {
+    note: Modal shown
+    [*] --> [*] : user dismisses
+    [*] --> Upgrade : user taps upgrade
+  }
+}
+
+@enduml

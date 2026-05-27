@@ -1,0 +1,32 @@
+@startuml UC07_State
+!theme plain
+
+title UC07 - Message State Machine
+
+[*] --> Sent : send()
+
+state Sent {
+  [*] --> Pending : stored
+  Pending --> Delivered : recipient online
+  Pending --> [*] : offline retry
+}
+
+state Delivered {
+  [*] --> Seen : recipient opens
+}
+
+state Seen {
+  [*] --> [*]
+}
+
+note left of Sent
+  Created but not
+  delivered yet
+end note
+
+note right of Seen
+  Read receipt sent
+  Chat updated
+end note
+
+@enduml

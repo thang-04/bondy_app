@@ -1,0 +1,28 @@
+@startuml UC06_Class
+!theme plain
+
+title UC06 - Conversation Class Diagram
+
+class Conversation {
+  +id: BigInt
+  +matchId: BigInt
+  +status: ConvStatus
+  +createdAt: Timestamp
+  +updatedAt: Timestamp
+  +create()
+  +archive()
+  +delete()
+}
+
+class ConversationMember {
+  +id: BigInt
+  +conversationId: BigInt
+  +userId: BigInt
+  +joinedAt: Timestamp
+  +lastReadAt: Timestamp
+  +unreadCount: Int
+}
+
+Conversation --> ConversationMember : contains
+
+@enduml

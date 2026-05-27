@@ -1,0 +1,469 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Admin API
+  version: 1.0.0
+  description: Admin management endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /admin/users:
+    get:
+      summary: Search users
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, suspended, deleted]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Users retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /admin/users/{userId}:
+    get:
+      summary: Get user details
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDetail'
+
+    put:
+      summary: Update user (suspend/activate)
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountStatus:
+                  type: string
+                  enum: [active, suspended]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: User updated
+
+  /admin/profiles/pending:
+    get:
+      summary: Get profiles pending review
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Pending profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingProfile'
+
+  /admin/profiles/{profileId}/review:
+    post:
+      summary: Review profile
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [approve, warn, reject]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Profile reviewed
+
+  /admin/reports:
+    get:
+      summary: Get report queue
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reviewed, resolved]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Reports retrieved
+
+  /admin/reports/{reportId}:
+    post:
+      summary: Process report
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [warn, suspend, dismiss]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Report processed
+
+  /admin/moderation-logs:
+    get:
+      summary: View moderation logs
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: adminId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: targetType
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Logs retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationLog'
+
+  /admin/subscriptions:
+    get:
+      summary: View all subscriptions
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tier
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Subscriptions retrieved
+
+  /admin/affiliate-courses:
+    get:
+      summary: List affiliate courses
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Courses retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AffiliateCourseAdmin'
+
+    post:
+      summary: Add affiliate course
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffiliateCourseCreate'
+      responses:
+        '201':
+          description: Course added
+
+    put:
+      summary: Update affiliate course
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffiliateCourseUpdate'
+      responses:
+        '200':
+          description: Course updated
+
+components:
+  schemas:
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        accountStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminUserDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        profile:
+          $ref: '#/components/schemas/Profile'
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        reportsCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    PendingProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        photos:
+          type: array
+          items:
+            type: string
+        moderationReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ModerationLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        adminId:
+          type: integer
+          format: int64
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: integer
+          format: int64
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AffiliateCourseAdmin:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        category:
+          type: string
+        affiliateUrl:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AffiliateCourseCreate:
+      type: object
+      required:
+        - title
+        - category
+        - affiliateUrl
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        affiliateUrl:
+          type: string
+        disclaimer:
+          type: string
+
+    AffiliateCourseUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        category:
+          type: string
+        affiliateUrl:
+          type: string
+        isActive:
+          type: boolean
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+
+    Subscription:
+      type: object
+      properties:
+        tier:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

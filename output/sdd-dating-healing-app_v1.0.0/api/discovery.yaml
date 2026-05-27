@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Discovery API
+  version: 1.0.0
+  description: Discovery and profile matching endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /discover:
+    get:
+      summary: Get discover list
+      tags:
+        - Discovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Discover profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiscoverProfile'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /discover/filters:
+    put:
+      summary: Update discovery preferences
+      tags:
+        - Discovery
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryFilters'
+      responses:
+        '200':
+          description: Filters updated
+
+  /discover/preferences:
+    get:
+      summary: Get discovery preferences
+      tags:
+        - Discovery
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Preferences retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryFilters'
+
+components:
+  schemas:
+    DiscoverProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        locationCity:
+          type: string
+        relationshipGoal:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+        compatibilityScore:
+          type: number
+          format: float
+        primaryPhoto:
+          type: string
+
+    DiscoveryFilters:
+      type: object
+      properties:
+        minAge:
+          type: integer
+          minimum: 18
+        maxAge:
+          type: integer
+          maximum: 99
+        maxDistanceKm:
+          type: integer
+        preferredGenders:
+          type: array
+          items:
+            type: string
+            enum: [male, female, non-binary, other]
+        preferredGoals:
+          type: array
+          items:
+            type: string
+            enum: [casual, dating, serious, marriage]
+        dealBreakers:
+          type: array
+          items:
+            type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

@@ -1,0 +1,33 @@
+@startuml UC08_Sequence
+!theme plain
+
+title UC08 - AI Suggestion Sequence
+
+actor Customer as C
+participant "Chat Service" as Chat
+participant "AI Service" as AI
+participant "Usage Tracker" as Track
+participant "Subscription Service" as Sub
+
+C -> Chat : POST /ai/suggest
+Chat -> Sub : Check AI limit(userId)
+alt limit exceeded
+  Chat --> C : 402 Paywall
+else within limit
+  Chat -> AI : Request suggestion
+  AI -> AI : Generate suggestion
+  AI --> Chat : suggestion text
+  Chat -> Track : Increment usage
+  Track --> Chat : usage updated
+  Chat --> C : 200 suggestion
+endif
+
+note right of AI
+  Inputs:
+  - Both profiles
+  - Shared interests
+  - Chat history
+  - Healing data
+end note
+
+@enduml

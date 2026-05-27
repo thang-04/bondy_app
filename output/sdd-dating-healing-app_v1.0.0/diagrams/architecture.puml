@@ -1,0 +1,95 @@
+@startuml Architecture_Diagram
+!theme plain
+
+title Dating Matching & Healing App - System Architecture
+
+package "Client Layer" {
+  [Mobile App\n(iOS/Android)] as Mobile
+  [Web App\n(Admin Dashboard)] as Web
+}
+
+package "API Gateway Layer" {
+  [API Gateway\nAuth/Throttle] as Gateway
+}
+
+package "Core Services" {
+  [Auth Service] as AuthSvc
+  [Profile Service] as ProfileSvc
+  [Discovery Service] as DiscoverSvc
+  [Match Service] as MatchSvc
+  [Chat Service] as ChatSvc
+  [AI Service] as AISvc
+  [Healing Service] as HealingSvc
+  [Subscription Service] as SubSvc
+}
+
+package "Admin Services" {
+  [User Management] as UserMgmt
+  [Moderation Service] as ModSvc
+  [Reporting Service] as ReportSvc
+}
+
+package "External Services" {
+  [AI Service\n(External)] as ExtAI
+  [Email Service] as EmailSvc
+  [Payment Service] as PaymentSvc
+  [Affiliate Providers] as Affiliate
+}
+
+package "Data Layer" {
+  database "MySQL 8.0" as DB {
+    [Users]
+    [Profiles]
+    [Matches]
+    [Messages]
+    [Logs]
+  }
+  database "Redis\n(Cache/Sessions)" as Redis
+}
+
+Mobile --> Gateway : HTTPS
+Web --> Gateway : HTTPS
+Gateway --> AuthSvc : Validate JWT
+Gateway --> ProfileSvc : Route
+Gateway --> DiscoverSvc : Route
+Gateway --> MatchSvc : Route
+Gateway --> ChatSvc : Route
+Gateway --> AISvc : Route
+Gateway --> HealingSvc : Route
+Gateway --> SubSvc : Route
+
+AuthSvc --> DB : CRUD
+ProfileSvc --> DB : CRUD
+DiscoverSvc --> DB : Query
+DiscoverSvc --> AI : Score
+MatchSvc --> DB : CRUD
+ChatSvc --> DB : CRUD
+ChatSvc <--> Redis : Cache
+AISvc --> ExtAI : Proxy
+AISvc --> DB : Track
+
+UserMgmt --> DB : Admin
+ModSvc --> DB : Review
+ReportSvc --> DB : Query
+
+SubSvc --> PaymentSvc : Mock/Billing
+
+note right of Gateway
+  - JWT Validation
+  - Rate Limiting
+  - Request Logging
+end note
+
+note bottom of DB
+  - Indexes on FK
+  - Partition by date
+  - Encryption at rest
+end note
+
+note right of ExtAI
+  - Chat Suggestions
+  - Moderation AI
+  - Healing Logic
+end note
+
+@enduml

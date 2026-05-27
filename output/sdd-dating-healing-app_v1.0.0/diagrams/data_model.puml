@@ -1,0 +1,206 @@
+@startuml Data_Model_ERD
+!theme plain
+
+title Dating Matching & Healing App - Data Model
+
+entity "users" as users {
+  * id : BIGINT PK
+  * email : VARCHAR(255) UNIQUE
+  * password_hash : VARCHAR(255)
+  * email_verified : BOOLEAN
+  * account_status : ENUM('active','suspended','deleted')
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "profiles" as profiles {
+  * id : BIGINT PK
+  * user_id : BIGINT FK
+  * display_name : VARCHAR(100)
+  * date_of_birth : DATE
+  * gender : ENUM('male','female','non-binary','other')
+  * orientation : ENUM('straight','gay','lesbian','bisexual','queer','other')
+  * bio : TEXT
+  * location_lat : DECIMAL(10,8)
+  * location_lng : DECIMAL(11,8)
+  * location_city : VARCHAR(100)
+  * relationship_goal : ENUM('casual','dating','serious','marriage')
+  * interests : JSON
+  * is_visible : BOOLEAN
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "photos" as photos {
+  * id : BIGINT PK
+  * profile_id : BIGINT FK
+  * url : VARCHAR(500)
+  * moderation_status : ENUM('approved','pending','rejected')
+  * is_primary : BOOLEAN
+  * created_at : TIMESTAMP
+}
+
+entity "matching_preferences" as mprefs {
+  * id : BIGINT PK
+  * user_id : BIGINT FK
+  * min_age : INT
+  * max_age : INT
+  * max_distance_km : INT
+  * preferred_genders : JSON
+  * preferred_goals : JSON
+  * deal_breakers : JSON
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "compatibility_scores" as scores {
+  * id : BIGINT PK
+  * user_a_id : BIGINT FK
+  * user_b_id : BIGINT FK
+  * score : DECIMAL(5,2)
+  * factors : JSON
+  * calculated_at : TIMESTAMP
+}
+
+entity "likes" as likes {
+  * id : BIGINT PK
+  * source_user_id : BIGINT FK
+  * target_user_id : BIGINT FK
+  * action : ENUM('like','pass')
+  * created_at : TIMESTAMP
+}
+
+entity "matches" as matches {
+  * id : BIGINT PK
+  * user_a_id : BIGINT FK
+  * user_b_id : BIGINT FK
+  * user_a_confirmed : BOOLEAN
+  * user_b_confirmed : BOOLEAN
+  * status : ENUM('pending','confirmed','expired','unmatched')
+  * expires_at : TIMESTAMP
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "conversations" as convs {
+  * id : BIGINT PK
+  * match_id : BIGINT FK
+  * status : ENUM('active','archived','deleted')
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "conversation_members" as cmembers {
+  * id : BIGINT PK
+  * conversation_id : BIGINT FK
+  * user_id : BIGINT FK
+  * joined_at : TIMESTAMP
+}
+
+entity "messages" as msgs {
+  * id : BIGINT PK
+  * conversation_id : BIGINT FK
+  * sender_id : BIGINT FK
+  * type : ENUM('text','emoji','image','voice','ai_suggestion')
+  * content : TEXT
+  * delivery_status : ENUM('sent','delivered','seen')
+  * is_read : BOOLEAN
+  * created_at : TIMESTAMP
+}
+
+entity "ai_usage" as ai_usage {
+  * id : BIGINT PK
+  * user_id : BIGINT FK
+  * usage_date : DATE
+  * count : INT
+  * limit : INT
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "subscriptions" as subs {
+  * id : BIGINT PK
+  * user_id : BIGINT FK
+  * tier : ENUM('free','plus','premium','elite')
+  * status : ENUM('active','cancelled','expired')
+  * start_date : DATE
+  * end_date : DATE
+  * is_mock : BOOLEAN
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "healing_check_ins" as hcheck {
+  * id : BIGINT PK
+  * user_id : BIGINT FK
+  * mood : VARCHAR(50)
+  * readiness : VARCHAR(50)
+  * emotional_needs : TEXT
+  * triggers : TEXT
+  * small_goal : TEXT
+  * created_at : TIMESTAMP
+}
+
+entity "affiliate_courses" as acourses {
+  * id : BIGINT PK
+  * title : VARCHAR(255)
+  * category : VARCHAR(100)
+  * affiliate_url : VARCHAR(500)
+  * disclaimer : TEXT
+  * is_active : BOOLEAN
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "reports" as reports {
+  * id : BIGINT PK
+  * reporter_id : BIGINT FK
+  * target_user_id : BIGINT FK
+  * target_type : ENUM('user','profile','conversation','message')
+  * reason : VARCHAR(100)
+  * evidence : JSON
+  * status : ENUM('pending','reviewed','resolved')
+  * created_at : TIMESTAMP
+  * reviewed_at : TIMESTAMP
+}
+
+entity "moderation_logs" as mlogs {
+  * id : BIGINT PK
+  * admin_id : BIGINT FK
+  * action : VARCHAR(100)
+  * target_type : VARCHAR(50)
+  * target_id : BIGINT
+  * reason : TEXT
+  * created_at : TIMESTAMP
+}
+
+users ||--o{ profiles : has
+users ||--o{ mprefs : has
+users ||--o{ likes : likes
+users ||--o{ matches : matches_a
+users ||--o{ matches : matches_b
+users ||--o{ subs : has
+users ||--o{ ai_usage : tracks
+users ||--o{ hcheck : has
+
+profiles ||--o{ photos : has
+profiles ||--o{ cmembers : member
+
+mprefs ||--o{ scores : calculated
+
+likes }o--|| users : source
+likes }o--|| users : target
+
+matches ||--o{ convs : creates
+
+convs ||--o{ cmembers : contains
+convs ||--o{ msgs : contains
+
+msgs }o--|| users : sender
+
+acourses ||--o{ reports : linked_to
+
+users ||--o{ reports : filed_by
+users ||--o{ mlogs : acted_by
+
+@enduml

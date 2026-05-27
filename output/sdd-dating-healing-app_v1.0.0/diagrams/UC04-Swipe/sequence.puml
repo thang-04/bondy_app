@@ -1,0 +1,32 @@
+@startuml UC04_Sequence
+!theme plain
+
+title UC04 - Like Profile Sequence
+
+actor Customer as C
+participant "Swipe Service" as Swipe
+participant "Subscription Service" as Sub
+participant "Match Service" as Match
+participant "Like Repository" as DB
+
+C -> Swipe : POST /swipe/like { target_user_id }
+Swipe -> Sub : Check like limit(userId)
+Sub --> Swipe : within limit
+
+alt limit exceeded
+  Swipe --> C : 402 Paywall Required
+else within limit
+  Swipe -> DB : Record like
+  DB --> Swipe : like saved
+  Swipe -> Match : Check mutual like
+  Match -> DB : Query reverse like
+  alt mutual like found
+    Match -> DB : Create match
+    Match --> Swipe : match created
+    Swipe --> C : 201 It's a Match!
+  else not mutual
+    Swipe --> C : 200 Like recorded
+  endif
+endif
+
+@enduml

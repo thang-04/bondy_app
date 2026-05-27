@@ -1,0 +1,24 @@
+@startuml UC04_Activity
+!theme plain
+
+title UC04 - Like Profile Activity
+
+start
+:User taps like button;
+:Check daily like limit;
+if (Limit exceeded?) then (yes)
+  :Show paywall;
+  stop
+endif
+:Record like in database;
+:Check if target already liked current user;
+if (Mutual like?) then (yes)
+  :Create match record;
+  :Notify both users;
+  :Show match celebration;
+else
+  :Return success;
+endif
+stop
+
+@enduml

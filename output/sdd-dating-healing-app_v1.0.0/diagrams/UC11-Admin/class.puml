@@ -1,0 +1,47 @@
+@startuml UC11_Class
+!theme plain
+
+title UC11 - Admin Class Diagram
+
+class AdminService {
+  +manageUsers()
+  +reviewProfile(profileId, action)
+  +processReport(reportId, action)
+  +viewModerationLogs()
+  +manageSubscriptions()
+  +manageAffiliateCourses()
+}
+
+class ModerationLog {
+  +id: BigInt
+  +adminId: BigInt
+  +action: String
+  +targetType: String
+  +targetId: BigInt
+  +reason: Text
+  +createdAt: Timestamp
+  +log()
+}
+
+class Report {
+  +id: BigInt
+  +reporterId: BigInt
+  +targetUserId: BigInt
+  +reason: String
+  +evidence: JSON
+  +status: ReportStatus
+  +review(action)
+}
+
+class UserManagement {
+  +searchUsers(query)
+  +getUserDetails(userId)
+  +suspendUser(userId)
+  +deleteUser(userId)
+}
+
+AdminService --> ModerationLog
+AdminService --> Report
+AdminService --> UserManagement
+
+@enduml

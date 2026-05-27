@@ -1,0 +1,28 @@
+@startuml UC11_State
+!theme plain
+
+title UC11 - Report State Machine
+
+[*] --> Pending : report filed
+
+state Pending {
+  [*] --> UnderReview : admin opens
+  UnderReview --> Resolved : action taken
+}
+
+state Resolved {
+  note: Case closed
+  [*] --> [*]
+}
+
+note right of Pending
+  Auto-detect or
+  user submitted
+end note
+
+note right of Resolved
+  Evidence retained
+  24 months
+end note
+
+@enduml

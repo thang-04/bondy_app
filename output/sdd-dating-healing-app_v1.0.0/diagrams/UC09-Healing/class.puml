@@ -1,0 +1,42 @@
+@startuml UC09_Class
+!theme plain
+
+title UC09 - Healing Class Diagram
+
+class HealingCheckIn {
+  +id: BigInt
+  +userId: BigInt
+  +mood: String
+  +readiness: String
+  +emotionalNeeds: Text
+  +triggers: Text
+  +smallGoal: Text
+  +createdAt: Timestamp
+  +save()
+}
+
+class HealingService {
+  +createCheckIn(userId, data)
+  +getHealingContent(userId)
+  +getAffiliateCourses(category)
+}
+
+class AffiliateCourse {
+  +id: BigInt
+  +title: String
+  +category: String
+  +affiliateUrl: String
+  +disclaimer: String
+  +isActive: Boolean
+}
+
+class ContentRecommendation {
+  +analyzeCheckIn(checkIn)
+  +getPersonalizedContent(userId)
+}
+
+HealingService --> HealingCheckIn
+HealingService --> AffiliateCourse
+HealingService --> ContentRecommendation
+
+@enduml

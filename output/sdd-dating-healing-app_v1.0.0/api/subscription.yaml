@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Subscription API
+  version: 1.0.0
+  description: Subscription management and paywall endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /subscription:
+    get:
+      summary: Get current subscription
+      tags:
+        - Subscription
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subscription retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /subscription/upgrade:
+    post:
+      summary: Upgrade subscription
+      tags:
+        - Subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tier
+              properties:
+                tier:
+                  type: string
+                  enum: [plus, premium, elite]
+      responses:
+        '200':
+          description: Upgrade successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Invalid tier
+        '402':
+          description: Payment failed
+
+  /subscription/cancel:
+    post:
+      summary: Cancel subscription
+      tags:
+        - Subscription
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /subscription/plans:
+    get:
+      summary: Get available plans
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Plans retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionPlan'
+
+  /subscription/feature-access:
+    post:
+      summary: Check feature access
+      tags:
+        - Subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - feature
+              properties:
+                feature:
+                  type: string
+                  enum: [advanced_filters, unlimited_likes, ai_suggestions, healing_content]
+      responses:
+        '200':
+          description: Access checked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hasAccess:
+                    type: boolean
+                  currentTier:
+                    type: string
+                  requiredTier:
+                    type: string
+
+components:
+  schemas:
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tier:
+          type: string
+          enum: [free, plus, premium, elite]
+        status:
+          type: string
+          enum: [active, cancelled, expired]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isMock:
+          type: boolean
+        features:
+          type: array
+          items:
+            type: string
+
+    SubscriptionPlan:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [free, plus, premium, elite]
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: USD
+        billingCycle:
+          type: string
+          enum: [monthly, yearly]
+        features:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+          properties:
+            dailyLikes:
+              type: integer
+            dailyAiSuggestions:
+              type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

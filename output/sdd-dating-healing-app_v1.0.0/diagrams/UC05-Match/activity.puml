@@ -1,0 +1,23 @@
+@startuml UC05_Activity
+!theme plain
+
+title UC05 - Match Confirmation Activity
+
+start
+:Match created (mutual like);
+:Set expiry timer (24h);
+:Notify both users;
+while (both confirmed?) is (no)
+  :Wait for confirmations;
+  if (24h elapsed?) then (yes)
+    :Expire match;
+    :Notify both users;
+    stop
+  endif
+endwhile (both confirmed)
+:Create conversation;
+:Notify both users;
+:Open chat;
+stop
+
+@enduml

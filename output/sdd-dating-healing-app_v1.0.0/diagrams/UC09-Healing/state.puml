@@ -1,0 +1,25 @@
+@startuml UC09_State
+!theme plain
+
+title UC09 - Healing Check-In State
+
+[*] --> Ready : user opens
+
+state Ready {
+  [*] --> Incomplete : form displayed
+  Incomplete --> Complete : all required
+  Incomplete --> [*] : user abandons
+
+  state Complete {
+    [*] --> Analyzing : submit
+    Analyzing --> Recommended : AI done
+    Recommended --> [*] : user leaves
+  }
+}
+
+note bottom of Ready
+  Repeated check-ins
+  track progress
+end note
+
+@enduml

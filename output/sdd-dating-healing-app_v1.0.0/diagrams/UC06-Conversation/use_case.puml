@@ -1,0 +1,22 @@
+@startuml UC06_Use_Case
+!theme plain
+
+title UC06 - Conversation Use Case
+
+left to right direction
+
+actor Customer as C
+
+package "Conversation" {
+  usecase "UC06-01: List Conversations" as UC06_01
+  usecase "UC06-02: Open Conversation" as UC06_02
+  usecase "UC06-03: Archive Conversation" as UC06_03
+  usecase "UC06-04: Delete Conversation" as UC06_04
+}
+
+C --> UC06_01 : View chat list
+C --> UC06_02 : Select conversation
+C --> UC06_03 : Archive old chat
+C --> UC06_04 : Delete conversation
+
+@enduml

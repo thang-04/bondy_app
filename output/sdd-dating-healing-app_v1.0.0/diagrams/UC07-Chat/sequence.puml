@@ -1,0 +1,32 @@
+@startuml UC07_Sequence
+!theme plain
+
+title UC07 - Send Message Sequence
+
+actor Sender as S
+participant "Chat Service" as Chat
+participant "Message Repository" as DB
+participant "WebSocket Server" as WS
+participant "Receiver" as R
+
+S -> Chat : POST /messages
+Chat -> Chat : Validate message
+Chat -> Chat : Validate sender in conversation
+Chat -> DB : Save message
+DB --> Chat : saved
+Chat -> WS : Publish message
+WS -> R : Deliver message (real-time)
+R --> WS : ACK
+WS --> Chat : delivered
+Chat --> S : 201 Created
+
+note right of Chat
+  Message types:
+  - text
+  - emoji
+  - image
+  - voice
+  - ai_suggestion
+end note
+
+@enduml

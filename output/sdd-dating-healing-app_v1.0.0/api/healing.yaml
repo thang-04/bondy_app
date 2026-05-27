@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Healing API
+  version: 1.0.0
+  description: Healing check-ins and content endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /healing/checkin:
+    post:
+      summary: Submit healing check-in
+      tags:
+        - Healing
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealingCheckInRequest'
+      responses:
+        '201':
+          description: Check-in saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealingCheckInResponse'
+
+    get:
+      summary: Get check-in history
+      tags:
+        - Healing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Check-ins retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkIns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealingCheckIn'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /healing/content:
+    get:
+      summary: Get healing content
+      tags:
+        - Healing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Content retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealingContent'
+                  courses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AffiliateCourse'
+
+  /healing/courses:
+    get:
+      summary: Get affiliate courses
+      tags:
+        - Healing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Courses retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AffiliateCourse'
+
+components:
+  schemas:
+    HealingCheckInRequest:
+      type: object
+      required:
+        - mood
+        - readiness
+      properties:
+        mood:
+          type: string
+          enum: [great, good, okay, low, struggling]
+        readiness:
+          type: string
+          enum: [ready, cautious, healing, not_ready]
+        emotionalNeeds:
+          type: string
+        triggers:
+          type: string
+        smallGoal:
+          type: string
+
+    HealingCheckIn:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        mood:
+          type: string
+        readiness:
+          type: string
+        emotionalNeeds:
+          type: string
+        triggers:
+          type: string
+        smallGoal:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    HealingCheckInResponse:
+      type: object
+      properties:
+        checkIn:
+          $ref: '#/components/schemas/HealingCheckIn'
+        suggestions:
+          type: array
+          items:
+            type: string
+        courses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffiliateCourse'
+
+    HealingContent:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        category:
+          type: string
+        content:
+          type: string
+        isPremium:
+          type: boolean
+
+    AffiliateCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        category:
+          type: string
+        affiliateUrl:
+          type: string
+        disclaimer:
+          type: string
+          example: "This course is provided by a third-party affiliate."
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

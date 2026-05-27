@@ -1,0 +1,29 @@
+@startuml UC08_State
+!theme plain
+
+title UC08 - AI Usage State
+
+[*] --> Idle : no request
+
+state Idle {
+  [*] --> Requesting : tap suggest
+  Requesting --> Checking : validate
+  Checking --> Generating : within limit
+  Checking --> Paywalled : limit exceeded
+
+  state Generating {
+    [*] --> Processing : AI called
+    Processing --> Options : suggestions ready
+    Options --> Selected : user picks
+    Options --> Dismissed : user cancels
+  }
+
+  state Paywalled {
+    note: Modal shown
+    [*] --> [*]
+  }
+}
+
+Generating --> Idle : complete
+
+@enduml

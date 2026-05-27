@@ -1,0 +1,24 @@
+@startuml UC03_Activity
+!theme plain
+
+title UC03 - Discover Activity Diagram
+
+start
+:User opens discover;
+:Load user matching preferences;
+:Query visible profiles;
+while (each profile) is (not end of list)
+  :Check age filter;
+  :Check distance filter;
+  :Check gender/orientation;
+  :Check relationship goal;
+  if (passes all filters?) then (yes)
+    :Calculate compatibility score;
+    :Add to results;
+  endif
+endwhile (end of list)
+:Sort by score descending;
+:Return paginated results;
+stop
+
+@enduml

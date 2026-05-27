@@ -1,0 +1,26 @@
+@startuml UC11_Use_Case
+!theme plain
+
+title UC11 - Admin Use Case
+
+left to right direction
+
+actor Admin as A
+
+package "Admin" {
+  usecase "UC11-01: Manage Users" as UC11_01
+  usecase "UC11-02: Review Profiles" as UC11_02
+  usecase "UC11-03: Process Reports" as UC11_03
+  usecase "UC11-04: View Moderation Logs" as UC11_04
+  usecase "UC11-05: View Subscriptions" as UC11_05
+  usecase "UC11-06: Manage Affiliate Courses" as UC11_06
+}
+
+A --> UC11-01 : Search/Edit users
+A --> UC11-02 : Review flagged
+A --> UC11-03 : Handle reports
+A --> UC11-04 : Audit actions
+A --> UC11-05 : Monitor plans
+A --> UC11-06 : Edit courses
+
+@enduml

@@ -1,0 +1,34 @@
+@startuml UC03_State
+!theme plain
+
+title UC03 - Discovery Session State
+
+[*] --> Loading : user opens
+
+state Loading {
+  [*] --> Fetching : request sent
+  Fetching --> Scoring : profiles received
+  Scoring --> Sorting : scores calculated
+  Sorting --> Ready : list prepared
+  Ready --> [*]
+}
+
+state Ready {
+  note: User can swipe
+  [*] --> Empty : no profiles
+  Empty --> [*] : no more matches
+
+  [*] --> HasProfiles : list ready
+  HasProfiles --> Exhausted : last profile
+  Exhausted --> [*] : refresh later
+
+  HasProfiles --> Refreshed : pull to refresh
+  Refreshed --> HasProfiles : new list
+}
+
+note right of Ready
+  Refresh available
+  after 5 min or pull
+end note
+
+@enduml

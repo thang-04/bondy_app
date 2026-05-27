@@ -1,0 +1,57 @@
+@startuml UC04_Class
+!theme plain
+
+title UC04 - Swipe Class Diagram
+
+class Like {
+  +id: BigInt
+  +sourceUserId: BigInt
+  +targetUserId: BigInt
+  +action: SwipeAction
+  +createdAt: Timestamp
+  +record()
+}
+
+class SwipeService {
+  +likeProfile(sourceId, targetId)
+  +passProfile(sourceId, targetId)
+  +reportProfile(reporterId, targetId, reason)
+  +checkDailyLimit(userId)
+}
+
+class Match {
+  +id: BigInt
+  +userAId: BigInt
+  +userBId: BigInt
+  +status: MatchStatus
+  +createdAt: Timestamp
+  +create()
+}
+
+class Report {
+  +id: BigInt
+  +reporterId: BigInt
+  +targetUserId: BigInt
+  +reason: String
+  +evidence: JSON
+  +status: ReportStatus
+  +create()
+}
+
+enum SwipeAction {
+  LIKE, PASS
+}
+
+enum MatchStatus {
+  PENDING, CONFIRMED, EXPIRED, UNMATCHED
+}
+
+enum ReportStatus {
+  PENDING, REVIEWED, RESOLVED
+}
+
+SwipeService --> Like
+SwipeService --> Match
+SwipeService --> Report
+
+@enduml

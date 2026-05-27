@@ -1,0 +1,33 @@
+@startuml UC02_Activity
+!theme plain
+
+title UC02 - Profile Creation Activity
+
+start
+:User submits profile data;
+:Validate all required fields present;
+if (Missing fields?) then (yes)
+  :Return error: complete required fields;
+  stop
+endif
+:Validate date of birth;
+if (Underage?) then (yes)
+  :Return error: minimum age not met;
+  stop
+endif
+:Validate photo upload;
+if (No photo?) then (yes)
+  :Return error: at least one photo required;
+  stop
+endif
+:Scan photo with AI moderation;
+if (Violation detected?) then (yes)
+  :Set status to pending_review;
+else
+  :Set status to approved;
+endif
+:Save profile to database;
+:Return success;
+stop
+
+@enduml

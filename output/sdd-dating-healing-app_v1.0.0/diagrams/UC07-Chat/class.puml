@@ -1,0 +1,49 @@
+@startuml UC07_Class
+!theme plain
+
+title UC07 - Chat Class Diagram
+
+class Message {
+  +id: BigInt
+  +conversationId: BigInt
+  +senderId: BigInt
+  +type: MessageType
+  +content: String
+  +deliveryStatus: DeliveryStatus
+  +isRead: Boolean
+  +createdAt: Timestamp
+  +send()
+  +markAsRead()
+}
+
+class ChatService {
+  +sendMessage(convId, senderId, type, content)
+  +markAsSeen(messageId, userId)
+  +sendTypingIndicator(convId, userId)
+  +getMessages(convId, page)
+}
+
+class WebSocketManager {
+  +publishMessage(message)
+  +subscribeToConversation(userId, convId)
+  +unsubscribeFromConversation(userId, convId)
+}
+
+enum MessageType {
+  TEXT
+  EMOJI
+  IMAGE
+  VOICE
+  AI_SUGGESTION
+}
+
+enum DeliveryStatus {
+  SENT
+  DELIVERED
+  SEEN
+}
+
+ChatService --> Message
+ChatService --> WebSocketManager
+
+@enduml

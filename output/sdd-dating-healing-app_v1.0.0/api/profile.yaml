@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Profile API
+  version: 1.0.0
+  description: Profile management endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /profile:
+    get:
+      summary: Get current user profile
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Profile not found
+
+    put:
+      summary: Update profile
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Validation error
+
+    delete:
+      summary: Delete account
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account deleted
+        '401':
+          description: Unauthorized
+
+  /profile/visibility:
+    put:
+      summary: Toggle profile visibility
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isVisible:
+                  type: boolean
+      responses:
+        '200':
+          description: Visibility updated
+
+  /profile/photos:
+    post:
+      summary: Upload profile photo
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                isPrimary:
+                  type: boolean
+      responses:
+        '201':
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photo'
+        '400':
+          description: Invalid file
+
+    delete:
+      summary: Delete profile photo
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Photo deleted
+
+components:
+  schemas:
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, non-binary, other]
+        orientation:
+          type: string
+          enum: [straight, gay, lesbian, bisexual, queer, other]
+        bio:
+          type: string
+        locationCity:
+          type: string
+        relationshipGoal:
+          type: string
+          enum: [casual, dating, serious, marriage]
+        interests:
+          type: array
+          items:
+            type: string
+        isVisible:
+          type: boolean
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo'
+
+    ProfileUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+        bio:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+        relationshipGoal:
+          type: string
+          enum: [casual, dating, serious, marriage]
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        url:
+          type: string
+        moderationStatus:
+          type: string
+          enum: [approved, pending, rejected]
+        isPrimary:
+          type: boolean
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

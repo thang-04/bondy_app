@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Chat API
+  version: 1.0.0
+  description: Real-time messaging endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /messages:
+    get:
+      summary: Get messages for conversation
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversationId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: Messages retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  hasMore:
+                    type: boolean
+
+    post:
+      summary: Send message
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Empty message
+        '403':
+          description: Not a conversation member
+
+  /messages/{messageId}/read:
+    put:
+      summary: Mark message as read
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Message marked as read
+
+  /messages/typing:
+    post:
+      summary: Send typing indicator
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - conversationId
+                - isTyping
+              properties:
+                conversationId:
+                  type: integer
+                  format: int64
+                isTyping:
+                  type: boolean
+      responses:
+        '200':
+          description: Typing indicator sent
+
+  /messages/{messageId}/delivered:
+    put:
+      summary: Mark message as delivered
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Message marked as delivered
+
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        conversationId:
+          type: integer
+          format: int64
+        senderId:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [text, emoji, image, voice, ai_suggestion]
+        content:
+          type: string
+        deliveryStatus:
+          type: string
+          enum: [sent, delivered, seen]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    SendMessageRequest:
+      type: object
+      required:
+        - conversationId
+        - type
+        - content
+      properties:
+        conversationId:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [text, emoji, image, voice, ai_suggestion]
+        content:
+          type: string
+        mediaUrl:
+          type: string
+          description: Required for image/voice types
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

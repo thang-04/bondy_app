@@ -1,0 +1,197 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Match API
+  version: 1.0.0
+  description: Match lifecycle management endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /matches:
+    get:
+      summary: Get user matches
+      tags:
+        - Match
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, expired, unmatched]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Matches retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchDetail'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /matches/{matchId}/confirm:
+    post:
+      summary: Confirm match for conversation
+      tags:
+        - Match
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationResponse'
+        '201':
+          description: Both confirmed - conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationCreatedResponse'
+        '409':
+          description: Already confirmed or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}:
+    delete:
+      summary: Unmatch
+      tags:
+        - Match
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Unmatched successfully
+
+  /matches/{matchId}/block:
+    post:
+      summary: Block user (cancels match)
+      tags:
+        - Match
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: User blocked and match cancelled
+
+components:
+  schemas:
+    MatchDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        otherUser:
+          $ref: '#/components/schemas/OtherUserPreview'
+        userAConfirmed:
+          type: boolean
+        userBConfirmed:
+          type: boolean
+        status:
+          type: string
+          enum: [pending, confirmed, expired, unmatched]
+        expiresAt:
+          type: string
+          format: date-time
+        matchedAt:
+          type: string
+          format: date-time
+
+    OtherUserPreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        primaryPhoto:
+          type: string
+
+    ConfirmationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        waitingForOther:
+          type: boolean
+
+    ConversationCreatedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        conversationId:
+          type: integer
+          format: int64
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

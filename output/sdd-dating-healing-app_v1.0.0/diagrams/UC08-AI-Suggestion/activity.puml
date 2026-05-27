@@ -1,0 +1,27 @@
+@startuml UC08_Activity
+!theme plain
+
+title UC08 - AI Suggestion Activity
+
+start
+:User taps AI suggest;
+:Check daily AI usage;
+if (Limit reached?) then (yes)
+  :Show paywall;
+  stop
+endif
+:Load conversation context;
+:Load both user profiles;
+:Load shared interests;
+:Call AI service;
+:Receive suggestion;
+:Display suggestion options;
+:User selects or dismisses;
+if (User selects)
+  :Insert as message draft;
+  :User sends;
+endif
+:Increment usage counter;
+stop
+
+@enduml

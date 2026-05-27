@@ -1,0 +1,41 @@
+@startuml UC02_Sequence
+!theme plain
+
+title UC02 - Profile Creation Sequence
+
+actor Customer as C
+participant "API Gateway" as Gateway
+participant "Profile Service" as Profile
+participant "Photo Service" as Photo
+participant "Moderation AI" as ModAI
+participant "Profile Repository" as DB
+
+C -> Gateway : POST /profile
+Gateway -> Profile : CreateProfileRequest
+Profile -> Profile : Validate required fields
+Profile -> Profile : Validate DOB (age >= min)
+Profile -> Photo : Upload photo
+Photo -> ModAI : Scan image
+alt violation detected
+  ModAI --> Profile : violation flagged
+  Profile -> DB : save with pending status
+  Profile --> Gateway : 201 Created (pending review)
+else no violation
+  ModAI --> Profile : approved
+  Profile -> DB : save with approved status
+  Profile --> Gateway : 201 Created
+endif
+
+note right of Profile
+  Required fields:
+  - display_name
+  - date_of_birth
+  - gender/orientation
+  - at least 1 photo
+  - location
+  - bio
+  - interests
+  - relationship_goal
+end note
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml UC09_Activity
+!theme plain
+
+title UC09 - Healing Check-In Activity
+
+start
+:User opens healing tab;
+:Display check-in form;
+:User fills mood;
+:User selects readiness;
+:User describes emotional needs;
+:User optionally notes triggers;
+:User sets small goal;
+:User submits check-in;
+:Save check-in record;
+:Analyze for personalization;
+:Load healing content;
+:Fetch affiliate courses;
+:Display content + disclaimer;
+stop
+
+@enduml

@@ -1,0 +1,25 @@
+@startuml UC10_Sequence
+!theme plain
+
+title UC10 - Upgrade Subscription Sequence
+
+actor Customer as C
+participant "Subscription Service" as Sub
+participant "Payment Service" as Pay
+participant "Subscription Repository" as DB
+
+C -> Sub : POST /subscription/upgrade
+Sub -> Sub : Validate target tier
+Sub -> Pay : Create payment
+Pay --> Sub : payment success
+Sub -> DB : Update subscription
+DB --> Sub : saved
+Sub --> C : 200 upgrade success
+Sub -> Sub : Activate new features
+
+note right of Sub
+  Mock payment for MVP
+  Real integration TBD
+end note
+
+@enduml

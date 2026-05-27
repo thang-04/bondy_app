@@ -1,0 +1,33 @@
+@startuml UC10_Use_Case
+!theme plain
+
+title UC10 - Subscription Use Case
+
+left to right direction
+
+actor Customer as C
+actor "Payment Service" as PS
+
+package "Subscription" {
+  usecase "UC10-01: View Plans" as UC10_01
+  usecase "UC10-02: Upgrade Plan" as UC10_02
+  usecase "UC10-03: Cancel Subscription" as UC10_03
+  usecase "UC10-04: Check Feature Access" as UC10_04
+  usecase "UC10-05: Show Paywall" as UC10_05
+}
+
+C --> UC10_01 : View pricing
+C --> UC10-02 : Select tier
+C --> UC10-03 : Cancel
+C --> UC10-04 : Try feature
+PS --> UC10-05 : Enforce limits
+
+note right of UC10-02
+  Tiers:
+  - Free
+  - Plus
+  - Premium
+  - Elite
+end note
+
+@enduml

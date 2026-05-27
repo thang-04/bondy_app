@@ -1,0 +1,44 @@
+@startuml UC05_State
+!theme plain
+
+title UC05 - Match State Machine
+
+[*] --> Pending : mutual like
+
+state Pending {
+  note: Both confirm within 24h
+  [*] --> AwaitingA : user B confirmed
+  AwaitingA --> Confirmed : user A confirms
+  AwaitingA --> Expired : 24h timeout
+
+  [*] --> AwaitingB : user A confirmed
+  AwaitingB --> Confirmed : user B confirms
+  AwaitingB --> Expired : 24h timeout
+
+  AwaitingA -[hidden]-> Expired
+  AwaitingB -[hidden]-> Expired
+}
+
+state Confirmed {
+  note: Conversation created
+  [*] --> Active : chat open
+  Active --> Unmatched : user unmatches
+  Active --> Blocked : user blocks
+}
+
+state Expired {
+  note: Cannot create conversation
+  [*] --> [*]
+}
+
+state Unmatched {
+  [*] --> [*]
+}
+
+state Blocked {
+  [*] --> [*]
+}
+
+Confirmed --> [*] : delete account
+
+@enduml

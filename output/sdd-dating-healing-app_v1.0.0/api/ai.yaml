@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: Dating App - AI Suggestion API
+  version: 1.0.0
+  description: AI-powered chat suggestions
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /ai/suggest:
+    post:
+      summary: Get AI chat suggestion
+      tags:
+        - AI
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - conversationId
+              properties:
+                conversationId:
+                  type: integer
+                  format: int64
+                context:
+                  type: string
+                  description: Optional additional context
+      responses:
+        '200':
+          description: Suggestion generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AISuggestionResponse'
+        '402':
+          description: Daily AI limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaywallResponse'
+        '429':
+          description: Rate limit exceeded
+
+  /ai/usage:
+    get:
+      summary: Get AI usage statistics
+      tags:
+        - AI
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Usage retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  used:
+                    type: integer
+                  limit:
+                    type: integer
+                  resetsAt:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    AISuggestionResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              text:
+                type: string
+              confidence:
+                type: number
+                format: float
+        remaining:
+          type: integer
+
+    PaywallResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        upgradeOptions:
+          type: array
+          items:
+            type: string
+            enum: [plus, premium, elite]
+        message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

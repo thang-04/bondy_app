@@ -1,0 +1,32 @@
+@startuml UC09_Use_Case
+!theme plain
+
+title UC09 - Healing Check-In Use Case
+
+left to right direction
+
+actor Customer as C
+actor "Affiliate Provider" as AP
+
+package "Healing" {
+  usecase "UC09-01: Complete Check-In" as UC09_01
+  usecase "UC09-02: View Healing Content" as UC09_02
+  usecase "UC09-03: Get Course Suggestions" as UC09_03
+  usecase "UC09-04: Open Affiliate Course" as UC09_04
+}
+
+C --> UC09-01 : Fill check-in
+C --> UC09-02 : Browse healing
+C --> UC09-03 : View recommendations
+AP --> UC09-03 : Provide courses
+
+note right of UC09-01
+  Fields:
+  - mood
+  - readiness
+  - emotional needs
+  - triggers
+  - small goal
+end note
+
+@enduml

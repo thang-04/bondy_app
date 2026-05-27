@@ -1,0 +1,29 @@
+@startuml UC01_Use_Case
+!theme plain
+
+title UC01 - Authentication Use Case
+
+left to right direction
+
+actor Customer as C
+actor Admin as A
+actor "AI Service" as AI
+actor "Email Service" as ES
+
+package "Authentication" {
+  usecase "UC01-01: Register with Email" as UC01_01
+  usecase "UC01-02: Verify Email" as UC01_02
+  usecase "UC01-03: Login" as UC01_03
+  usecase "UC01-04: Forgot Password" as UC01_04
+  usecase "UC01-05: Reset Password" as UC01_05
+  usecase "UC01-06: Logout" as UC01_06
+}
+
+C --> UC01_01 : Submit email/password
+C --> UC01_02 : Click verification link
+C --> UC01_03 : Enter credentials
+C --> UC01_04 : Request password reset
+ES --> UC01_02 : Send verification email
+AI --> UC01_01 : Validate input
+
+@enduml

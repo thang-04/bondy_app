@@ -1,0 +1,27 @@
+@startuml UC09_Sequence
+!theme plain
+
+title UC09 - Healing Check-In Sequence
+
+actor Customer as C
+participant "Healing Service" as Heal
+participant "Healing Repository" as DB
+participant "AI Service" as AI
+participant "Affiliate Service" as Aff
+
+C -> Heal : POST /healing/checkin
+Heal -> Heal : Validate check-in data
+Heal -> DB : Save check-in
+DB --> Heal : saved
+Heal -> AI : Analyze for suggestions
+AI --> Heal : personalized content
+Heal -> Aff : Get course recommendations
+Aff --> Heal : courses
+Heal --> C : check-in complete + suggestions
+
+note right of Aff
+  Affiliate disclaimer
+  must be shown
+end note
+
+@enduml

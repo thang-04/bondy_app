@@ -1,0 +1,32 @@
+@startuml UC02_Use_Case
+!theme plain
+
+title UC02 - Profile Management Use Case
+
+left to right direction
+
+actor Customer as C
+actor Admin as A
+actor "AI Service" as AI
+
+package "Profile Management" {
+  usecase "UC02-01: Create Profile" as UC02_01
+  usecase "UC02-02: Update Profile" as UC02_02
+  usecase "UC02-03: Add Photo" as UC02_03
+  usecase "UC02-04: Delete Photo" as UC02_04
+  usecase "UC02-05: Set Profile Visibility" as UC02_05
+  usecase "UC02-06: Delete Account" as UC02_06
+  usecase "UC02-07: Auto-Detect Violation" as UC02_07
+  usecase "UC02-08: Review Profile" as UC02_08
+}
+
+C --> UC02_01 : Enter profile data
+C --> UC02_02 : Update fields
+C --> UC02_03 : Upload photo
+C --> UC02_04 : Remove photo
+C --> UC02_05 : Toggle visibility
+C --> UC02_06 : Request deletion
+AI --> UC02_07 : Detect violation
+A --> UC02_08 : Approve/Warn
+
+@enduml

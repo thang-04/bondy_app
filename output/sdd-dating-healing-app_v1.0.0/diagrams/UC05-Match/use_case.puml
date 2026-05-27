@@ -1,0 +1,31 @@
+@startuml UC05_Use_Case
+!theme plain
+
+title UC05 - Match Lifecycle Use Case
+
+left to right direction
+
+actor Customer as C
+
+package "Match Lifecycle" {
+  usecase "UC05-01: View Matches" as UC05_01
+  usecase "UC05-02: Confirm Match" as UC05_02
+  usecase "UC05-03: Decline Match" as UC05_03
+  usecase "UC05-04: Expire Match" as UC05_04
+  usecase "UC05-05: Unmatch" as UC05_05
+  usecase "UC05-06: Block User" as UC05_06
+}
+
+C --> UC05_01 : View match list
+C --> UC05_02 : Confirm conversation
+C --> UC05_03 : Decline/ignore
+C --> UC05_04 : Auto-expiry
+C --> UC05_05 : Unmatch
+C --> UC05_06 : Block user
+
+note right of UC05_02
+  Both users must confirm
+  within 24 hours
+end note
+
+@enduml

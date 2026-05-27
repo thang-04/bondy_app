@@ -1,0 +1,50 @@
+@startuml UC01_Class
+!theme plain
+
+title UC01 - Authentication Class Diagram
+
+class User {
+  +id: BigInt
+  +email: String
+  +passwordHash: String
+  +emailVerified: Boolean
+  +accountStatus: AccountStatus
+  +createdAt: Timestamp
+  +register()
+  +login()
+  +verifyEmail()
+  +resetPassword()
+}
+
+class AuthService {
+  +register(email, password)
+  +login(email, password)
+  +verifyEmail(token)
+  +forgotPassword(email)
+  +resetPassword(token, newPassword)
+}
+
+class UserRepository {
+  +findByEmail(email)
+  +create(user)
+  +update(user)
+  +findById(id)
+}
+
+class EmailService {
+  +sendVerificationEmail(user)
+  +sendPasswordResetEmail(user)
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+AuthService --> UserRepository
+AuthService --> EmailService
+UserRepository --> User
+EmailService --> User
+
+@enduml

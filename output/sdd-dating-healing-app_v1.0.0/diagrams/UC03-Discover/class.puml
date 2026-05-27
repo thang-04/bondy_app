@@ -1,0 +1,43 @@
+@startuml UC03_Class
+!theme plain
+
+title UC03 - Discovery Class Diagram
+
+class DiscoveryService {
+  +getDiscoverList(userId, page)
+  +filterProfiles(profiles, prefs)
+  +refreshDiscoverCache(userId)
+}
+
+class CompatibilityEngine {
+  +calculateScore(userA, userB)
+  +getScoreFactors(userA, userB)
+  +applyDealBreakers(profiles, prefs)
+}
+
+class CompatibilityScore {
+  +id: BigInt
+  +userAId: BigInt
+  +userBId: BigInt
+  +score: Decimal
+  +factors: JSON
+  +calculatedAt: Timestamp
+  +save()
+  +getCached()
+}
+
+class Profile {
+  +id: BigInt
+  +displayName: String
+  +dateOfBirth: Date
+  +gender: Gender
+  +locationCity: String
+  +interests: List<String>
+  +relationshipGoal: RelationshipGoal
+}
+
+DiscoveryService --> CompatibilityEngine
+CompatibilityEngine --> CompatibilityScore
+CompatibilityEngine --> Profile
+
+@enduml

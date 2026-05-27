@@ -1,0 +1,39 @@
+@startuml UC03_Sequence
+!theme plain
+
+title UC03 - Discover Profile Sequence
+
+actor Customer as C
+participant "Discovery Service" as Disc
+participant "Compatibility Engine" as Comp
+participant "Profile Repository" as DB
+participant "Cache" as Cache
+
+C -> Disc : GET /discover?page=1
+Disc -> Disc : Load user preferences
+Disc -> Comp : Calculate compatibility scores
+Comp -> DB : Query eligible profiles
+DB --> Comp : profiles
+Comp -> Comp : Score each profile
+Comp --> Disc : scored profiles
+Disc -> Cache : Cache top profiles
+Disc --> C : paginated list
+
+note right of Comp
+  Score factors:
+  - shared interests (30%)
+  - distance (20%)
+  - age range (15%)
+  - goal alignment (25%)
+  - deal-breakers (10%)
+end note
+
+note right of Disc
+  Excludes:
+  - blocked users
+  - hidden profiles
+  - failed moderation
+  - already liked/passed
+end note
+
+@enduml

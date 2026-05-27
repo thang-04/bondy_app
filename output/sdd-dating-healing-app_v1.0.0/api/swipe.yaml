@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Swipe API
+  version: 1.0.0
+  description: Swipe actions for likes, passes, and reports
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /swipe/like:
+    post:
+      summary: Like a profile
+      tags:
+        - Swipe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+              properties:
+                targetUserId:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Like recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LikeResponse'
+        '201':
+          description: It's a match!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+        '402':
+          description: Daily like limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaywallResponse'
+
+  /swipe/pass:
+    post:
+      summary: Pass a profile
+      tags:
+        - Swipe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+              properties:
+                targetUserId:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Pass recorded
+
+  /swipe/report:
+    post:
+      summary: Report a profile
+      tags:
+        - Swipe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+                - reason
+              properties:
+                targetUserId:
+                  type: integer
+                  format: int64
+                reason:
+                  type: string
+                  enum: [inappropriate, spam, fake, harassment, other]
+                evidence:
+                  type: object
+      responses:
+        '201':
+          description: Report submitted
+
+  /swipe/likes/remaining:
+    get:
+      summary: Get remaining daily likes
+      tags:
+        - Swipe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Like count retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remaining:
+                    type: integer
+                  resetAt:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    LikeResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        likeId:
+          type: integer
+          format: int64
+
+    MatchResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        match:
+          $ref: '#/components/schemas/Match'
+        requiresConfirmation:
+          type: boolean
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userAId:
+          type: integer
+          format: int64
+        userBId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending, confirmed, expired, unmatched]
+        expiresAt:
+          type: string
+          format: date-time
+
+    PaywallResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          example: DAILY_LIKE_LIMIT_EXCEEDED
+        upgradeOptions:
+          type: array
+          items:
+            type: string
+            enum: [plus, premium, elite]
+        message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

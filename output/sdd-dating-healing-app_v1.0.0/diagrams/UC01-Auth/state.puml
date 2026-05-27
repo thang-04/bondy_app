@@ -1,0 +1,39 @@
+@startuml UC01_State
+!theme plain
+
+title UC01 - User Account State Diagram
+
+[*] --> Unverified : register()
+
+state Unverified {
+  [*] --> PendingEmail : account created
+  PendingEmail --> Verified : email verified
+  PendingEmail --> Expired : 24h timeout
+  Expired --> [*]
+}
+
+state Verified {
+  [*] --> Active : first login
+  Active --> Suspended : admin action
+  Suspended --> Active : admin action
+  Active --> Deleted : user request
+}
+
+Verified --> [*]
+Active --> [*]
+
+note right of Unverified
+  Protected actions blocked
+  until email verified
+end note
+
+note right of Verified
+  Full access granted
+end note
+
+note right of Suspended
+  Login blocked
+  Profile hidden
+end note
+
+@enduml

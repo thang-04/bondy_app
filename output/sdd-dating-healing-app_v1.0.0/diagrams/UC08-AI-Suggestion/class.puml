@@ -1,0 +1,35 @@
+@startuml UC08_Class
+!theme plain
+
+title UC08 - AI Suggestion Class Diagram
+
+class AIService {
+  +generateSuggestion(conversationId, userId)
+  +getContext(conversationId)
+}
+
+class AIUsage {
+  +id: BigInt
+  +userId: BigInt
+  +usageDate: Date
+  +count: Int
+  +limit: Int
+  +increment()
+  +checkLimit()
+}
+
+class SuggestionEngine {
+  +analyzeContext(profiles, interests, history)
+  +generateOptions(context)
+}
+
+class SubscriptionService {
+  +getUserTier(userId)
+  +getAILimit(tier)
+}
+
+AIService --> AIUsage
+AIService --> SuggestionEngine
+AIUsage --> SubscriptionService
+
+@enduml

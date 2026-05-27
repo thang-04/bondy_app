@@ -1,0 +1,27 @@
+@startuml UC06_State
+!theme plain
+
+title UC06 - Conversation State
+
+[*] --> Active : created
+
+state Active {
+  [*] --> HasUnread : new message
+  HasUnread --> Read : user opens
+  Read --> HasUnread : new message
+
+  [*] --> Typing : other user typing
+  Typing --> [*] : timeout
+}
+
+Active --> Archived : user archives
+Active --> Deleted : user deletes
+
+Archived --> Active : user unarchives
+
+note right of Deleted
+  Retained for evidence
+  or user deletion cleanup
+end note
+
+@enduml

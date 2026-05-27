@@ -1,0 +1,30 @@
+@startuml UC03_Use_Case
+!theme plain
+
+title UC03 - Discover Use Case
+
+left to right direction
+
+actor Customer as C
+actor "AI Service" as AI
+
+package "Discovery" {
+  usecase "UC03-01: View Discover List" as UC03_01
+  usecase "UC03-02: Filter Profiles" as UC03_02
+  usecase "UC03-03: View Compatibility Score" as UC03_03
+  usecase "UC03-04: Update Discovery Preferences" as UC03_04
+}
+
+C --> UC03_01 : Open discover
+C --> UC03_02 : Set filters
+C --> UC03_03 : View score details
+AI --> UC03_03 : Calculate score
+
+note right of UC03_01
+  Filters: age, distance,
+  gender, orientation,
+  relationship goal,
+  shared interests
+end note
+
+@enduml

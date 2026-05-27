@@ -1,0 +1,30 @@
+@startuml UC08_Use_Case
+!theme plain
+
+title UC08 - AI Chat Suggestion Use Case
+
+left to right direction
+
+actor Customer as C
+actor "AI Service" as AI
+
+package "AI Suggestion" {
+  usecase "UC08-01: Request Suggestion" as UC08_01
+  usecase "UC08-02: View Suggestions" as UC08_02
+  usecase "UC08-03: Send Suggested Text" as UC08_03
+  usecase "UC08-04: Track Usage" as UC08_04
+  usecase "UC08-05: Check Daily Limit" as UC08_05
+}
+
+C --> UC08_01 : Tap AI suggest
+C --> UC08_02 : View options
+C --> UC08_03 : Send selected
+AI --> UC08_04 : Count usage
+AI --> UC08_05 : Enforce limit
+
+note right of UC08_01
+  Free: 10/day
+  Paid: TBD
+end note
+
+@enduml

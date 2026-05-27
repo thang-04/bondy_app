@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: Dating App - Conversation API
+  version: 1.0.0
+  description: Conversation management endpoints
+
+servers:
+  - url: https://api.datingapp.com/v1
+
+paths:
+  /conversations:
+    get:
+      summary: List conversations
+      tags:
+        - Conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, archived, deleted]
+            default: active
+      responses:
+        '200':
+          description: Conversations retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConversationPreview'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /conversations/{conversationId}:
+    get:
+      summary: Get conversation details
+      tags:
+        - Conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Conversation retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '403':
+          description: Not a member
+
+    put:
+      summary: Update conversation (archive)
+      tags:
+        - Conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, archived]
+      responses:
+        '200':
+          description: Conversation updated
+
+    delete:
+      summary: Delete conversation
+      tags:
+        - Conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Conversation deleted
+
+components:
+  schemas:
+    ConversationPreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        otherUser:
+          $ref: '#/components/schemas/OtherUserPreview'
+        lastMessage:
+          $ref: '#/components/schemas/LastMessage'
+        unreadCount:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+
+    OtherUserPreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        primaryPhoto:
+          type: string
+        onlineStatus:
+          type: string
+          enum: [online, offline, away]
+
+    LastMessage:
+      type: object
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, emoji, image, voice, ai_suggestion]
+        createdAt:
+          type: string
+          format: date-time
+
+    ConversationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        matchId:
+          type: integer
+          format: int64
+        otherUser:
+          $ref: '#/components/schemas/OtherUserPreview'
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

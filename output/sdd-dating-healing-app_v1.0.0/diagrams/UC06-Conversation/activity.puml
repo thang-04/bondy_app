@@ -1,0 +1,16 @@
+@startuml UC06_Activity
+!theme plain
+
+title UC06 - Conversation Creation Activity
+
+start
+:Match confirmed by both users;
+:Create conversation record;
+:Link conversation to match;
+:Add both matched users as members;
+:Initialize unread counts;
+:Set status to active;
+:Return conversation;
+stop
+
+@enduml

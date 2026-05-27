@@ -1,0 +1,29 @@
+@startuml UC05_Sequence
+!theme plain
+
+title UC05 - Match Confirmation Sequence
+
+actor Customer as C
+participant "Match Service" as Match
+participant "Conversation Service" as Conv
+participant "Match Repository" as DB
+
+C -> Match : POST /matches/{id}/confirm
+Match -> DB : Load match
+alt both not confirmed
+  Match -> Match : Update user confirmation
+  DB --> Match : saved
+  alt both now confirmed
+    Match -> Conv : Create conversation
+    Conv -> DB : Create conversation
+    Conv --> Match : created
+    Match --> C : 201 Conversation created
+    Match -> Match : Notify other user
+  else only one confirmed
+    Match --> C : 200 Confirmed, waiting
+  endif
+else already confirmed
+  Match --> C : 409 Already confirmed
+endif
+
+@enduml

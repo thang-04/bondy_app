@@ -1,0 +1,97 @@
+@startuml Deployment_Diagram
+!theme plain
+
+title Dating Matching & Healing App - Deployment Architecture
+
+node "Load Balancer" {
+  [Nginx\nSSL Termination] as LB
+}
+
+node "Web Tier" {
+  [Web Server 1\n(Express/Node)] as Web1
+  [Web Server 2\n(Express/Node)] as Web2
+}
+
+node "App Tier" {
+  [App Server 1] as App1
+  [App Server 2] as App2
+  [App Server 3] as App3
+}
+
+node "Cache Tier" {
+  [Redis Cluster\nMaster-Slave] as Redis
+}
+
+node "DB Tier" {
+  [MySQL Primary] as MySQL_P
+  [MySQL Replica 1] as MySQL_R1
+  [MySQL Replica 2] as MySQL_R2
+}
+
+node "Message Queue" {
+  [RabbitMQ\nAsync Tasks] as MQ
+}
+
+node "AI Service" {
+  [AI Service\n(Docker)] as AI
+}
+
+node "Monitoring" {
+  [Prometheus] as Prom
+  [Grafana] as Graf
+}
+
+LB --> Web1 : HTTP/HTTPS
+LB --> Web2 : HTTP/HTTPS
+
+Web1 --> App1 : AJP
+Web2 --> App2 : AJP
+
+App1 --> Redis : Session/Cache
+App2 --> Redis : Session/Cache
+App3 --> Redis : Session/Cache
+
+App1 --> MySQL_P : Primary
+App2 --> MySQL_R1 : Read
+App3 --> MySQL_R2 : Read
+
+App1 --> MQ : Tasks
+App2 --> MQ : Tasks
+App3 --> MQ : Tasks
+
+MQ --> AI : Async
+
+note top of LB
+  - 2x Nginx
+  - Health checks
+  - SSL offload
+end note
+
+note top of Web Tier
+  - Auto-scaling
+  - Min 2 instances
+end note
+
+note top of App Tier
+  - Stateless
+  - Min 3 instances
+end note
+
+note left of Redis
+  - Session store
+  - Rate limit
+  - Queue pending
+end note
+
+note left of MySQL_P
+  - WAL enabled
+  - Point-in-time recovery
+end note
+
+note bottom of MQ
+  - Chat notifications
+  - AI processing
+  - Moderation jobs
+end note
+
+@enduml

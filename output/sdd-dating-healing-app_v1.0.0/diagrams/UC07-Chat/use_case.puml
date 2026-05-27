@@ -1,0 +1,36 @@
+@startuml UC07_Use_Case
+!theme plain
+
+title UC07 - Chat Use Case
+
+left to right direction
+
+actor Customer as C
+actor "AI Service" as AI
+
+package "Chat" {
+  usecase "UC07-01: Send Message" as UC07_01
+  usecase "UC07-02: Receive Message" as UC07_02
+  usecase "UC07-03: Mark as Seen" as UC07_03
+  usecase "UC07-04: Send Typing Indicator" as UC07_04
+  usecase "UC07-05: Update Online Status" as UC07_05
+  usecase "UC07-06: Send Image" as UC07_07
+  usecase "UC07-07: Send Voice" as UC07_08
+}
+
+C --> UC07_01 : Type and send
+C --> UC07_03 : Open chat
+C --> UC07_04 : Type
+C --> UC07_05 : App background/foreground
+C --> UC07_07 : Attach image
+C --> UC07_08 : Record voice
+AI --> UC07_02 : Receive
+
+note right of UC07_01
+  Message types:
+  - text, emoji
+  - image, voice
+  - ai_suggestion
+end note
+
+@enduml

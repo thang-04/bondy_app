@@ -1,0 +1,31 @@
+@startuml UC02_State
+!theme plain
+
+title UC02 - Profile Visibility State Diagram
+
+[*] --> Hidden : new profile
+
+state Hidden {
+  note: Profile not visible in discover
+  [*] --> Visible : user enables
+  Visible --> Hidden : user disables
+}
+
+state Visible {
+  [*] --> Active : profile complete
+  Active --> Hidden : user toggles off
+
+  state Active {
+    [*] --> PendingReview : AI detects issue
+    PendingReview --> Active : admin approves
+    PendingReview --> Flagged : admin warns
+    Flagged --> Active : user updates
+    Active --> UnderReview : report filed
+    UnderReview --> Active : admin clears
+    UnderReview --> Suspended : admin action
+  }
+}
+
+Visible --> [*] : profile deleted
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml UC07_Activity
+!theme plain
+
+title UC07 - Send Message Activity
+
+start
+:User types message;
+:User clicks send;
+:Validate message not empty;
+if (Empty?) then (yes)
+  :Return error;
+  stop
+endif
+:Validate user in conversation;
+if (Not member?) then (yes)
+  :Return 403 forbidden;
+  stop
+endif
+:Save message to database;
+:Publish to WebSocket;
+:Deliver to recipient;
+:Update delivery status;
+if (Recipient online?) then (yes)
+  :Show delivered;
+else
+  :Show sent;
+endif
+stop
+
+@enduml

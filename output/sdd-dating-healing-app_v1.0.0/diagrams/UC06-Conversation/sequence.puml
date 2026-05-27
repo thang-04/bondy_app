@@ -1,0 +1,22 @@
+@startuml UC06_Sequence
+!theme plain
+
+title UC06 - Create Conversation Sequence
+
+participant "Match Service" as Match
+participant "Conversation Service" as Conv
+participant "Conversation Repository" as DB
+
+Match -> Conv : Create conversation(matchId)
+Conv -> DB : Save conversation
+DB --> Conv : created
+Conv -> Conv : Add both members
+Conv --> Match : conversation ready
+
+note right of Conv
+  Members added:
+  - Match user A
+  - Match user B
+end note
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml UC01_Activity
+!theme plain
+
+title UC01 - Authentication Activity Diagram
+
+start
+:User enters email and password;
+:Validate email format;
+if (Invalid email?) then (yes)
+  :Return error: Invalid email format;
+  stop
+endif
+:Validate password complexity;
+if (Invalid password?) then (yes)
+  :Return error: Password too weak;
+  stop
+endif
+:Check for duplicate email;
+if (Email exists?) then (yes)
+  :Return error: Email already registered;
+  stop
+endif
+:Hash password;
+:Create user record;
+:Send verification email;
+:Return success with unverified status;
+stop
+
+@enduml

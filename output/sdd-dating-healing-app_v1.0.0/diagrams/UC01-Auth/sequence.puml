@@ -1,0 +1,31 @@
+@startuml UC01_Sequence
+!theme plain
+
+title UC01 - Authentication Sequence Diagram
+
+actor Customer as C
+participant "API Gateway" as Gateway
+participant "Auth Service" as Auth
+participant "User Repository" as DB
+participant "Email Service" as Email
+
+C -> Gateway : POST /auth/register
+Gateway -> Auth : RegisterRequest
+Auth -> Auth : Validate email format
+Auth -> Auth : Validate password rules
+Auth -> DB : Check duplicate email
+DB --> Auth : no duplicate
+Auth -> Auth : Hash password
+Auth -> DB : Create user
+DB --> Auth : user created
+Auth -> Email : Send verification email
+Email --> Auth : email queued
+Auth --> Gateway : 201 Created
+Gateway --> C : { user_id, message }
+
+note right of Auth
+  Email verification pending
+  Account status = unverified
+end note
+
+@enduml

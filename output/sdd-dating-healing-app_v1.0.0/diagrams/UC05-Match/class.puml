@@ -1,0 +1,51 @@
+@startuml UC05_Class
+!theme plain
+
+title UC05 - Match Lifecycle Class Diagram
+
+class Match {
+  +id: BigInt
+  +userAId: BigInt
+  +userBId: BigInt
+  +userAConfirmed: Boolean
+  +userBConfirmed: Boolean
+  +status: MatchStatus
+  +expiresAt: Timestamp
+  +create()
+  +confirm(userId)
+  +expire()
+  +unmatch()
+}
+
+class Conversation {
+  +id: BigInt
+  +matchId: BigInt
+  +status: ConvStatus
+  +create()
+  +close()
+}
+
+class ConversationMember {
+  +id: BigInt
+  +conversationId: BigInt
+  +userId: BigInt
+  +joinedAt: Timestamp
+}
+
+enum MatchStatus {
+  PENDING
+  CONFIRMED
+  EXPIRED
+  UNMATCHED
+}
+
+enum ConvStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+Match --> Conversation : creates
+Conversation --> ConversationMember : has
+
+@enduml
