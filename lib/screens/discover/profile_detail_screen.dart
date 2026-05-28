@@ -515,9 +515,43 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     );
   }
 
+  String _getDatingGoalText(String? goal) {
+    switch (goal) {
+      case 'LONG_TERM':
+        return 'Mối quan hệ lâu dài';
+      case 'MARRIAGE':
+        return 'Muốn tìm người bạn đời';
+      case 'DATING':
+        return 'Hẹn hò tìm hiểu';
+      case 'FRIENDSHIP':
+        return 'Kết bạn';
+      case 'NOT_SURE':
+        return 'Chưa xác định';
+      default:
+        return goal ?? 'Mối quan hệ lâu dài';
+    }
+  }
+
+  String _getDatingGoalSubtitle(String? goal) {
+    switch (goal) {
+      case 'LONG_TERM':
+        return 'Mong muốn kết nối nghiêm túc';
+      case 'MARRIAGE':
+        return 'Muốn xây dựng gia đình lâu dài';
+      case 'DATING':
+        return 'Trải nghiệm và tìm hiểu đối phương';
+      case 'FRIENDSHIP':
+        return 'Mở rộng vòng bạn bè cảm xúc';
+      case 'NOT_SURE':
+        return 'Mở lòng với mọi kiểu kết nối';
+      default:
+        return 'Mong muốn kết nối nghiêm túc';
+    }
+  }
+
   Widget _buildDatingGoal(DiscoverProfile profile) {
-    final goalText = profile.datingGoal ?? 'Mối quan hệ lâu dài';
-    final goalSubtitle = profile.datingGoal != null ? 'Mong muốn kết nối nghiêm túc' : 'Muốn tìm người bạn đời';
+    final goalText = _getDatingGoalText(profile.datingGoal);
+    final goalSubtitle = _getDatingGoalSubtitle(profile.datingGoal);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
