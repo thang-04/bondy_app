@@ -70,15 +70,23 @@ class DiscoverProfile {
         ? (json['distanceKm'] as num).toDouble()
         : null;
 
+    final String city = json['city']?.toString() ?? '';
+    final String distanceLabel = distanceKm != null
+        ? (distanceKm % 1 == 0
+            ? 'Cách bạn ${distanceKm.toInt()} km'
+            : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
+        : '';
+    
+    final String finalDistance = [
+      if (distanceLabel.isNotEmpty) distanceLabel,
+      if (city.isNotEmpty) city,
+    ].join(' • ');
+
     return DiscoverProfile(
       id: json['userId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Ẩn danh',
       age: (json['age'] as num?)?.toInt() ?? 0,
-      distance: distanceKm != null
-          ? (distanceKm % 1 == 0
-              ? 'Cách bạn ${distanceKm.toInt()} km'
-              : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
-          : (json['city']?.toString() ?? ''),
+      distance: finalDistance.isNotEmpty ? finalDistance : city,
       bio: json['bio']?.toString() ?? '',
       vibe: json['vibe']?.toString(),
       prompts: promptsRaw
