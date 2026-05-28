@@ -166,13 +166,20 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               );
             },
             backgroundColor: Colors.transparent,
-            elevation: 4,
+            elevation: 0,
             child: Container(
               width: 56,
               height: 56,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
+                color: Colors.white,
                 shape: BoxShape.circle,
-                gradient: BondyColors.primaryGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFEA2A5A).withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
