@@ -7,6 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/discover_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/bondy_feedback.dart';
+import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 import 'widgets/report_bottom_sheet.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
@@ -65,9 +66,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         return;
       }
       navigator.pop(action);
-    } on QuotaExceededException catch (e) {
+    } on QuotaExceededException {
       if (!mounted) return;
-      BondyFeedback.showError(context, e, fallback: e.message);
+      showDialog(
+        context: context,
+        builder: (ctx) => const LikeQuotaExceededDialog(),
+      );
     } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(context, e);

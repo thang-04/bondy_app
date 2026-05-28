@@ -13,6 +13,7 @@ import '../../widgets/match/new_match_receipt_sheet.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
+import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 
 String discoverSwipeActionForDirection(AxisDirection direction) {
   switch (direction) {
@@ -156,25 +157,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   void _showQuotaDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hết lượt like'),
-        content: const Text(
-          'Bạn đã dùng hết lượt like hôm nay. Nâng cấp Premium để tiếp tục (beta — chưa thu phí).',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Để sau'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.of(context).pushNamed('/settings/premium');
-            },
-            child: const Text('Xem gói Premium'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const LikeQuotaExceededDialog(),
     );
   }
 

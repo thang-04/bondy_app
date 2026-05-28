@@ -1,0 +1,179 @@
+<h2>Đề xuất thiết kế chi tiết (Cập nhật Logo thương hiệu ở Home)</h2>
+<p class="subtitle">Đã bổ sung Logo mini thương hiệu Bondy vào thanh tiêu đề trang chủ</p>
+
+<div class="split">
+  <!-- MÀN HOME MOCKUP -->
+  <div class="mockup" style="max-width: 380px;">
+    <div class="mockup-header">📱 MÀN HÌNH HOME (MỚI - ĐÃ CÓ LOGO)</div>
+    <div class="mockup-body" style="padding: 16px; background: #fff9f5; font-family: sans-serif; color: #5d4e46;">
+      <!-- Header with Brand Logo -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <!-- Custom Brand Logo (Representing assets/images/logo.png mini) -->
+          <div style="width:28px; height:28px; background: linear-gradient(135deg, #ff4b8b 0%, #ff8a6c 100%); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; box-shadow: 0 2px 6px rgba(255, 75, 139, 0.3);">
+            ❤️
+          </div>
+          <span style="font-weight:900; font-size:20px; color:#ff7e5f; letter-spacing:-0.5px;">Bondy</span>
+        </div>
+        <div style="width:32px; height:32px; border-radius:50%; background:#ffd9c0; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">L</div>
+      </div>
+      
+      <!-- Greeting -->
+      <div style="margin-bottom:16px;">
+        <h4 style="margin:0; font-size:22px; font-weight:800;">Chào Linh Chi 👋</h4>
+        <span style="font-size:12px; color:#9c8a82;">Hôm nay bạn cảm thấy thế nào?</span>
+      </div>
+
+      <!-- Quick Mood Check-in -->
+      <div style="background:#fff5f2; border:1px solid #ffd9c0; border-radius:16px; padding:12px; margin-bottom:16px;">
+        <div style="font-size:12px; font-weight:bold; margin-bottom:8px; display:flex; align-items:center; gap:4px;">
+          <span>🧘</span> Check-in cảm xúc hôm nay
+        </div>
+        <div style="display:flex; justify-content:space-around; font-size:20px;">
+          <span style="cursor:pointer;" title="Vui">😊</span>
+          <span style="cursor:pointer;" title="Bình yên">😌</span>
+          <span style="cursor:pointer;" title="Mệt mỏi">😴</span>
+          <span style="cursor:pointer;" title="Buồn">😢</span>
+          <span style="cursor:pointer;" title="Hào hứng">🤩</span>
+        </div>
+      </div>
+
+      <!-- NEW SECTION: Suggested Profiles -->
+      <div style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+          <span style="font-size:14px; font-weight:bold;">🔥 Gợi ý tương thích cao</span>
+          <span style="font-size:10px; color:#ff7e5f; font-weight:bold; letter-spacing:1px;">XEM THÊM</span>
+        </div>
+        <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;">
+          <!-- Card 1 -->
+          <div style="min-width:120px; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #ffe5d9; box-shadow: 0 4px 8px rgba(0,0,0,0.04);">
+            <div style="height:100px; background:#ffd9c0; display:flex; align-items:center; justify-content:center; font-size:24px; position:relative; background-image:url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop'); background-size:cover;">
+              <span style="position:absolute; bottom:6px; right:6px; background:#ff4d6d; color:#fff; font-size:9px; font-weight:bold; padding:2px 6px; border-radius:10px;">98% Match</span>
+            </div>
+            <div style="padding:6px 8px;">
+              <div style="font-size:12px; font-weight:bold;">Linh Chi, 24</div>
+              <div style="font-size:9px; color:#9c8a82;">Cách 3.5 km</div>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div style="min-width:120px; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #ffe5d9; box-shadow: 0 4px 8px rgba(0,0,0,0.04);">
+            <div style="height:100px; background:#ffd9c0; display:flex; align-items:center; justify-content:center; font-size:24px; position:relative; background-image:url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop'); background-size:cover;">
+              <span style="position:absolute; bottom:6px; right:6px; background:#ff4d6d; color:#fff; font-size:9px; font-weight:bold; padding:2px 6px; border-radius:10px;">92% Match</span>
+            </div>
+            <div style="padding:6px 8px;">
+              <div style="font-size:12px; font-weight:bold;">Minh Hải, 26</div>
+              <div style="font-size:9px; color:#9c8a82;">Cách 5.2 km</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bento Grid (Discovery) -->
+      <div style="margin-bottom:16px;">
+        <span style="font-size:14px; font-weight:bold; display:block; margin-bottom:8px;">Khám phá nhanh</span>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:#fff5f2; border:1px solid #ffe5d9; border-radius:12px; padding:12px;">
+            <div style="font-size:16px;">❤️</div>
+            <div style="font-size:12px; font-weight:bold; margin-top:4px;">Kết đôi</div>
+            <div style="font-size:9px; color:#9c8a82;">Tìm tri kỷ</div>
+          </div>
+          <div style="background:#fff5f2; border:1px solid #ffe5d9; border-radius:12px; padding:12px;">
+            <div style="font-size:16px;">🧘</div>
+            <div style="font-size:12px; font-weight:bold; margin-top:4px;">Chữa lành</div>
+            <div style="font-size:9px; color:#9c8a82;">Thiền & Yoga</div>
+          </div>
+        </div>
+        <div style="background:#fff5f2; border:1px solid #ffe5d9; border-radius:12px; padding:12px; margin-top:12px; display:flex; align-items:center; gap:12px;">
+          <div style="font-size:18px;">👥</div>
+          <div>
+            <div style="font-size:12px; font-weight:bold;">Mối quan hệ</div>
+            <div style="font-size:9px; color:#9c8a82;">Lời khuyên chuyên gia</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÀN PROFILE DETAIL MOCKUP -->
+  <div class="mockup" style="max-width: 380px;">
+    <div class="mockup-header">📱 MÀN HÌNH PROFILE DETAIL</div>
+    <div class="mockup-body" style="padding: 0; background: #fafafa; font-family: sans-serif; color: #1a1a1a; position:relative;">
+      <!-- Hero with Clip -->
+      <div style="height:250px; position:relative; background-image:url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop'); background-size:cover; border-bottom-left-radius:30px; border-bottom-right-radius:30px; overflow:hidden;">
+        <!-- Gradient -->
+        <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%);"></div>
+        <!-- Info overlay -->
+        <div style="position:absolute; bottom:16px; left:16px; right:16px; color:#fff;">
+          <h4 style="margin:0; font-size:24px; font-weight:bold; display:flex; align-items:center; gap:6px;">Linh Chi <span style="width:8px; height:8px; background:#4ade80; border-radius:50%;"></span></h4>
+          <span style="font-size:13px; opacity:0.9;">24 tuổi • Cách 3.5 km</span>
+        </div>
+      </div>
+
+      <!-- Body Content -->
+      <div style="padding:16px; height:250px; overflow-y:auto; font-size:13px;">
+        <!-- Icebreaker -->
+        <div style="background:#eef2ff; border:1px solid #e0e7ff; border-radius:12px; padding:10px; margin-bottom:16px; display:flex; gap:10px;">
+          <span>💡</span>
+          <div>
+            <div style="font-size:10px; font-weight:bold; color:#4f46e5; text-transform:uppercase;">Gợi ý mở lời</div>
+            <div style="font-style:italic; color:#4b5563; font-size:11px;">"Hãy thử hỏi Linh Chi về những hoạt động cuối tuần yêu thích..."</div>
+          </div>
+        </div>
+
+        <!-- About Me -->
+        <div style="margin-bottom:16px;">
+          <h5 style="margin:0 0 6px 0; font-size:14px; font-weight:bold;">Về mình</h5>
+          <p style="margin:0; color:#4b5563; line-height:1.5;">Mình là người hướng nội nhưng thích đi dạo phố và khám phá quán cà phê nhỏ. Đang tìm kiếm mối quan hệ chân thành để cùng nhau chữa lành...</p>
+        </div>
+
+        <!-- Horizontal Gallery -->
+        <div style="margin-bottom:16px;">
+          <h5 style="margin:0 0 6px 0; font-size:14px; font-weight:bold;">Hình ảnh</h5>
+          <div style="display:flex; gap:8px;">
+            <div style="width:70px; height:70px; background:#e5e7eb; border-radius:10px; background-image:url('https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100'); background-size:cover;"></div>
+            <div style="width:70px; height:70px; background:#e5e7eb; border-radius:10px; position:relative; background-image:url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100'); background-size:cover;">
+              <div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:14px; border-radius:10px;">+3</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal -->
+        <div>
+          <h5 style="margin:0 0 6px 0; font-size:14px; font-weight:bold;">Mục tiêu</h5>
+          <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:18px;">❤️</span>
+            <div>
+              <div style="font-weight:bold;">Mối quan hệ lâu dài</div>
+              <div style="font-size:11px; color:#6b7280;">Muốn tìm người bạn đời</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Heart Button -->
+      <div style="position:absolute; bottom:16px; right:16px; width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, #ff4b8b, #ff6b6b); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; box-shadow:0 4px 12px rgba(255,75,139,0.4); cursor:pointer;">❤️</div>
+    </div>
+  </div>
+</div>
+
+<hr style="border: none; border-top: 1px solid #ffd9c0; margin: 32px 0;">
+
+<h3>Xác nhận đề xuất đã cập nhật:</h3>
+<p class="subtitle">Bấm Đồng ý để tôi tạo file Design Spec và chuẩn bị cho kế hoạch triển khai</p>
+
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Đồng ý và triển khai</h3>
+      <p>Mockup đã có logo mini thương hiệu chính xác. Hãy bắt đầu lập tài liệu thiết kế và kế hoạch chi tiết.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Vẫn cần điều chỉnh tiếp</h3>
+      <p>Cần tinh chỉnh thêm các chi tiết khác.</p>
+    </div>
+  </div>
+</div>

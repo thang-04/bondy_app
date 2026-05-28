@@ -19,6 +19,7 @@ import '../../widgets/community/community_profile_card.dart';
 import '../../services/discover_service.dart';
 import '../auth/interests_setup_screen.dart';
 import 'home_dashboard_screen.dart';
+import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 
 class MainShellScreen extends StatefulWidget {
   final ProfileService? profileService;
@@ -580,10 +581,12 @@ class _CommunityTabState extends State<_CommunityTab> {
         );
       }
       await _viewModel.loadFeed();
-    } on QuotaExceededException catch (e) {
-      // Test #14: hết lượt like ⇒ không ghi nhận, không xóa card khỏi feed.
+    } on QuotaExceededException {
       if (!mounted) return;
-      BondyFeedback.showError(context, e, fallback: e.message);
+      showDialog(
+        context: context,
+        builder: (ctx) => const LikeQuotaExceededDialog(),
+      );
     } catch (e) {
       // Test #18: lỗi mạng / lỗi server ⇒ báo rõ ràng, KHÔNG báo đã like.
       if (!mounted) return;
