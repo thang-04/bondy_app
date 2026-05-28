@@ -353,12 +353,44 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
 
   Widget _buildHorizontalPendingList() {
     return SizedBox(
-      height: 100,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _pendingMatches.length,
         itemBuilder: (context, index) {
           final match = _pendingMatches[index];
+          final bool hasGradient = index % 3 != 2;
+          final bool isOnline = index % 3 == 0;
+
+          final avatarContainer = Container(
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: hasGradient
+                  ? const LinearGradient(
+                      colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
+                    )
+                  : null,
+              color: hasGradient ? null : const Color(0xFFE2E8F0),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: CircleAvatar(
+                radius: 28,
+                backgroundImage: match.otherUserPhoto != null
+                    ? NetworkImage(match.otherUserPhoto!)
+                    : null,
+                child: match.otherUserPhoto == null
+                    ? Text(match.otherUserName[0].toUpperCase())
+                    : null,
+              ),
+            ),
+          );
+
           return Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
@@ -368,30 +400,24 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               ).then((_) => _loadAll(silent: true)),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(2.5),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundImage: match.otherUserPhoto != null
-                            ? NetworkImage(match.otherUserPhoto!)
-                            : null,
-                        child: match.otherUserPhoto == null
-                            ? Text(match.otherUserName[0].toUpperCase())
-                            : null,
-                      ),
-                    ),
+                  Stack(
+                    children: [
+                      avatarContainer,
+                      if (isOnline)
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF22C55E),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -410,7 +436,32 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
   }
 
+  bool _isNewConnection(ChatMatch chat) {
+    if (chat.lastMessage == null) return true;
+    if (!chat.lastMessage!.isMine && DateTime.now().difference(chat.updatedAt).inHours < 24) {
+      return true;
+    }
+    return false;
+  }
 
+  String _formatRelativeTime(DateTime value) {
+    final now = DateTime.now();
+    final difference = now.difference(value);
+
+    if (difference.inSeconds < 60) {
+      return 'Vừa xong';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} phút';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày';
+    } else {
+      final hour = value.hour.toString().padLeft(2, '0');
+      final minute = value.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+  }
 
   Widget _buildChatTile(BuildContext context, ChatMatch chat) {
     final displayName = chat.otherUser.displayName.isEmpty
@@ -420,19 +471,32 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final bool isNewChat = chat.lastMessage == null || chat.lastMessage!.content.isEmpty;
     final int seed = chat.id.hashCode;
     final String icebreaker = AIPromptsConfig.icebreakers[seed % AIPromptsConfig.icebreakers.length];
+    
+    final bool isUnread = chat.unreadCount > 0;
+    final bool showNewBadge = _isNewConnection(chat);
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        leading: _buildAvatar(chat.otherUser.photo, displayName),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        leading: _buildAvatar(chat.otherUser.photo, displayName, showNewBadge: showNewBadge),
         title: Text(
           displayName,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontWeight: isUnread ? FontWeight.w800 : FontWeight.w700,
+            color: const Color(0xFF0F172A),
           ),
         ),
         subtitle: isNewChat
@@ -466,7 +530,8 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                       chat.lastMessage!.content,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
-                        color: BondyColors.textSecondary,
+                        fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
+                        color: isUnread ? const Color(0xFF0F172A) : BondyColors.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -498,29 +563,23 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              _formatTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
+              _formatRelativeTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
-                color: BondyColors.textHint,
+                fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
+                color: showNewBadge 
+                    ? const Color(0xFFEF4444)
+                    : (isUnread ? const Color(0xFF0F172A) : BondyColors.textHint),
               ),
             ),
-            if (chat.unreadCount > 0) ...[
+            if (isUnread) ...[
               const SizedBox(height: 6),
               Container(
-                constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-                padding: const EdgeInsets.symmetric(horizontal: 7),
+                width: 12,
+                height: 12,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF97316),
+                  color: Color(0xFF3B82F6),
                   shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
                 ),
               ),
             ],
@@ -570,27 +629,53 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
   }
 
-  Widget _buildAvatar(String? photo, String displayName) {
+  Widget _buildAvatar(String? photo, String displayName, {bool showNewBadge = false}) {
+    Widget avatar;
     if (photo != null && photo.startsWith('http')) {
-      return CircleAvatar(radius: 24, backgroundImage: NetworkImage(photo));
+      avatar = CircleAvatar(radius: 26, backgroundImage: NetworkImage(photo));
+    } else {
+      final initial = displayName.trim().isEmpty
+          ? 'B'
+          : displayName.trim()[0].toUpperCase();
+      avatar = CircleAvatar(
+        radius: 26,
+        backgroundColor: BondyColors.primaryLight,
+        child: Text(
+          initial,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+        ),
+      );
     }
 
-    final initial = displayName.trim().isEmpty
-        ? 'B'
-        : displayName.trim()[0].toUpperCase();
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: BondyColors.primaryLight,
-      child: Text(
-        initial,
-        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-      ),
-    );
-  }
+    if (!showNewBadge) {
+      return avatar;
+    }
 
-  String _formatTime(DateTime value) {
-    final hour = value.hour.toString().padLeft(2, '0');
-    final minute = value.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        avatar,
+        Positioned(
+          top: -2,
+          right: -2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+            child: Text(
+              'Mới',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
