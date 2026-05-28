@@ -523,39 +523,15 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               )
             : Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      chat.lastMessage!.content,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
-                        color: isUnread ? const Color(0xFF0F172A) : BondyColors.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.local_florist, size: 12, color: BondyColors.primary),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Gợi ý hâm nóng: "$icebreaker"',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                              color: BondyColors.primary.withValues(alpha: 0.7),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  chat.lastMessage!.content,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
+                    color: isUnread ? const Color(0xFF0F172A) : BondyColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
         trailing: Column(
