@@ -194,9 +194,13 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: widget.profile.tags
-                            .map((tag) => _buildTag(tag))
-                            .toList(),
+                        children: [
+                          ...widget.profile.tags
+                              .take(3)
+                              .map((tag) => _buildTag(tag)),
+                          if (widget.profile.tags.length > 3)
+                            _buildTag('...'),
+                        ],
                       ),
 
                       const SizedBox(height: 16),
