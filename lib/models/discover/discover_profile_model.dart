@@ -27,6 +27,7 @@ class DiscoverProfile {
   final String imageUrl;
   final List<String> photos;
   final String? datingGoal;
+  final double? distanceKm;
 
   const DiscoverProfile({
     required this.id,
@@ -41,6 +42,7 @@ class DiscoverProfile {
     required this.imageUrl,
     this.photos = const [],
     this.datingGoal,
+    this.distanceKm,
   });
 
   factory DiscoverProfile.fromJson(Map<String, dynamic> json) {
@@ -64,12 +66,19 @@ class DiscoverProfile {
     }
 
     final promptsRaw = (json['prompts'] as List<dynamic>?) ?? [];
+    final double? distanceKm = json['distanceKm'] != null
+        ? (json['distanceKm'] as num).toDouble()
+        : null;
 
     return DiscoverProfile(
       id: json['userId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Ẩn danh',
       age: (json['age'] as num?)?.toInt() ?? 0,
-      distance: json['city']?.toString() ?? '',
+      distance: distanceKm != null
+          ? (distanceKm % 1 == 0
+              ? 'Cách bạn ${distanceKm.toInt()} km'
+              : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
+          : (json['city']?.toString() ?? ''),
       bio: json['bio']?.toString() ?? '',
       vibe: json['vibe']?.toString(),
       prompts: promptsRaw
@@ -89,6 +98,7 @@ class DiscoverProfile {
           '',
       photos: photosList,
       datingGoal: json['datingGoal']?.toString(),
+      distanceKm: distanceKm,
     );
   }
 }
