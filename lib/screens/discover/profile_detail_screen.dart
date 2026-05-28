@@ -21,6 +21,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     apiClient: ApiClient(),
   );
   bool _isSubmitting = false;
+  int _currentPhotoIndex = 0;
 
   DiscoverProfile? get _profile {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -65,11 +66,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       }
       navigator.pop(action);
     } on QuotaExceededException catch (e) {
-      // Test #14: hết quota ⇒ không pop màn detail.
       if (!mounted) return;
       BondyFeedback.showError(context, e, fallback: e.message);
     } catch (e) {
-      // Test #18: lỗi mạng ⇒ giữ nguyên màn hình, báo lỗi rõ ràng.
       if (!mounted) return;
       BondyFeedback.showError(context, e);
     } finally {
@@ -147,7 +146,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 380,
+            expandedHeight: 520,
             pinned: true,
             leading: IconButton(
               icon: const CircleAvatar(
@@ -242,7 +241,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                   _buildPhotoGallery(profile),
                   const SizedBox(height: 24),
                   _buildDatingGoal(profile),
-                  const SizedBox(height: 120), // Padding for Floating Action Button
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -253,90 +252,138 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildHero(DiscoverProfile profile) {
-    final imageChild = profile.imageUrl.startsWith('http')
-        ? Image.network(
-            profile.imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildHeroPlaceholder(profile),
-          )
-        : _buildHeroPlaceholder(profile);
+    final photos = profile.photos.isNotEmpty 
+        ? profile.photos 
+        : (profile.imageUrl.isNotEmpty ? [profile.imageUrl] : <String>[]);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(40),
-        bottomRight: Radius.circular(40),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          imageChild,
-          // Dark gradient overlay
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.75),
-                  Colors.black.withValues(alpha: 0.1),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.45, 0.8],
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final imageChild = (photos.isNotEmpty && _currentPhotoIndex < photos.length && photos[_currentPhotoIndex].startsWith('http'))
+            ? Image.network(
+                photos[_currentPhotoIndex],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildHeroPlaceholder(profile),
+              )
+            : _buildHeroPlaceholder(profile);
+
+        return GestureDetector(
+          onTapUp: (details) {
+            final x = details.localPosition.dx;
+            if (x < width * 0.35) {
+              if (_currentPhotoIndex > 0) {
+                setState(() {
+                  _currentPhotoIndex--;
+                });
+              }
+            } else if (x > width * 0.65) {
+              if (_currentPhotoIndex < photos.length - 1) {
+                setState(() {
+                  _currentPhotoIndex++;
+                });
+              }
+            }
+          },
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(40),
+              bottomRight: Radius.circular(40),
             ),
-          ),
-          // Name, Age and Distance Overlay
-          Positioned(
-            bottom: 24,
-            left: 24,
-            right: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      '${profile.name}, ${profile.age}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                imageChild,
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.75),
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.45, 0.8],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: Colors.white,
-                        size: 14,
+                ),
+                if (photos.length > 1)
+                  Positioned(
+                    top: 100,
+                    left: 20,
+                    right: 20,
+                    child: Row(
+                      children: List.generate(
+                        photos.length,
+                        (idx) => Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: idx == _currentPhotoIndex
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        profile.distance,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                    ),
+                  ),
+                Positioned(
+                  bottom: 24,
+                  left: 24,
+                  right: 24,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${profile.name}, ${profile.age}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              profile.distance,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -345,8 +392,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -417,7 +464,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildPhotoGallery(DiscoverProfile profile) {
-    if (profile.photos.length <= 1) return const SizedBox.shrink();
+    final photos = profile.photos.isNotEmpty 
+        ? profile.photos 
+        : (profile.imageUrl.isNotEmpty ? [profile.imageUrl] : <String>[]);
+    if (photos.length <= 1) return const SizedBox.shrink();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,16 +484,27 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: profile.photos.length,
+            itemCount: photos.length,
             itemBuilder: (context, index) {
-              return Container(
-                width: 120,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: NetworkImage(profile.photos[index]),
-                    fit: BoxFit.cover,
+              final isSelected = index == _currentPhotoIndex;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _currentPhotoIndex = index;
+                  });
+                },
+                child: Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: isSelected
+                        ? Border.all(color: BondyColors.primary, width: 3)
+                        : null,
+                    image: DecorationImage(
+                      image: NetworkImage(photos[index]),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               );
