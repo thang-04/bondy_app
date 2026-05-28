@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/bondy_exceptions.dart' show QuotaExceededException;
@@ -114,22 +116,27 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: _isSubmitting ? null : () => _swipe('LIKE'),
+        onPressed: _isSubmitting 
+            ? null 
+            : () {
+                HapticFeedback.lightImpact();
+                _swipe('LIKE');
+              },
         backgroundColor: Colors.transparent,
         elevation: 0,
         child: Container(
-          width: 56,
-          height: 56,
-          decoration: const BoxDecoration(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFFFF4B8B), Color(0xFFFF6B6B)],
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFD3A84), Color(0xFFFF6B6B)],
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x66FF4B8B),
-                blurRadius: 15,
-                offset: Offset(0, 4),
+                color: const Color(0xFFFD3A84).withValues(alpha: 0.35),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -144,7 +151,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     ),
                   ),
                 )
-              : const Icon(Icons.favorite, color: Colors.white, size: 28),
+              : const Icon(Icons.favorite, color: Colors.white, size: 30),
         ),
       ),
       body: CustomScrollView(
@@ -192,59 +199,134 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Hàng 1: Bento Grid nhỏ (% match & dating goal)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildCompatibility(profile)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildDatingGoal(profile)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Hàng 2: Gợi ý mở lời
                   _buildIcebreaker(profile),
-                  const SizedBox(height: 24),
-                  _buildCompatibility(profile),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Về tôi',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 16),
+
+                  // Hàng 3: Về tôi
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.menu_book_rounded,
+                              color: BondyColors.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Về tôi',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: BondyColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          profile.bio.isEmpty
+                              ? 'Người này chưa thêm giới thiệu.'
+                              : profile.bio,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            color: BondyColors.textSecondary,
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    profile.bio.isEmpty
-                        ? 'Người này chưa thêm giới thiệu.'
-                        : profile.bio,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      color: BondyColors.textSecondary,
-                      height: 1.6,
+                  const SizedBox(height: 16),
+
+                  // Hàng 4: Sở thích
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: BondyColors.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sở thích',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: BondyColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (profile.tags.isEmpty)
+                          Text(
+                            'Chưa có sở thích.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: BondyColors.textSecondary,
+                            ),
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: profile.tags.map(_buildTag).toList(),
+                          ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Sở thích',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (profile.tags.isEmpty)
-                    Text(
-                      'Chưa có sở thích.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: BondyColors.textSecondary,
-                      ),
-                    )
-                  else
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: profile.tags.map(_buildTag).toList(),
-                    ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+
                   _buildPhotoGallery(profile),
-                  const SizedBox(height: 24),
-                  _buildDatingGoal(profile),
                   const SizedBox(height: 120),
                 ],
               ),
@@ -364,30 +446,40 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.location_on_outlined,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              profile.distance,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                width: 1,
                               ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  profile.distance,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -426,16 +518,23 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         : '"Hãy thử hỏi ${profile.name} về những hoạt động cuối tuần yêu thích của cô ấy nhé."';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
-        border: Border.all(color: const Color(0xFFE0E7FF)),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFFFFBEB), // Amber pastel
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFFEF3C7),
+          width: 1,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF4F46E5), size: 22),
+          const Icon(
+            Icons.lightbulb_rounded,
+            color: Color(0xFFD97706), // Amber đậm
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -445,18 +544,19 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                   'GỢI Ý MỞ LỜI',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF4F46E5),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFD97706),
                     letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   icebreakerText,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontStyle: FontStyle.italic,
-                    color: const Color(0xFF4B5563),
+                    color: const Color(0xFF78350F),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -473,49 +573,79 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         : (profile.imageUrl.isNotEmpty ? [profile.imageUrl] : <String>[]);
     if (photos.length <= 1) return const SizedBox.shrink();
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Hình ảnh',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: photos.length,
-            itemBuilder: (context, index) {
-              final isSelected = index == _currentPhotoIndex;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _currentPhotoIndex = index;
-                  });
-                },
-                child: Container(
-                  width: 120,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: isSelected
-                        ? Border.all(color: BondyColors.primary, width: 3)
-                        : null,
-                    image: DecorationImage(
-                      image: NetworkImage(photos[index]),
-                      fit: BoxFit.cover,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.photo_library_rounded,
+                color: BondyColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Hình ảnh',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: BondyColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: photos.length,
+              itemBuilder: (context, index) {
+                final isSelected = index == _currentPhotoIndex;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _currentPhotoIndex = index;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 100,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? BondyColors.primary
+                            : Colors.transparent,
+                        width: 3,
+                      ),
+                      image: DecorationImage(
+                        image: NetworkImage(photos[index]),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -557,82 +687,82 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     final goalText = _getDatingGoalText(profile.datingGoal);
     final goalSubtitle = _getDatingGoalSubtitle(profile.datingGoal);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Mục tiêu',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      height: 106,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F3FF), // Tím pastel
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.favorite_border_rounded,
+            color: Color(0xFF8B5CF6),
+            size: 24,
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.grey.shade200),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-              ),
-            ],
+          const SizedBox(height: 10),
+          Text(
+            goalText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF6D28D9),
+            ),
           ),
-          child: Row(
-            children: [
-              const Icon(Icons.favorite_rounded, color: Color(0xFFFF4B8B), size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      goalText,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      goalSubtitle,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(height: 2),
+          Text(
+            goalSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF8B85C1),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildCompatibility(DiscoverProfile profile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      height: 106,
       decoration: BoxDecoration(
-        color: BondyColors.primaryLight,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFFFF0F5), // Hồng pastel
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.favorite, color: BondyColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '${profile.matchPercentage}% match',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: BondyColors.primary,
-              ),
+          const Icon(
+            Icons.favorite_rounded,
+            color: Color(0xFFEC4899),
+            size: 24,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${profile.matchPercentage}% Match',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF9D174D),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Mức độ hòa hợp',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFFC97A9E),
             ),
           ),
         ],
@@ -641,17 +771,28 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildTag(String label) {
+    final colors = [
+      {'bg': const Color(0xFFEFF6FF), 'fg': const Color(0xFF1E40AF)}, // Blue
+      {'bg': const Color(0xFFFFF0F5), 'fg': const Color(0xFF9D174D)}, // Pink
+      {'bg': const Color(0xFFECFDF5), 'fg': const Color(0xFF065F46)}, // Green
+      {'bg': const Color(0xFFFFF7ED), 'fg': const Color(0xFF9A3412)}, // Orange
+      {'bg': const Color(0xFFF5F3FF), 'fg': const Color(0xFF5B21B6)}, // Purple
+    ];
+    
+    final colorPair = colors[label.hashCode % colors.length];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: BondyColors.primaryLight,
-        borderRadius: BorderRadius.circular(8),
+        color: colorPair['bg'],
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
         style: GoogleFonts.plusJakartaSans(
           fontSize: 13,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
+          color: colorPair['fg'],
         ),
       ),
     );

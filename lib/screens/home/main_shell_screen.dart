@@ -685,30 +685,56 @@ class _ProfileTab extends StatefulWidget {
   @override
   State<_ProfileTab> createState() => _ProfileTabState();
 
-  static Widget _buildStat(String value, String label) {
+  static Widget _buildStat({
+    required String value,
+    required String label,
+    required IconData icon,
+    required Color bgColor,
+    required Color accentColor,
+  }) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        height: 94,
         decoration: BoxDecoration(
-          color: BondyColors.primaryLight,
-          borderRadius: BorderRadius.circular(8),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              value,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: BondyColors.primary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: accentColor, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  value,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: accentColor,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 6),
             Text(
               label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: BondyColors.textSecondary,
               ),
             ),
@@ -718,26 +744,34 @@ class _ProfileTab extends StatefulWidget {
     );
   }
 
-  static Widget _buildMenuItem(
-    IconData icon,
-    String label,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      child: ListTile(
-        leading: Icon(icon, color: BondyColors.textPrimary),
-        title: Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: BondyColors.textHint),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        onTap: onTap,
+  static Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: Icon(
+        icon,
+        color: BondyColors.textPrimary.withValues(alpha: 0.7),
+        size: 20,
       ),
+      title: Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: BondyColors.textPrimary,
+        ),
+      ),
+      trailing: trailing ??
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: BondyColors.textHint,
+            size: 20,
+          ),
+      onTap: onTap,
     );
   }
 }
@@ -827,77 +861,213 @@ class _ProfileTabState extends State<_ProfileTab> {
               Row(
                 children: [
                   _ProfileTab._buildStat(
-                    '${_stats['streakDays'] ?? 0}',
-                    'Ngày streak',
+                    value: '${_stats['streakDays'] ?? 0}',
+                    label: 'Ngày streak',
+                    icon: Icons.local_fire_department_rounded,
+                    bgColor: const Color(0xFFFFF5F0), // Cam pastel nhạt
+                    accentColor: const Color(0xFFF97316), // Cam đậm
                   ),
                   _ProfileTab._buildStat(
-                    '${_stats['matchCount'] ?? 0}',
-                    'Kết nối',
+                    value: '${_stats['matchCount'] ?? 0}',
+                    label: 'Kết nối',
+                    icon: Icons.favorite_rounded,
+                    bgColor: const Color(0xFFFFF0F5), // Hồng pastel nhạt
+                    accentColor: const Color(0xFFEC4899), // Hồng đậm
                   ),
                   _ProfileTab._buildStat(
-                    '${_stats['weeklyActivities'] ?? 0}',
-                    'Tuần này',
+                    value: '${_stats['weeklyActivities'] ?? 0}',
+                    label: 'Tuần này',
+                    icon: Icons.check_circle_rounded,
+                    bgColor: const Color(0xFFF5F3FF), // Tím pastel nhạt
+                    accentColor: const Color(0xFF8B5CF6), // Tím đậm
                   ),
                 ],
               ),
               const SizedBox(height: 32),
-              if (_errorMessage != null)
+              if (_errorMessage != null) ...[
                 BondyErrorBanner(
                   message: _errorMessage!,
                   onRetry: _loadProfile,
                 ),
-              _ProfileTab._buildMenuItem(
-                Icons.person_outline,
-                'Chỉnh sửa hồ sơ',
-                _openEditProfile,
-              ),
-              _ProfileTab._buildMenuItem(
-                Icons.favorite_outline,
-                'Sở thích',
-                () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const InterestsSetupScreen(fromProfile: true),
-                  ),
+                const SizedBox(height: 16),
+              ],
+              
+              // Nhóm 1: Cá nhân hóa & Premium
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.favorite_outline_rounded,
+                      label: 'Sở thích',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const InterestsSetupScreen(fromProfile: true),
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                    ),
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.people_alt_outlined,
+                      label: 'Mối quan hệ của tôi',
+                      onTap: () => Navigator.of(context).pushNamed('/relationship/home'),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                    ),
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.star_outline_rounded,
+                      label: 'Bondy Premium',
+                      onTap: () => Navigator.of(context).pushNamed('/settings/premium'),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'PRO',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              _ProfileTab._buildMenuItem(
-                Icons.favorite_outline,
-                'Mối quan hệ của tôi',
-                () => Navigator.of(context).pushNamed('/relationship/home'),
+              const SizedBox(height: 16),
+
+              // Nhóm 2: Bảo mật & Thiết lập
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.lock_outline_rounded,
+                      label: 'Đổi mật khẩu',
+                      onTap: () => Navigator.of(context).pushNamed('/settings/change-password'),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                    ),
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.shield_outlined,
+                      label: 'Quyền riêng tư',
+                      onTap: () => Navigator.of(context).pushNamed('/settings/privacy'),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                    ),
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.notifications_outlined,
+                      label: 'Thông báo',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
               ),
-              _ProfileTab._buildMenuItem(
-                Icons.star_outline,
-                'Bondy Premium',
-                () => Navigator.of(context).pushNamed('/settings/premium'),
+              const SizedBox(height: 16),
+
+              // Nhóm 3: Hỗ trợ & Thông tin
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Trợ giúp',
+                      onTap: () {},
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                    ),
+                    _ProfileTab._buildMenuItem(
+                      icon: Icons.info_outline_rounded,
+                      label: 'Về Bondy',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
               ),
-              _ProfileTab._buildMenuItem(
-                Icons.lock_outline,
-                'Đổi mật khẩu',
-                () => Navigator.of(
-                  context,
-                ).pushNamed('/settings/change-password'),
-              ),
-              _ProfileTab._buildMenuItem(
-                Icons.shield_outlined,
-                'Quyền riêng tư',
-                () => Navigator.of(context).pushNamed('/settings/privacy'),
-              ),
-              _ProfileTab._buildMenuItem(
-                Icons.notifications_outlined,
-                'Thông báo',
-                () {},
-              ),
-              _ProfileTab._buildMenuItem(Icons.help_outline, 'Trợ giúp', () {}),
-              _ProfileTab._buildMenuItem(Icons.info_outline, 'Về Bondy', () {}),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: _logout,
-                child: Text(
-                  'Đăng xuất',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: BondyColors.error,
-                    fontWeight: FontWeight.w600,
+              const SizedBox(height: 32),
+
+              // Nút Đăng xuất Outlined Đỏ Pastel
+              GestureDetector(
+                onTap: _logout,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1F2), // red-50
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFFECDD3), // red-200
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.logout_rounded,
+                          color: BondyColors.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Đăng xuất',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: BondyColors.error,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -913,46 +1083,94 @@ class _ProfileTabState extends State<_ProfileTab> {
     final displayName =
         profile?.displayName ??
         (_isLoading ? 'Đang tải...' : 'Người dùng Bondy');
-    final subtitle = profile == null
-        ? (_isLoading
-              ? 'Đang tải thông tin tài khoản'
-              : 'Kéo xuống để tải lại hồ sơ')
-        : [
-            if (profile.email.isNotEmpty) profile.email,
-            if (profile.bio?.isNotEmpty == true) profile.bio!,
-            if (profile.city?.isNotEmpty == true) profile.city!,
-          ].join('\n');
+    
+    final detailsList = [
+      if (profile != null && profile.email.isNotEmpty) profile.email,
+      if (profile?.bio?.isNotEmpty == true) profile!.bio!,
+      if (profile?.city?.isNotEmpty == true) profile!.city!,
+    ];
 
-    return Column(
-      children: [
-        _buildAvatar(profile, displayName),
-        const SizedBox(height: 12),
-        Text(
-          displayName,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            color: BondyColors.textSecondary,
-          ),
-        ),
-        if (_isLoading) ...[
-          const SizedBox(height: 16),
-          const SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(BondyRadius.lg), // 24.0
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
-      ],
+      ),
+      child: Stack(
+        children: [
+          // Nút chỉnh sửa mờ ở góc trên bên phải
+          Positioned(
+            top: 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: _openEditProfile,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: BondyColors.background.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.edit_rounded,
+                  size: 18,
+                  color: BondyColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              children: [
+                _buildAvatar(profile, displayName),
+                const SizedBox(height: 16),
+                Text(
+                  displayName,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: BondyColors.textPrimary,
+                  ),
+                ),
+                if (detailsList.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    detailsList.join('  •  '),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: BondyColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                if (_isLoading) ...[
+                  const SizedBox(height: 16),
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: BondyColors.primary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -962,35 +1180,59 @@ class _ProfileTabState extends State<_ProfileTab> {
         (profile?.photos.isNotEmpty == true ? profile!.photos.first : null);
 
     return Container(
-      width: 100,
-      height: 100,
+      width: 90,
+      height: 90,
       decoration: BoxDecoration(
-        color: BondyColors.primaryLight,
         shape: BoxShape.circle,
-        border: Border.all(color: BondyColors.primary, width: 3),
+        border: Border.all(
+          color: BondyColors.primary.withValues(alpha: 0.15),
+          width: 4,
+        ),
       ),
-      child: avatarUrl == null
-          ? _avatarPlaceholder(displayName)
-          : ClipOval(
-              child: Image.network(
-                avatarUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    _avatarPlaceholder(displayName),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+        ),
+        child: avatarUrl == null
+            ? _avatarPlaceholder(displayName)
+            : ClipOval(
+                child: Image.network(
+                  avatarUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _avatarPlaceholder(displayName),
+                ),
               ),
-            ),
+      ),
     );
   }
 
   Widget _avatarPlaceholder(String displayName) {
     final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
-    return Center(
-      child: Text(
-        initial,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 34,
-          fontWeight: FontWeight.w700,
-          color: BondyColors.primary,
+    return Container(
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF6366F1), // Indigo
+            Color(0xFFEC4899), // Pink
+          ],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
       ),
     );
