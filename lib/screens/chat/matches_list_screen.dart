@@ -89,8 +89,6 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
         children: [
           _buildHeaderTitle(context),
           const SizedBox(height: 12),
-          _buildAiBanner(),
-          const SizedBox(height: 12),
           _buildSearchField(),
           const SizedBox(height: 16),
           if (_pendingMatches.isNotEmpty) ...[
@@ -176,7 +174,13 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                 shape: BoxShape.circle,
                 gradient: BondyColors.primaryGradient,
               ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 28),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
         ),
@@ -198,101 +202,6 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
 
     return scaffold;
-  }
-
-  Widget _buildAiBanner() {
-    // Gợi ý thay đổi theo ngày
-    final today = DateTime.now();
-    final seed = today.day + today.month * 31;
-    final suggestions = [
-      '💬 Hôm nay thử hỏi người ấy một câu thật thú vị nhé?',
-      '🌸 Đừng ngại nhắn trước – sự chủ động rất đáng yêu đó!',
-      '✨ Một câu hỏi chân thật hơn là mười câu "hi bạn ơi".',
-      '☕ Rủ người ấy cùng thưởng thức buổi sáng cuối tuần chăng?',
-      '🎵 Chia sẻ một bài nhạc – cách mở đầu không bao giờ sai!',
-    ];
-    final suggestion = suggestions[seed % suggestions.length];
-
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => AskBondyBottomSheet(
-            onSubmit: (msg) {
-              Navigator.pop(context);
-              Navigator.of(context).pushNamed(
-                '/bondy-ai',
-                arguments: {'initialMessage': msg},
-              ).then((_) => _loadAll(silent: true));
-            },
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFF9A7B), Color(0xFFEA2A5A)],
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFEA2A5A).withValues(alpha: 0.18),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bondy AI gợi ý',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.85),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    suggestion,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildHeaderTitle(BuildContext context) {
