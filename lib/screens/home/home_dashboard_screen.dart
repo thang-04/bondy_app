@@ -170,12 +170,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                 ),
               SliverToBoxAdapter(
+                child: _SuggestedProfilesSection(profiles: _suggestedProfiles),
+              ),
+              SliverToBoxAdapter(
                 child: _FeaturedJourneyCard(
                   onStart: () => Navigator.of(context).pushNamed('/healing/daily'),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: _SuggestedProfilesSection(profiles: _suggestedProfiles),
               ),
               SliverToBoxAdapter(
                 child: _QuickDiscoveryBento(
