@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -122,6 +123,12 @@ class AuthService {
   static String resolveBaseUrl({String? baseUrlOverride}) {
     if (baseUrlOverride != null && baseUrlOverride.trim().isNotEmpty) {
       return baseUrlOverride.trim().replaceFirst(RegExp(r'/+$'), '');
+    }
+
+    // Dynamic secure proxy resolution when running in a web browser
+    if (kIsWeb) {
+      final portPart = (Uri.base.port != 80 && Uri.base.port != 443 && Uri.base.port != 0) ? ':${Uri.base.port}' : '';
+      return '${Uri.base.scheme}://${Uri.base.host}$portPart/api-proxy';
     }
 
     // Priority 1: .env file (for real device and production)
