@@ -292,20 +292,7 @@ class _HomeTopBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const BondyLogoMini(size: 32),
-              const SizedBox(width: 8),
-              ShaderMask(
-                shaderCallback: (rect) => _Palette.gradient.createShader(rect),
-                child: Text(
-                  'Bondy',
-                  style: _font(
-                    size: 24,
-                    weight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
+              const BondyLogoMini(size: 90),
             ],
           ),
           GestureDetector(
