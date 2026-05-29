@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/auth_service.dart';
 import '../../services/onboarding_router.dart';
-import '../healing/healing_stitch_style.dart';
+import '../../theme/app_theme.dart';
 
 class AuthGateScreen extends StatefulWidget {
   final AuthService? authService;
@@ -13,16 +14,41 @@ class AuthGateScreen extends StatefulWidget {
   State<AuthGateScreen> createState() => _AuthGateScreenState();
 }
 
-class _AuthGateScreenState extends State<AuthGateScreen> {
+class _AuthGateScreenState extends State<AuthGateScreen> with SingleTickerProviderStateMixin {
   late final AuthService _authService;
+  late final AnimationController _animationController;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _authService = widget.authService ?? AuthService();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.04).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _animationController.repeat(reverse: true);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreSession();
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _restoreSession() async {
@@ -62,17 +88,53 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HealingStitchColors.warmBackground,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Bondy', style: healingText(size: 36, weight: FontWeight.w800, color: HealingStitchColors.coral)),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(color: HealingStitchColors.coral),
-            const SizedBox(height: 16),
-            Text('Đang khôi phục phiên...', style: healingText(color: HealingStitchColors.textMuted)),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: BondyColors.signatureGradient,
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FadeTransition(
+                      opacity: _opacityAnimation,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 160,
+                          height: 160,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Đang khôi phục phiên...',
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
