@@ -396,7 +396,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                 ),
                 if (photos.length > 1)
                   Positioned(
-                    top: 100,
+                    top: MediaQuery.of(context).padding.top + 12,
                     left: 20,
                     right: 20,
                     child: Row(
@@ -405,7 +405,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         (idx) => Expanded(
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 2),
-                            height: 3,
+                            height: 2,
                             decoration: BoxDecoration(
                               color: idx == _currentPhotoIndex
                                   ? Colors.white
