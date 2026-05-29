@@ -105,8 +105,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> with SingleTickerProvid
                         scale: _scaleAnimation,
                         child: Image.asset(
                           'assets/images/logo.png',
-                          width: 160,
-                          height: 160,
+                          width: 240,
+                          height: 240,
                           fit: BoxFit.contain,
                         ),
                       ),
