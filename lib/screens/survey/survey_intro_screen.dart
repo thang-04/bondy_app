@@ -60,57 +60,68 @@ class SurveyIntroScreen extends StatelessWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SurveyIntroGraphic(),
-                        const SizedBox(height: 40),
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: BondyColors.textPrimary,
-                              height: 1.2,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SurveyIntroGraphic(),
+                                const SizedBox(height: 40),
+                                RichText(
+                                  textAlign: TextAlign.center,
+                                  text: TextSpan(
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: BondyColors.textPrimary,
+                                      height: 1.2,
+                                    ),
+                                    children: const [
+                                      TextSpan(text: 'Bondy muốn hiểu bạn đang ở '),
+                                      TextSpan(
+                                        text: 'giai đoạn nào',
+                                        style: TextStyle(color: BondyColors.primary),
+                                      ),
+                                      TextSpan(text: '\ntrong chuyện tình cảm.'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Điều này giúp chúng tôi gợi ý trải nghiệm\nphù hợp – không áp đặt.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 16,
+                                    color: BondyColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 32),
+                                // 3 indicator dots
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.primary, shape: BoxShape.circle)),
+                                    const SizedBox(width: 8),
+                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
+                                    const SizedBox(width: 8),
+                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
+                                  ],
+                                ),
+                              ],
                             ),
-                            children: const [
-                              TextSpan(text: 'Bondy muốn hiểu bạn đang ở '),
-                              TextSpan(
-                                text: 'giai đoạn nào',
-                                style: TextStyle(color: BondyColors.primary),
-                              ),
-                              TextSpan(text: '\ntrong chuyện tình cảm.'),
-                            ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Điều này giúp chúng tôi gợi ý trải nghiệm\nphù hợp – không áp đặt.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            color: BondyColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-                        // 3 indicator dots
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.primary, shape: BoxShape.circle)),
-                            const SizedBox(width: 8),
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
-                            const SizedBox(width: 8),
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
-                          ],
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
                 // Footer

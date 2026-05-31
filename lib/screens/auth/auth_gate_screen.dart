@@ -88,53 +88,49 @@ class _AuthGateScreenState extends State<AuthGateScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: BondyColors.signatureGradient,
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FadeTransition(
-                      opacity: _opacityAnimation,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          width: 240,
-                          height: 240,
-                          fit: BoxFit.contain,
-                        ),
+      backgroundColor: BondyColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 240,
+                        height: 240,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 48),
-                    const SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                  ),
+                  const SizedBox(height: 48),
+                  const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      color: BondyColors.primary,
+                      strokeWidth: 2,
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Đang khôi phục phiên...',
-                      style: GoogleFonts.manrope(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.8),
-                        letterSpacing: 0.2,
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Đang khôi phục phiên...',
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: BondyColors.textSecondary,
+                      letterSpacing: 0.2,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
