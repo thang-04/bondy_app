@@ -469,6 +469,8 @@
             statusColor = '#00e676'; // green for OK
           } else if (item.status.includes('PENDING')) {
             statusColor = '#ffcc00'; // yellow for pending
+          } else if (item.status === 'INFO') {
+            statusColor = '#90caf9'; // light blue for INFO
           } else if (item.status === 'CRITICAL') {
             statusColor = '#ff1744'; // deep red for fatal errors
           }
@@ -478,6 +480,8 @@
           if (item.type === 'error') {
             typeLabel = 'ERROR';
             typeColor = '#ff1744';
+          } else if (item.type === 'info') {
+            typeColor = '#90caf9'; // light blue for info
           }
           
           div.innerHTML = '<span style="color:#888">[' + item.timestamp + ']</span> ' +
