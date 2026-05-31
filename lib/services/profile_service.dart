@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:http/http.dart' as http_client;
 
 import '../models/user_profile_model.dart';
 import './api_client.dart';
@@ -45,22 +47,30 @@ class ProfileService {
       final ext = fileName.split('.').last.toLowerCase();
       final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
 
-      final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(
+      final token = await AuthService().getToken();
+      final uri = Uri.parse('${_apiClient.baseUrl}/upload');
+      final request = http_client.MultipartRequest('POST', uri);
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      request.files.add(
+        http_client.MultipartFile.fromBytes(
+          'file',
           bytes,
           filename: fileName,
           contentType: MediaType.parse(mimeType),
         ),
-      });
-
-      final response = await _dio.post(
-        '/upload',
-        data: formData,
-        options: await _authOptions(),
       );
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        return response.data['data']['url'];
+      final streamedResponse = await request.send();
+      final response = await http_client.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return responseData['data']['url'];
+        }
       }
       return null;
     } catch (e) {

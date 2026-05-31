@@ -1,12 +1,13 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http_client;
 import '../../services/auth_service.dart';
 import '../../services/onboarding_router.dart';
 
@@ -67,11 +68,6 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
     }
 
     setState(() => _isUploading = true);
-    final dio = Dio(BaseOptions(
-      baseUrl: _baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
-    ));
     List<String> uploadedUrls = [];
 
     try {
@@ -83,26 +79,31 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         final ext = fileName.split('.').last.toLowerCase();
         final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
 
-        FormData formData = FormData.fromMap({
-          "file": MultipartFile.fromBytes(
+        // Use the native http package MultipartRequest to upload files,
+        // which avoids the Safari iOS type conversion InvalidAccessError Blob bug!
+        final uri = Uri.parse('$_baseUrl/upload');
+        final request = http_client.MultipartRequest('POST', uri);
+        if (token != null) {
+          request.headers['Authorization'] = 'Bearer $token';
+        }
+        
+        request.files.add(
+          http_client.MultipartFile.fromBytes(
+            'file',
             bytes,
             filename: fileName,
             contentType: MediaType.parse(mimeType),
           ),
-        });
-
-        Response response = await dio.post(
-          '/upload',
-          data: formData,
-          options: Options(
-            headers: {
-              if (token != null) 'Authorization': 'Bearer $token',
-            },
-          ),
         );
+        
+        final streamedResponse = await request.send();
+        final response = await http_client.Response.fromStream(streamedResponse);
 
-        if (response.statusCode == 200 && response.data['success'] == true) {
-          uploadedUrls.add(response.data['data']['url']);
+        if (response.statusCode == 200) {
+          final responseData = jsonDecode(response.body);
+          if (responseData['success'] == true && responseData['data'] != null) {
+            uploadedUrls.add(responseData['data']['url']);
+          }
         }
       }
 
@@ -117,15 +118,19 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
 
       // Save photos to profile — server accepts both "images" and "photos"
       final token2 = await AuthService().getToken();
-      await dio.patch(
-        '/profile/me',
-        data: {"images": uploadedUrls},
-        options: Options(
-          headers: {
-            if (token2 != null) 'Authorization': 'Bearer $token2',
-          },
-        ),
+      final patchUri = Uri.parse('$_baseUrl/profile/me');
+      final patchResponse = await http_client.patch(
+        patchUri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token2 != null) 'Authorization': 'Bearer $token2',
+        },
+        body: jsonEncode({"images": uploadedUrls}),
       );
+
+      if (patchResponse.statusCode < 200 || patchResponse.statusCode >= 300) {
+        throw Exception("Không thể cập nhật ảnh vào hồ sơ (Mã lỗi: ${patchResponse.statusCode})");
+      }
 
       if (mounted) {
         await OnboardingRouter.navigateToNextStep(context);

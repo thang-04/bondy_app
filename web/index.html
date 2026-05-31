@@ -20,27 +20,577 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Datting app">
 
+  <!-- Viewport meta tag - CRITICAL for iOS Safari -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="bondy_app">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bondy">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>bondy_app</title>
+  <title>Bondy</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Loading indicator while Flutter initializes */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FFFBF9;
+      overflow: hidden;
+    }
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background: linear-gradient(135deg, #FFF5F0 0%, #FFFBF9 50%, #FFF0E8 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .loading-text {
+      color: #E8613C;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .loading-subtitle {
+      color: #999;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #FFE0D4;
+      border-top: 3px solid #E8613C;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <script>
+    window._debugUrls = [];
+    
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+    function rewriteUrl(url) {
+      if (typeof url !== 'string') return url;
+      
+      // Match both http://103.149.86.25:3000 and http://103.149.86.25
+      const ipPattern = /^http:\/\/103\.149\.86\.25(:3000)?/i;
+      
+      if (ipPattern.test(url)) {
+        const rewritten = url.replace(ipPattern, window.location.origin);
+        console.log('Rewrote network URL:', url, '->', rewritten);
+        return rewritten;
+      }
+      return url;
+    }
+    
+    function logRequest(type, method, url) {
+      const entry = {
+        id: Math.random().toString(36).substr(2, 9),
+        type: type,
+        method: method || 'GET',
+        url: url,
+        status: 'PENDING...',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      window._debugUrls.push(entry);
+      updateDebugUI();
+      return entry.id;
+    }
+
+    function logResponse(id, status) {
+      for (let i = 0; i < window._debugUrls.length; i++) {
+        if (window._debugUrls[i].id === id) {
+          window._debugUrls[i].status = status;
+          updateDebugUI();
+          break;
+        }
+      }
+    }
+    
+    // Intercept console.error
+    const originalConsoleError = console.error;
+    console.error = function() {
+      let msg = Array.prototype.slice.call(arguments).map(function(arg) {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (arg && typeof arg === 'object') {
+          try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+        }
+        return String(arg);
+      }).join(' ');
+      
+      window._debugUrls.push({
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'error',
+        method: 'CONSOLE',
+        url: msg,
+        status: 'CRITICAL',
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateDebugUI();
+      return originalConsoleError.apply(console, arguments);
+    };
+
+    // Intercept console.log (for debugPrint and print statements from Dart)
+    const originalConsoleLog = console.log;
+    console.log = function() {
+      let msg = Array.prototype.slice.call(arguments).map(function(arg) {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (arg && typeof arg === 'object') {
+          try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+        }
+        return String(arg);
+      }).join(' ');
+      
+      const isErr = msg.toLowerCase().includes('error') || msg.toLowerCase().includes('exception') || msg.toLowerCase().includes('fail');
+      
+      window._debugUrls.push({
+        id: Math.random().toString(36).substr(2, 9),
+        type: isErr ? 'error' : 'info',
+        method: isErr ? 'LOG-ERR' : 'LOG',
+        url: msg,
+        status: isErr ? 'WARNING' : 'INFO',
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateDebugUI();
+      return originalConsoleLog.apply(console, arguments);
+    };
+
+    // Capture all errors at any time
+    window.addEventListener('error', function(e) {
+      const msg = e.error ? (e.error.stack || e.error.message) : (e.message || 'Unknown global error');
+      window._debugUrls.push({
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'error',
+        method: 'GLOBAL',
+        url: msg,
+        status: 'CRITICAL',
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateDebugUI();
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      const msg = e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'Unhandled rejection';
+      window._debugUrls.push({
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'error',
+        method: 'REJECTION',
+        url: msg,
+        status: 'CRITICAL',
+        timestamp: new Date().toLocaleTimeString()
+      });
+      updateDebugUI();
+    });
+    
+    // ===== SAFARI iOS 18 UPLOAD FIX =====
+    // WebKit bug: new Response(anyBody).body.getReader() throws InvalidAccessError
+    // on iOS 18 Safari. We create Response(null) and manually override body/methods.
+    
+    function _createSafeResponse(bodyText, status, statusText, headers) {
+      var bytes = new TextEncoder().encode(bodyText);
+      
+      // Create Response with NULL body — avoids WebKit's broken stream processing
+      var resp = new Response(null, {
+        status: status,
+        statusText: statusText,
+        headers: headers
+      });
+      
+      // Track if body has been consumed
+      var consumed = false;
+      
+      // Create a fresh ReadableStream on demand (not through Response constructor)
+      function makeStream() {
+        return new ReadableStream({
+          start: function(controller) {
+            controller.enqueue(new Uint8Array(bytes));
+            controller.close();
+          }
+        });
+      }
+      
+      // Override body getter — return a direct ReadableStream, not WebKit-processed
+      Object.defineProperty(resp, 'body', {
+        get: function() {
+          if (consumed) return null;
+          return makeStream();
+        },
+        configurable: true
+      });
+      
+      // Override bodyUsed
+      Object.defineProperty(resp, 'bodyUsed', {
+        get: function() { return consumed; },
+        configurable: true
+      });
+      
+      // Override text()
+      resp.text = function() {
+        if (consumed) return Promise.reject(new TypeError('body already consumed'));
+        consumed = true;
+        return Promise.resolve(bodyText);
+      };
+      
+      // Override json()
+      resp.json = function() {
+        if (consumed) return Promise.reject(new TypeError('body already consumed'));
+        consumed = true;
+        try { return Promise.resolve(JSON.parse(bodyText)); }
+        catch(e) { return Promise.reject(e); }
+      };
+      
+      // Override arrayBuffer()
+      resp.arrayBuffer = function() {
+        if (consumed) return Promise.reject(new TypeError('body already consumed'));
+        consumed = true;
+        return Promise.resolve(bytes.buffer.slice(0));
+      };
+      
+      // Override blob()
+      resp.blob = function() {
+        if (consumed) return Promise.reject(new TypeError('body already consumed'));
+        consumed = true;
+        return Promise.resolve(new Blob([bytes], {type: headers['content-type'] || 'application/json'}));
+      };
+      
+      // Override clone()
+      resp.clone = function() {
+        return _createSafeResponse(bodyText, status, statusText, headers);
+      };
+      
+      console.log('[upload-fix] SafeResponse created: status=' + status + ' bodyLen=' + bodyText.length);
+      return resp;
+    }
+    
+    const originalFetch = window.fetch;
+    window.fetch = function(input, init) {
+      let url = '';
+      let method = (init && init.method) ? init.method : 'GET';
+      
+      if (typeof input === 'string') {
+        input = rewriteUrl(input);
+        url = input;
+      } else if (input instanceof URL) {
+        const rewrittenHref = rewriteUrl(input.href);
+        input = new URL(rewrittenHref);
+        url = rewrittenHref;
+      } else if (input && typeof input.url === 'string') {
+        url = input.url;
+        const rewrittenUrl = rewriteUrl(url);
+        if (rewrittenUrl !== url) {
+          const newInit = {};
+          if (init) { for (let key in init) { newInit[key] = init[key]; } }
+          if (!newInit.method) newInit.method = input.method;
+          if (!newInit.headers) newInit.headers = input.headers;
+          if (!newInit.body && input.body) newInit.body = input.body;
+          input = new Request(rewrittenUrl, newInit);
+          url = rewrittenUrl;
+        }
+        if (input.method) method = input.method;
+      }
+      
+      let reqId;
+      if (url) reqId = logRequest('fetch', method, url);
+
+      // Detect upload requests
+      const isUpload = (typeof url === 'string') &&
+                       url.includes('/api-proxy/upload');
+
+      const fetchPromise = originalFetch.call(window, input, init);
+
+      if (isUpload) {
+        // ===== SAFARI iOS 18 WEBKIT BUG WORKAROUND =====
+        // WebKit has a deep bug where new Response(body).body.getReader() throws
+        // "InvalidAccessError: The object does not support the operation or argument"
+        // regardless of whether body is a Blob, String, ArrayBuffer, or ReadableStream.
+        // WebKit's Response constructor internally wraps the body stream in a way that
+        // corrupts getReader() support.
+        //
+        // FIX: Create Response(null) (no body at all), then OVERRIDE the body property
+        // and all body-reading methods to return data from a manually-managed buffer.
+        // This completely bypasses WebKit's broken internal stream handling.
+        return fetchPromise.then(function(response) {
+          if (reqId) logResponse(reqId, response.status + ' ' + response.statusText);
+          var status = response.status;
+          var statusText = response.statusText;
+          var respHeaders = {};
+          try {
+            response.headers.forEach(function(val, key) { respHeaders[key] = val; });
+          } catch(e) {}
+          return response.text().then(function(bodyText) {
+            console.log('[upload-fix] status=' + status + ' body=' + bodyText.substring(0, 200));
+            return _createSafeResponse(bodyText, status, statusText, respHeaders);
+          }).catch(function(err) {
+            console.error('[upload-fix] text() failed:', err);
+            var errBody = '{"success":false,"message":"Response read error: ' + String(err) + '"}';
+            return _createSafeResponse(errBody, status || 500, 'Error', {'content-type':'application/json'});
+          });
+        }).catch(function(error) {
+          if (reqId) logResponse(reqId, 'FAILED: ' + (error.message || String(error)));
+          throw error;
+        });
+      }
+
+      return fetchPromise
+        .then(function(response) {
+          if (reqId) logResponse(reqId, response.status + ' ' + response.statusText);
+          return response;
+        })
+        .catch(function(error) {
+          if (reqId) logResponse(reqId, 'FAILED: ' + (error.message || String(error)));
+          throw error;
+        });
+    };
+
+    // Intercept XHR
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+      this._url = rewriteUrl(url);
+      this._method = method;
+      return originalOpen.call(this, method, this._url, async, user, password);
+    };
+
+    const originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function() {
+      const xhr = this;
+      let reqId;
+      if (xhr._url) {
+        reqId = logRequest('xhr', xhr._method, xhr._url);
+        xhr.addEventListener('readystatechange', function() {
+          if (xhr.readyState === 4) {
+            logResponse(reqId, xhr.status + ' ' + xhr.statusText);
+          }
+        });
+      }
+      return originalSend.apply(this, arguments);
+    };
+
+    // Create a debug log viewer on 5 taps
+    let tapCount = 0;
+    let tapTimer;
+    window.addEventListener('click', function() {
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(function() { tapCount = 0; }, 1200);
+      if (tapCount >= 5) {
+        showDebugOverlay();
+      }
+    });
+
+    function showDebugOverlay() {
+      let overlay = document.getElementById('debug-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'debug-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(18,18,18,0.98);color:#fff;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,monospace;padding:20px;box-sizing:border-box;overflow:auto;font-size:12px;';
+        
+        const close = document.createElement('button');
+        close.textContent = 'ĐÓNG DIÁGNOSTICS';
+        close.style.cssText = 'padding:12px 24px;background:#E8613C;color:#fff;border:none;border-radius:8px;margin-bottom:15px;font-weight:bold;font-size:14px;cursor:pointer;';
+        close.onclick = function() { overlay.style.display = 'none'; };
+        overlay.appendChild(close);
+
+        const title = document.createElement('h3');
+        title.textContent = 'Bondy Diagnostics - Lịch sử cuộc gọi mạng & lỗi';
+        title.style.color = '#E8613C';
+        overlay.appendChild(title);
+
+        const list = document.createElement('div');
+        list.id = 'debug-log-list';
+        overlay.appendChild(list);
+
+        document.body.appendChild(overlay);
+      }
+      overlay.style.display = 'block';
+      updateDebugUI();
+    }
+
+    function updateDebugUI() {
+      const list = document.getElementById('debug-log-list');
+      if (list) {
+        list.innerHTML = '';
+        if (window._debugUrls.length === 0) {
+          list.innerHTML = '<div style="color:#888">Chưa có hoạt động mạng hay lỗi nào được ghi nhận.</div>';
+          return;
+        }
+        window._debugUrls.forEach(function(item) {
+          const div = document.createElement('div');
+          div.style.borderBottom = '1px solid #2a2a2a';
+          div.style.padding = '8px 0';
+          div.style.wordBreak = 'break-all';
+          
+          let color = '#ffffff';
+          if (item.type === 'error') {
+            color = '#ff3b30'; // bright red for exceptions
+          } else if (item.url.includes('uploads')) {
+            color = '#ffb300';
+          } else if (item.url.includes('api')) {
+            color = '#00e5ff';
+          }
+          
+          let statusColor = '#ff3b30'; // red for errors/failed
+          if (item.status.startsWith('2') || item.status.includes('OK')) {
+            statusColor = '#00e676'; // green for OK
+          } else if (item.status.includes('PENDING')) {
+            statusColor = '#ffcc00'; // yellow for pending
+          } else if (item.status === 'CRITICAL') {
+            statusColor = '#ff1744'; // deep red for fatal errors
+          }
+          
+          let typeLabel = item.type.toUpperCase();
+          let typeColor = '#00e676';
+          if (item.type === 'error') {
+            typeLabel = 'ERROR';
+            typeColor = '#ff1744';
+          }
+          
+          div.innerHTML = '<span style="color:#888">[' + item.timestamp + ']</span> ' +
+            '<span style="color:' + typeColor + ';font-weight:bold;">' + typeLabel + '</span> ' +
+            '<span style="color:#9e9e9e;font-weight:bold;background:#333;padding:2px 6px;border-radius:4px;margin-right:5px;">' + item.method + '</span>: ' +
+            '<span style="color:' + color + '">' + escapeHtml(item.url) + '</span>' +
+            '<br><span style="color:#888;margin-left:20px;">Trạng thái: </span>' +
+            '<span style="color:' + statusColor + ';font-weight:bold;">' + escapeHtml(item.status) + '</span>';
+          
+          list.appendChild(div);
+        });
+      }
+    }
+  </script>
+
+  <!-- Loading indicator shown while Flutter boots up -->
+  <div id="loading" class="loading-container">
+    <img src="icons/Icon-192.png" alt="Bondy" class="loading-logo" onerror="this.style.display='none'">
+    <div class="loading-text">Bondy</div>
+    <div class="loading-subtitle">Đang tải ứng dụng...</div>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <script>
+    // Clear any stale service workers that might interfere
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+          console.log('Cleared active service worker.');
+        }
+      });
+    }
+  </script>
+  <script>
+    var flutterLoaded = false;
+    var errorShown = false;
+
+    // Hide loading screen once Flutter renders
+    window.addEventListener('flutter-first-frame', function() {
+      flutterLoaded = true;
+      var loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.transition = 'opacity 0.3s ease';
+        loading.style.opacity = '0';
+        setTimeout(function() { loading.remove(); }, 300);
+      }
+    });
+
+    // Catch any fatal errors during Flutter initialization
+    window.addEventListener('error', function(e) {
+      console.error('Global JS error:', e);
+      if (!flutterLoaded && !errorShown) {
+        showError(e.error || new Error(e.message || 'Unknown global error'));
+      }
+    });
+
+    // Catch promise rejections (very common in async initialization)
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled rejection:', e);
+      if (!flutterLoaded && !errorShown) {
+        showError(e.reason || new Error('Unhandled Promise rejection'));
+      }
+    });
+
+    // Fallback: if Flutter hasn't loaded after 20 seconds, show error
+    setTimeout(function() {
+      if (!flutterLoaded && !errorShown) {
+        showError(new Error('Flutter initialization timed out after 20 seconds.'));
+      }
+    }, 20000);
+
+    function showError(err) {
+      errorShown = true;
+      var loading = document.getElementById('loading');
+      if (loading) {
+        var subtitle = loading.querySelector('.loading-subtitle');
+        var spinner = loading.querySelector('.loading-spinner');
+        if (subtitle) {
+          var errorMsg = 'Không thể tải ứng dụng. Vui lòng thử lại.';
+          var details = '';
+          if (err) {
+            details = err.stack || err.message || String(err);
+          }
+          subtitle.innerHTML = errorMsg + '<br><div id="error-details" style="margin-top: 15px; padding: 10px; background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 8px; color: #d32f2f; font-size: 11px; font-family: monospace; text-align: left; max-width: 90%; word-break: break-all; overflow-x: auto; white-space: pre-wrap; line-height: 1.4; display: inline-block;">' + escapeHtml(details) + '</div>';
+        }
+        if (spinner) {
+          spinner.style.display = 'none';
+        }
+        
+        // Remove existing reload button if present to avoid duplicates
+        var existingBtn = loading.querySelector('.reload-btn');
+        if (!existingBtn) {
+          var btn = document.createElement('button');
+          btn.className = 'reload-btn';
+          btn.textContent = 'Tải lại trang';
+          btn.style.cssText = 'margin-top:20px;padding:12px 32px;border:none;border-radius:24px;background:#E8613C;color:#fff;font-size:16px;font-weight:600;cursor:pointer;box-shadow: 0 4px 12px rgba(232,97,60,0.3);';
+          btn.onclick = function() { location.reload(); };
+          loading.appendChild(btn);
+        }
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

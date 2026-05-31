@@ -1,11 +1,12 @@
 {
-    "name": "bondy_app",
-    "short_name": "bondy_app",
-    "start_url": ".",
+    "name": "Bondy",
+    "short_name": "Bondy",
+    "start_url": "/web/",
+    "scope": "/web/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Datting app",
+    "background_color": "#FFFBF9",
+    "theme_color": "#E8613C",
+    "description": "Bondy - Thánh đường Kỹ thuật số",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
