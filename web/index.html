@@ -401,17 +401,45 @@
       return originalSend.apply(this, arguments);
     };
 
-    // Create a debug log viewer on 5 taps
-    let tapCount = 0;
-    let tapTimer;
-    window.addEventListener('click', function() {
-      tapCount++;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(function() { tapCount = 0; }, 1200);
-      if (tapCount >= 5) {
-        showDebugOverlay();
+    // ===== SECURE PERSISTENT DEBUG MODE =====
+    // To enable: visit the site with URL parameter ?debug=true
+    // To disable: visit with ?debug=false
+    // When enabled, it persists in localStorage and shows a beautiful subtle floating button.
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const debugParam = urlParams.get('debug');
+      
+      if (debugParam === 'true') {
+        localStorage.setItem('bondy_debug', 'true');
+      } else if (debugParam === 'false') {
+        localStorage.removeItem('bondy_debug');
       }
-    });
+      
+      const isDebugEnabled = localStorage.getItem('bondy_debug') === 'true';
+      
+      if (isDebugEnabled) {
+        const floatBtn = document.createElement('div');
+        floatBtn.id = 'debug-float-btn';
+        floatBtn.innerHTML = '⚙️';
+        floatBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;width:44px;height:44px;background:rgba(232,97,60,0.85);color:#fff;border-radius:50%;z-index:999998;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);backdrop-filter:blur(4px);transition:transform 0.2s ease, opacity 0.2s ease;user-select:none;-webkit-user-select:none;opacity:0.6;';
+        
+        floatBtn.addEventListener('mouseenter', function() { floatBtn.style.opacity = '1'; floatBtn.style.transform = 'scale(1.05)'; });
+        floatBtn.addEventListener('mouseleave', function() { floatBtn.style.opacity = '0.6'; floatBtn.style.transform = 'scale(1)'; });
+        
+        floatBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          showDebugOverlay();
+        });
+        
+        if (document.body) {
+          document.body.appendChild(floatBtn);
+        } else {
+          window.addEventListener('DOMContentLoaded', function() {
+            document.body.appendChild(floatBtn);
+          });
+        }
+      }
+    })();
 
     function showDebugOverlay() {
       let overlay = document.getElementById('debug-overlay');
