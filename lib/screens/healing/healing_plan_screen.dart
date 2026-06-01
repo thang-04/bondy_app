@@ -57,7 +57,13 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
       if (_isPreview) {
         _preview = await _service.fetchRecommendedPlanPreview();
       } else {
-        _timeline = await _service.fetchActivePlanTimeline();
+        try {
+          _timeline = await _service.fetchActivePlanTimeline();
+        } catch (_) {
+          // Fallback sang preview khi fetch timeline lỗi (VD: server trả về 404 do chưa có active plan)
+          _showPreview = true;
+          _preview = await _service.fetchRecommendedPlanPreview();
+        }
       }
     } catch (error) {
       _errorMessage = BondyErrorMapper.message(error);

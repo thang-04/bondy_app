@@ -1,4 +1,4 @@
-﻿class PostCheckinCardConfig {
+class PostCheckinCardConfig {
   final String topMessage;
   final String primaryCtaLabel;
   final int maxCardsAboveFold;
