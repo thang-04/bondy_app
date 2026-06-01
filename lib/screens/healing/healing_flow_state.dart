@@ -32,23 +32,23 @@ class HealingFlowState {
     );
   }
 
-  factory HealingFlowState.returningInProgress() {
-    return const HealingFlowState(
+  factory HealingFlowState.returningInProgress({int? intensity}) {
+    return HealingFlowState(
       isFirstTime: false,
       hasInProgress: true,
       hasTodayCheckin: true,
       entry: HealingEntry.voluntary,
-      lastIntensity: 4,
+      lastIntensity: intensity,
     );
   }
 
-  factory HealingFlowState.postTriggeredReturn() {
-    return const HealingFlowState(
+  factory HealingFlowState.postTriggeredReturn({int? intensity}) {
+    return HealingFlowState(
       isFirstTime: false,
       hasInProgress: false,
       hasTodayCheckin: true,
       entry: HealingEntry.triggered,
-      lastIntensity: 8,
+      lastIntensity: intensity,
     );
   }
 
@@ -67,7 +67,9 @@ class HealingFlowState {
   }
 
   HealingRecoveryAction get recoveryPrimaryAction =>
-      HealingRecoveryAction.startReflection;
+      primaryIntent == HealingPrimaryIntent.stabilize
+          ? HealingRecoveryAction.doExercise
+          : HealingRecoveryAction.startReflection;
 
   HealingRoute get routeAfterCheckin => entry == HealingEntry.triggered
       ? HealingRoute.recoveryResult

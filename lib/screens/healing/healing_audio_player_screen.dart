@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/bondy_error_mapper.dart';
 import '../../models/healing/healing_models.dart';
-import '../../services/healing/healing_data_source.dart';
 import '../../services/healing/healing_service.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
@@ -107,45 +106,44 @@ class _HealingAudioPlayerScreenState extends State<HealingAudioPlayerScreen> {
       _playbackErrorMessage = null;
       _isAudioReady = false;
     });
+    if (id == null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage =
+            'Thiếu mã audio. Vui lòng mở lại từ màn hình lộ trình hoặc thư viện.';
+      });
+      return;
+    }
     try {
-      if (id != null) {
-        final audio = await _service.fetchAudio(id);
+      final audio = await _service.fetchAudio(id);
+      if (!mounted) return;
+      setState(() {
+        _audio = audio;
+        _duration = Duration(seconds: audio.durationSeconds);
+      });
+      await _loadFavoriteState(id);
+      if (audio.audioUrl.isEmpty) {
+        setState(() {
+          _playbackErrorMessage =
+              'Audio chưa có file phát. Bạn vẫn có thể hoàn thành session để ghi nhận tiến trình.';
+        });
+        return;
+      }
+      try {
+        await _player.setUrl(audio.audioUrl);
         if (!mounted) return;
         setState(() {
-          _audio = audio;
-          _duration = Duration(seconds: audio.durationSeconds);
+          _duration =
+              _player.duration ?? Duration(seconds: audio.durationSeconds);
+          _isAudioReady = true;
         });
-        await _loadFavoriteState(id);
-        if (audio.audioUrl.isEmpty) {
-          setState(() {
-            _playbackErrorMessage =
-                'Audio chưa có file phát. Bạn vẫn có thể hoàn thành session để ghi nhận tiến trình.';
-          });
-          return;
-        }
-        if (audio.audioUrl.isEmpty) {
-          // just_audio throw nếu setUrl với chuỗi rỗng — server chưa upload
-          // file thì hiển thị lỗi rõ thay vì để app crash.
-          throw StateError(
-            'Audio chưa có file phát. Vui lòng thử nội dung khác.',
-          );
-        }
-        try {
-          await _player.setUrl(audio.audioUrl);
-          if (!mounted) return;
-          setState(() {
-            _duration =
-                _player.duration ?? Duration(seconds: audio.durationSeconds);
-            _isAudioReady = true;
-          });
-        } catch (_) {
-          if (!mounted) return;
-          setState(() {
-            _playbackErrorMessage =
-                'Audio chưa phát được file hiện tại. Bạn vẫn có thể hoàn thành session để ghi nhận tiến trình.';
-          });
-        }
-        await _loadFavoriteState(id);
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _playbackErrorMessage =
+              'Audio chưa phát được file hiện tại. Bạn vẫn có thể hoàn thành session để ghi nhận tiến trình.';
+        });
       }
     } catch (error) {
       if (!mounted) return;

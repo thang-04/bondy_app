@@ -276,14 +276,26 @@ class _AllContentTab extends StatelessWidget {
   }
 }
 
-class _AudioSessionsTab extends StatelessWidget {
+class _AudioSessionsTab extends StatefulWidget {
   final List<HealingContentPreview> audios;
 
   const _AudioSessionsTab({required this.audios});
 
   @override
+  State<_AudioSessionsTab> createState() => _AudioSessionsTabState();
+}
+
+class _AudioSessionsTabState extends State<_AudioSessionsTab> {
+  static const int _initialLimit = 5;
+  bool _showAll = false;
+
+  @override
   Widget build(BuildContext context) {
-    final items = audios;
+    final items = widget.audios;
+    final hasMore = items.length > _initialLimit;
+    final visibleItems = _showAll || !hasMore
+        ? items
+        : items.take(_initialLimit).toList();
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
       children: [
@@ -301,10 +313,25 @@ class _AudioSessionsTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        for (final item in items) ...[
+        for (final item in visibleItems) ...[
           _SessionTile(item: item),
           const SizedBox(height: 12),
         ],
+        if (hasMore && !_showAll)
+          Center(
+            child: TextButton.icon(
+              onPressed: () => setState(() => _showAll = true),
+              icon: const Icon(Icons.expand_more, size: 18),
+              label: Text(
+                'Xem thêm (${items.length - _initialLimit})',
+                style: healingText(
+                  size: 13,
+                  weight: FontWeight.w800,
+                  color: HealingStitchColors.pink,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -690,20 +717,32 @@ class _SquareContentCard extends StatelessWidget {
   }
 }
 
-class _CompactContentList extends StatelessWidget {
+class _CompactContentList extends StatefulWidget {
   final List<HealingContentPreview> items;
+  final int initialLimit;
 
-  const _CompactContentList({required this.items});
+  const _CompactContentList({required this.items, this.initialLimit = 5});
+
+  @override
+  State<_CompactContentList> createState() => _CompactContentListState();
+}
+
+class _CompactContentListState extends State<_CompactContentList> {
+  bool _showAll = false;
 
   @override
   Widget build(BuildContext context) {
-    final visibleItems = items;
-    if (visibleItems.isEmpty) {
+    final items = widget.items;
+    if (items.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 24),
         child: _EmptyContentCard(message: 'Chưa có bài tập nhanh.'),
       );
     }
+    final hasMore = items.length > widget.initialLimit;
+    final visibleItems = _showAll || !hasMore
+        ? items
+        : items.take(widget.initialLimit).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -712,6 +751,19 @@ class _CompactContentList extends StatelessWidget {
             _SessionTile(item: item),
             const SizedBox(height: 10),
           ],
+          if (hasMore && !_showAll)
+            TextButton.icon(
+              onPressed: () => setState(() => _showAll = true),
+              icon: const Icon(Icons.expand_more, size: 18),
+              label: Text(
+                'Xem thêm (${items.length - widget.initialLimit})',
+                style: healingText(
+                  size: 13,
+                  weight: FontWeight.w800,
+                  color: HealingStitchColors.pink,
+                ),
+              ),
+            ),
         ],
       ),
     );

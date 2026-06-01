@@ -7,6 +7,7 @@ import 'first_time_entry_bottom_sheet.dart';
 import 'daily_ritual_personalization.dart';
 import 'healing_flow_state.dart';
 import 'healing_navigation.dart';
+import 'healing_shared_utils.dart';
 import 'post_checkin_card_config.dart';
 import 'healing_stitch_style.dart';
 import 'widgets/today_checkin_summary_card.dart';
@@ -280,7 +281,7 @@ class _HealingModeDashboardScreenState
                 ),
                 children: [
                   Text(
-                    'Chào buổi tối, $displayName',
+                    'Chào ${healingGreeting()}, $displayName',
                     style: healingText(size: 29, weight: FontWeight.w900),
                   ),
                   const SizedBox(height: 18),
@@ -372,18 +373,19 @@ class _HealingModeDashboardScreenState
                   if (hasTodayCheckin)
                     TodayCheckinSummaryCard(
                       todayMood: todayMood,
-                      onViewResult: () => Navigator.of(
-                        context,
-                      ).pushNamed('/healing/checkin-result'),
+                      onViewResult: () => Navigator.of(context).pushNamed(
+                        '/healing/checkin-result',
+                        arguments: _viewModel?.lastCheckin,
+                      ),
                     )
                   else if (flow.topBlock == HealingTopBlock.continueJourney)
                     _QuickCheckinCard(onTap: () => _openQuickCheckin(flow)),
-                  if (postCheckinConfig != null) ...[
+                  if (postCheckinConfig != null && todayMood != null) ...[
                     const SizedBox(height: 12),
                     _PostCheckinPrimaryActionCard(
                       topMessage: postCheckinConfig.topMessage,
                       ctaLabel: postCheckinConfig.primaryCtaLabel,
-                      onTap: () => _openPrimaryMoodAction(postCheckinConfig),
+                      onTap: () => _openPrimaryMoodAction(todayMood),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -391,46 +393,11 @@ class _HealingModeDashboardScreenState
                     prompt: reflectionPrompt,
                     onTap: () => Navigator.of(context).pushNamed('/chatbot'),
                   ),
-                  const SizedBox(height: 22),
-                  const _StageProgressCard(),
-                  const SizedBox(height: 26),
-                  _SectionHeader(
-                    title: 'Nghi thức hằng ngày',
-                    action: 'Xem tất cả',
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushNamed('/healing/ritual-overview'),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 244,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      children: [
-                        _SquareRitualCard(
-                          type: 'ĐỌC',
-                          title: 'Hiểu về nỗi buồn và buông bỏ',
-                          duration: '5 phút',
-                          image: HealingStitchAssets.openBook,
-                          onTap: () => Navigator.of(context).pushNamed(
-                            '/healing/ritual-reading-detail',
-                            arguments: 'ritual-readying-heart',
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        _SquareRitualCard(
-                          type: 'AUDIO',
-                          title: 'Bài tập thở giúp dịu lại',
-                          duration: '10 phút',
-                          image: HealingStitchAssets.meditation,
-                          onTap: () => Navigator.of(
-                            context,
-                          ).pushNamed('/healing/ritual-audio-detail'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  if (activePlan != null) ...[
+                    const SizedBox(height: 22),
+                    _StageProgressCard(plan: activePlan),
+                  ],
+                  ..._buildRitualSection(context, home),
                   const SizedBox(height: 24),
                   _CoachCard(
                     onTap: () => Navigator.of(context).pushNamed('/chatbot'),
@@ -547,13 +514,103 @@ class _HealingModeDashboardScreenState
     );
 
     if (submitted && mounted) {
-      Navigator.of(context).pushNamed('/healing/checkin-result');
+      Navigator.of(
+        context,
+      ).pushNamed('/healing/checkin-result', arguments: viewModel.lastCheckin);
     }
   }
 
-  void _openPrimaryMoodAction(PostCheckinCardConfig cfg) {
-    final route = resolvePrimaryRouteByCta(cfg.primaryCtaLabel);
-    Navigator.of(context).pushNamed(route);
+  List<Widget> _buildRitualSection(
+    BuildContext context,
+    HealingHomeData? home,
+  ) {
+    final rituals = home?.sections.rituals ?? const [];
+    final fallback = home?.sections.exercises ?? const [];
+    final items = rituals.isNotEmpty
+        ? rituals
+        : fallback.isNotEmpty
+              ? fallback
+              : (home?.sections.articles ?? const []);
+    if (items.isEmpty) {
+      return const [SizedBox.shrink()];
+    }
+    final visibleItems = items.take(6).toList();
+    return [
+      const SizedBox(height: 26),
+      _SectionHeader(
+        title: 'Nghi thức hằng ngày',
+        action: 'Xem tất cả',
+        onTap: () =>
+            Navigator.of(context).pushNamed('/healing/ritual-overview'),
+      ),
+      const SizedBox(height: 12),
+      SizedBox(
+        height: 244,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          itemCount: visibleItems.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (_, i) {
+            final item = visibleItems[i];
+            return _SquareRitualCard(
+              type: _ritualBadgeFor(item),
+              title: item.title,
+              duration: _ritualDurationLabel(item),
+              image: _ritualImageFor(item, i),
+              onTap: () => _openRitualItem(context, item),
+            );
+          },
+        ),
+      ),
+    ];
+  }
+
+  String _ritualBadgeFor(HealingContentPreview item) {
+    final type = item.type.toUpperCase();
+    if (type == 'AUDIO') return 'AUDIO';
+    if (type == 'EXERCISE') return 'BÀI TẬP';
+    if (type == 'ARTICLE') return 'ĐỌC';
+    final tags = item.tags.map((t) => t.toLowerCase()).toList();
+    if (tags.contains('audio') || tags.contains('breathing')) return 'AUDIO';
+    return 'ĐỌC';
+  }
+
+  String _ritualDurationLabel(HealingContentPreview item) {
+    final mins = item.estimatedMinutes ?? 5;
+    return '$mins phút';
+  }
+
+  String _ritualImageFor(HealingContentPreview item, int index) {
+    final type = item.type.toUpperCase();
+    if (type == 'AUDIO') return HealingStitchAssets.meditation;
+    return index.isEven
+        ? HealingStitchAssets.openBook
+        : HealingStitchAssets.meditation;
+  }
+
+  void _openRitualItem(BuildContext context, HealingContentPreview item) {
+    final type = item.type.toUpperCase();
+    final tags = item.tags.map((t) => t.toLowerCase()).toList();
+    final route = switch (type) {
+      'AUDIO' => '/healing/ritual-audio-detail',
+      'EXERCISE' => '/healing/exercise-detail',
+      'ARTICLE' => '/healing/article-detail',
+      'RITUAL' =>
+        tags.contains('audio') || tags.contains('breathing')
+            ? '/healing/ritual-audio-detail'
+            : '/healing/ritual-reading-detail',
+      _ => '/healing/ritual-reading-detail',
+    };
+    Navigator.of(context).pushNamed(route, arguments: item.id);
+  }
+
+  void _openPrimaryMoodAction(HealingLogSnapshot mood) {
+    final action = resolveActionForMood(
+      mood: mood.mood,
+      intensity: mood.intensity,
+    );
+    Navigator.of(context).pushNamed(resolveRoute(action));
   }
 
   Future<void> _openPlanItem(HealingPlanTimelineItem item) async {
@@ -1620,10 +1677,17 @@ class _ReflectionPromptCard extends StatelessWidget {
 }
 
 class _StageProgressCard extends StatelessWidget {
-  const _StageProgressCard();
+  final HealingPlanTimeline plan;
+
+  const _StageProgressCard({required this.plan});
 
   @override
   Widget build(BuildContext context) {
+    final totalDays = plan.durationDays == 0 ? 1 : plan.durationDays;
+    final clampedCurrent = plan.currentDay.clamp(1, totalDays);
+    final percent = ((clampedCurrent / totalDays) * 100).round();
+    final fraction = (clampedCurrent / totalDays).clamp(0.0, 1.0);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1643,7 +1707,7 @@ class _StageProgressCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'GIAI ĐOẠN 2',
+                      'NGÀY $clampedCurrent / $totalDays',
                       style: healingText(
                         size: 11,
                         weight: FontWeight.w900,
@@ -1652,14 +1716,14 @@ class _StageProgressCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Tái kết nối',
+                      plan.title,
                       style: healingText(size: 20, weight: FontWeight.w800),
                     ),
                   ],
                 ),
               ),
               Text(
-                '35%',
+                '$percent%',
                 style: healingText(
                   size: 13,
                   weight: FontWeight.w700,
@@ -1672,7 +1736,7 @@ class _StageProgressCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: 0.35,
+              value: fraction,
               minHeight: 10,
               backgroundColor: const Color(0xFFF3F4F6),
               valueColor: AlwaysStoppedAnimation<Color>(
@@ -1961,32 +2025,6 @@ class _ConnectGentlyCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              SizedBox(
-                width: 86,
-                height: 42,
-                child: Stack(
-                  children: const [
-                    _Avatar(asset: HealingStitchAssets.avatarOne, left: 0),
-                    _Avatar(asset: HealingStitchAssets.avatarTwo, left: 28),
-                    Positioned(
-                      left: 56,
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Color(0xFFF3F4F6),
-                        child: Text(
-                          '+4',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF6B7280),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2024,25 +2062,3 @@ class _ConnectGentlyCard extends StatelessWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  final String asset;
-  final double left;
-
-  const _Avatar({required this.asset, required this.left});
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: left,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          image: DecorationImage(image: AssetImage(asset), fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-}

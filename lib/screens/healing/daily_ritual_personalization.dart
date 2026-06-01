@@ -1,4 +1,13 @@
+enum PostCheckinAction {
+  stabilize,
+  exercise,
+  journal,
+  continuePlan,
+  browseContent,
+}
+
 class DailyRitualModel {
+  final PostCheckinAction action;
   final String heroTitle;
   final String ctaLabel;
   final String firstItemTitle;
@@ -7,6 +16,7 @@ class DailyRitualModel {
   final String secondItemSubtitle;
 
   const DailyRitualModel({
+    required this.action,
     required this.heroTitle,
     required this.ctaLabel,
     required this.firstItemTitle,
@@ -33,6 +43,7 @@ DailyRitualModel buildDailyRitualModel({
 }) {
   if (intensity >= 7) {
     return const DailyRitualModel(
+      action: PostCheckinAction.stabilize,
       heroTitle: 'Mình tạm ổn định trước nhé',
       ctaLabel: 'Ổn định ngay',
       firstItemTitle: 'Thở hộp 2 phút',
@@ -44,6 +55,7 @@ DailyRitualModel buildDailyRitualModel({
 
   if (intensity >= 4) {
     return const DailyRitualModel(
+      action: PostCheckinAction.exercise,
       heroTitle: 'Dành vài phút cho bản thân',
       ctaLabel: 'Bắt đầu bài tập',
       firstItemTitle: 'Thở sâu 5 phút',
@@ -56,6 +68,7 @@ DailyRitualModel buildDailyRitualModel({
   final normalizedMood = mood.toUpperCase();
   if (normalizedMood == 'OK' || normalizedMood == 'CALM') {
     return const DailyRitualModel(
+      action: PostCheckinAction.continuePlan,
       heroTitle: 'Giữ nhịp ổn định',
       ctaLabel: 'Tiếp tục nhẹ nhàng',
       firstItemTitle: 'Nhật ký biết ơn 3 phút',
@@ -66,6 +79,7 @@ DailyRitualModel buildDailyRitualModel({
   }
 
   return const DailyRitualModel(
+    action: PostCheckinAction.journal,
     heroTitle: 'Giữ nhịp ổn định',
     ctaLabel: 'Tiếp tục nhẹ nhàng',
     firstItemTitle: 'Thở sâu 3 phút',
@@ -75,18 +89,17 @@ DailyRitualModel buildDailyRitualModel({
   );
 }
 
-String resolvePrimaryRouteByCta(String ctaLabel) {
-  switch (ctaLabel) {
-    case 'Ổn định ngay':
-    case 'Bắt đầu ổn định':
-    case 'Hạ nhiệt ngay':
-      return stabilizeQuickActionsRoute;
-    case 'Bắt đầu bài tập':
-    case 'Viết 3 phút':
-      return '/chatbot';
-    case 'Tiếp tục hành trình':
-      return '/healing/plan';
-    default:
-      return '/content';
-  }
+String resolveRoute(PostCheckinAction action) => switch (action) {
+  PostCheckinAction.stabilize => stabilizeQuickActionsRoute,
+  PostCheckinAction.exercise => '/healing/exercise-detail',
+  PostCheckinAction.journal => '/chatbot',
+  PostCheckinAction.continuePlan => '/healing/plan',
+  PostCheckinAction.browseContent => '/content',
+};
+
+PostCheckinAction resolveActionForMood({
+  required String mood,
+  required int intensity,
+}) {
+  return buildDailyRitualModel(mood: mood, intensity: intensity).action;
 }

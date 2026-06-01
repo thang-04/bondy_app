@@ -1,17 +1,53 @@
 import 'package:flutter/material.dart';
 
+import '../../models/healing/healing_models.dart';
+import '../../services/healing/healing_service.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
 import 'daily_ritual_personalization.dart';
 import 'healing_stitch_style.dart';
 
-class HealingDailyScreen extends StatelessWidget {
+class HealingDailyScreen extends StatefulWidget {
   final String? mood;
   final int? intensity;
+  final HealingDataSource? service;
 
-  const HealingDailyScreen({super.key, this.mood, this.intensity});
+  const HealingDailyScreen({
+    super.key,
+    this.mood,
+    this.intensity,
+    this.service,
+  });
+
+  @override
+  State<HealingDailyScreen> createState() => _HealingDailyScreenState();
+}
+
+class _HealingDailyScreenState extends State<HealingDailyScreen> {
+  late final HealingDataSource _service;
+  List<HealingContentPreview> _audios = const [];
+  bool _didFetch = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = widget.service ?? HealingService();
+  }
+
+  Future<void> _fetchAudios() async {
+    if (_didFetch) return;
+    _didFetch = true;
+    try {
+      final home = await _service.fetchHome();
+      if (!mounted) return;
+      setState(() => _audios = home.sections.audios);
+    } catch (_) {
+      // Audio library là phụ - lỗi load không cản trở phần ritual phía trên.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    _fetchAudios();
     final args = _resolveArgs(context);
     final ritualModel = buildDailyRitualModel(
       mood: args.mood,
@@ -93,16 +129,17 @@ class HealingDailyScreen extends StatelessWidget {
                       ritualModel: ritualModel,
                       onStart: () => Navigator.of(
                         context,
-                      ).pushNamed(
-                        resolvePrimaryRouteByCta(ritualModel.ctaLabel),
-                      ),
+                      ).pushNamed(resolveRoute(ritualModel.action)),
                     ),
                   ),
-                  const SizedBox(height: 26),
-                  _CompactAudioLibrary(
-                    onViewAll: () =>
-                        Navigator.of(context).pushNamed('/content'),
-                  ),
+                  if (_audios.isNotEmpty) ...[
+                    const SizedBox(height: 26),
+                    _CompactAudioLibrary(
+                      audios: _audios,
+                      onViewAll: () =>
+                          Navigator.of(context).pushNamed('/content'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -113,8 +150,8 @@ class HealingDailyScreen extends StatelessWidget {
   }
 
   HealingDailyArgs _resolveArgs(BuildContext context) {
-    if (mood != null && intensity != null) {
-      return HealingDailyArgs(mood: mood!, intensity: intensity!);
+    if (widget.mood != null && widget.intensity != null) {
+      return HealingDailyArgs(mood: widget.mood!, intensity: widget.intensity!);
     }
 
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
@@ -322,29 +359,35 @@ class _CompactRitualRow extends StatelessWidget {
 }
 
 class _CompactAudioLibrary extends StatelessWidget {
+  final List<HealingContentPreview> audios;
   final VoidCallback onViewAll;
 
-  const _CompactAudioLibrary({required this.onViewAll});
+  const _CompactAudioLibrary({
+    required this.audios,
+    required this.onViewAll,
+  });
+
+  ({String image, IconData icon, Color color}) _decoration(int index) {
+    return index.isEven
+        ? (
+            image: HealingStitchAssets.compactAudioWater,
+            icon: Icons.nature_people_outlined,
+            color: HealingStitchColors.orange,
+          )
+        : (
+            image: HealingStitchAssets.compactAudioStones,
+            icon: Icons.self_improvement,
+            color: HealingStitchColors.purple,
+          );
+  }
+
+  String _durationLabel(HealingContentPreview audio) {
+    final minutes = audio.estimatedMinutes ?? 5;
+    return '$minutes phút';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tracks = [
-      (
-        HealingStitchAssets.compactAudioWater,
-        'Nhạc nền thư giãn',
-        'Âm thanh tự nhiên - 30p',
-        Icons.nature_people_outlined,
-        HealingStitchColors.orange,
-      ),
-      (
-        HealingStitchAssets.compactAudioStones,
-        'Audio chữa lành',
-        'Dẫn thiền - 15p',
-        Icons.self_improvement,
-        HealingStitchColors.purple,
-      ),
-    ];
-
     return Column(
       children: [
         Padding(
@@ -378,9 +421,13 @@ class _CompactAudioLibrary extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, index) {
-              final track = tracks[index];
+              final audio = audios[index];
+              final deco = _decoration(index);
               return GestureDetector(
-                onTap: onViewAll,
+                onTap: () => Navigator.of(context).pushNamed(
+                  '/healing/audio-player',
+                  arguments: audio.id,
+                ),
                 child: SizedBox(
                   width: 250,
                   child: Column(
@@ -392,7 +439,7 @@ class _CompactAudioLibrary extends StatelessWidget {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image.asset(track.$1, fit: BoxFit.cover),
+                              Image.asset(deco.image, fit: BoxFit.cover),
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Container(
@@ -428,7 +475,7 @@ class _CompactAudioLibrary extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                track.$2,
+                                audio.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: healingText(
@@ -439,11 +486,11 @@ class _CompactAudioLibrary extends StatelessWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(track.$4, size: 14, color: track.$5),
+                                  Icon(deco.icon, size: 14, color: deco.color),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
-                                      track.$3,
+                                      _durationLabel(audio),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: healingText(
@@ -464,7 +511,7 @@ class _CompactAudioLibrary extends StatelessWidget {
               );
             },
             separatorBuilder: (_, _) => const SizedBox(width: 14),
-            itemCount: tracks.length,
+            itemCount: audios.length,
           ),
         ),
       ],

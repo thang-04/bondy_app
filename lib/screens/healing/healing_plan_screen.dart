@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/bondy_error_mapper.dart';
 import '../../models/healing/healing_models.dart';
+import '../../services/api_client.dart';
 import '../../services/healing/healing_service.dart';
 import 'healing_audio_player_screen.dart';
 import 'healing_navigation.dart';
@@ -59,10 +60,15 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
       } else {
         try {
           _timeline = await _service.fetchActivePlanTimeline();
-        } catch (_) {
-          // Fallback sang preview khi fetch timeline lỗi (VD: server trả về 404 do chưa có active plan)
-          _showPreview = true;
-          _preview = await _service.fetchRecommendedPlanPreview();
+        } on ApiClientException catch (e) {
+          // Chỉ fallback sang preview khi server xác nhận chưa có active plan
+          // (404). Các lỗi mạng / auth / 5xx vẫn nổi lên để show error screen.
+          if (e.statusCode == 404) {
+            _showPreview = true;
+            _preview = await _service.fetchRecommendedPlanPreview();
+          } else {
+            rethrow;
+          }
         }
       }
     } catch (error) {
@@ -74,7 +80,41 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
     }
   }
 
+  Future<bool> _confirmJourneySwitch() async {
+    final HealingPlanTimeline existing;
+    try {
+      existing = await _service.fetchActivePlanTimeline();
+    } on ApiClientException catch (e) {
+      if (e.statusCode == 404) return true;
+      rethrow;
+    }
+    if (!mounted) return false;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Bạn đang tham gia lộ trình khác'),
+        content: Text(
+          'Bắt đầu lộ trình mới sẽ lưu lại tiến trình hiện tại (${existing.title}) '
+          'và chuyển hẳn sang lộ trình mới. Bạn có đồng ý không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Huỷ'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Đồng ý chuyển'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
   Future<void> _startPlan() async {
+    final allowed = await _confirmJourneySwitch();
+    if (!allowed) return;
     setState(() => _isMutating = true);
     try {
       await _service.startRecommendedPlan();
