@@ -48,6 +48,7 @@ import 'screens/chat/chat_screen.dart';
 import 'screens/chat/healing_chatbot_coach_screen.dart';
 import 'screens/chat/bondy_ai_chat_screen.dart';
 import 'screens/chat/active_chat_deeper_prompts_screen.dart';
+import 'screens/chat/chat_info_screen.dart';
 
 // Healing screens
 import 'screens/healing/content_hub_library_screen.dart';
@@ -157,6 +158,38 @@ class BondyApp extends StatelessWidget {
         title: 'Bondy',
         debugShowCheckedModeBanner: false,
         theme: BondyTheme.lightTheme,
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final isWebLarge = mediaQuery.size.width > 500;
+          if (isWebLarge) {
+            return Scaffold(
+              backgroundColor: const Color(0xFFFFFBF9), // Match Bondy background color
+              body: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 430,
+                      ),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+          return child ?? const SizedBox();
+        },
 
         // Internationalisation
         localizationsDelegates: const [
@@ -210,6 +243,7 @@ class BondyApp extends StatelessWidget {
           '/edit-profile': (context) => const EditProfileScreen(),
           '/matches': (context) => const MatchesListScreen(),
           '/chat': (context) => const ChatScreen(),
+          '/chat/info': (context) => const ChatInfoScreen(),
           '/chatbot': (context) => const HealingChatbotCoachScreen(),
           '/bondy-ai': (context) => const BondyAIChatScreen(),
           '/healing/daily': (context) => const HealingDailyScreen(),

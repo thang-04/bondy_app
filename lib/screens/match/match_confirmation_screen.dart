@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:confetti/confetti.dart';
 
 import '../../theme/app_theme.dart';
 import '../../viewmodels/match/match_confirmation_viewmodel.dart';
 import '../../widgets/match/compatibility_receipt_modal.dart';
+import '../../services/auth_service.dart';
 
 class MatchConfirmationScreen extends StatefulWidget {
   final String matchId;
@@ -15,9 +17,15 @@ class MatchConfirmationScreen extends StatefulWidget {
       _MatchConfirmationScreenState();
 }
 
-class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
+class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
+    with SingleTickerProviderStateMixin {
   late final MatchConfirmationViewModel _viewModel;
   bool _receiptShown = false;
+  late final ConfettiController _confettiController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+  String? _currentUserPhoto;
+  String? _currentUserName;
 
   @override
   void initState() {
@@ -25,11 +33,35 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
     _viewModel = MatchConfirmationViewModel(matchId: widget.matchId);
     _viewModel.addListener(_onViewModelChange);
     _viewModel.loadMatchStatus();
+
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 3));
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.2, end: 0.6).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Fetch current user photo
+    AuthService().getCurrentUser().then((user) {
+      if (mounted) {
+        setState(() {
+          _currentUserName = user['name'] ?? 'Bạn';
+          _currentUserPhoto = user['profile']?['photos']?[0] ?? user['image'];
+        });
+      }
+    }).catchError((_) {});
   }
 
   void _onViewModelChange() {
-    if (_viewModel.status == MatchConfirmationStatus.confirmed && !_receiptShown) {
+    if (_viewModel.status == MatchConfirmationStatus.confirmed &&
+        !_receiptShown) {
       _receiptShown = true;
+      _confettiController.play();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _showReceiptModal();
       });
@@ -66,6 +98,8 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
 
   @override
   void dispose() {
+    _confettiController.dispose();
+    _pulseController.dispose();
     _viewModel.removeListener(_onViewModelChange);
     _viewModel.dispose();
     super.dispose();
@@ -87,45 +121,73 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: BondyColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.of(context).pop(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFF9F5), Color(0xFFFFE8F0)],
+          ),
         ),
-        title: const Text('Xac nhan ket noi'),
-      ),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            if (_viewModel.isLoading &&
-                _viewModel.status == MatchConfirmationStatus.pending) {
-              return const Center(
-                child: CircularProgressIndicator(color: BondyColors.primary),
-              );
-            }
+        child: SafeArea(
+          child: ListenableBuilder(
+            listenable: _viewModel,
+            builder: (context, _) {
+              if (_viewModel.isLoading &&
+                  _viewModel.status == MatchConfirmationStatus.pending) {
+                return const Center(
+                  child: CircularProgressIndicator(color: BondyColors.primary),
+                );
+              }
 
-            if (_viewModel.errorMessage != null &&
-                _viewModel.status == MatchConfirmationStatus.pending) {
-              return _buildErrorState();
-            }
+              if (_viewModel.errorMessage != null &&
+                  _viewModel.status == MatchConfirmationStatus.pending) {
+                return _buildErrorState();
+              }
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
+              return Stack(
                 children: [
-                  const Spacer(),
-                  _buildAvatarPair(),
-                  const SizedBox(height: 32),
-                  _buildStatusContent(),
-                  const Spacer(),
-                  _buildBottomAction(),
-                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const Spacer(),
+                        _buildAvatarPair(),
+                        const SizedBox(height: 40),
+                        _buildStatusContent(),
+                        const Spacer(),
+                        _buildBottomAction(),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      shouldLoop: false,
+                      colors: const [
+                        Color(0xFFFF4B8B),
+                        Color(0xFFFF8A6C),
+                        Color(0xFFFFD700),
+                        Color(0xFF20DF60),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: BondyColors.textPrimary),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ],
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -141,12 +203,21 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
             Text(
               _viewModel.errorMessage!,
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(color: BondyColors.error),
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.error,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _viewModel.loadMatchStatus,
-              child: const Text('Thu lai'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(160, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+              child: const Text('Thử lại'),
             ),
           ],
         ),
@@ -155,90 +226,108 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
   }
 
   Widget _buildAvatarPair() {
-    return SizedBox(
-      height: 120,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(left: 0, child: _buildInitialAvatar('B', 'Ban')),
-          Positioned(right: 0, child: _buildOtherUserAvatar()),
-          Center(
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: BondyColors.primary,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        final shadowAlpha = _pulseAnimation.value;
+        return SizedBox(
+          height: 120,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: BondyColors.primary.withValues(alpha: shadowAlpha),
+                          blurRadius: 20,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: _buildAvatarCircle(
+                      _currentUserPhoto,
+                      _currentUserName ?? 'Bạn',
+                    ),
+                  ),
+                  const SizedBox(width: -20),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: BondyColors.primary.withValues(alpha: shadowAlpha),
+                          blurRadius: 20,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: _buildAvatarCircle(
+                      _viewModel.otherUserPhoto,
+                      _viewModel.otherUserName ?? 'Người kia',
+                    ),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.favorite, color: Colors.white, size: 20),
-            ),
+              Positioned(
+                bottom: 8,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: BondyColors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.favorite, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatarCircle(String? photoUrl, String name) {
+    final imageProvider = (photoUrl != null && photoUrl.startsWith('http'))
+        ? NetworkImage(photoUrl)
+        : null;
+
+    return Container(
+      width: 88,
+      height: 88,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+        color: BondyColors.surface,
       ),
-    );
-  }
-
-  Widget _buildOtherUserAvatar() {
-    final name = _viewModel.otherUserName ?? 'Nguoi kia';
-    final photo = _viewModel.otherUserPhoto;
-    if (photo != null && photo.startsWith('http')) {
-      return Column(
-        children: [
-          CircleAvatar(radius: 40, backgroundImage: NetworkImage(photo)),
-          const SizedBox(height: 8),
-          _buildAvatarLabel(name),
-        ],
-      );
-    }
-
-    final initial = name.trim().isEmpty ? 'B' : name.trim()[0].toUpperCase();
-    return _buildInitialAvatar(initial, name);
-  }
-
-  Widget _buildInitialAvatar(String initial, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: BondyColors.surface,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: BondyColors.primary.withValues(alpha: 0.3),
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              initial,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: BondyColors.primary,
+      child: ClipOval(
+        child: imageProvider != null
+            ? Image(image: imageProvider, fit: BoxFit.cover)
+            : Center(
+                child: Text(
+                  name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase(),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: BondyColors.primary,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        _buildAvatarLabel(label),
-      ],
-    );
-  }
-
-  Widget _buildAvatarLabel(String label) {
-    return SizedBox(
-      width: 96,
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          color: BondyColors.textSecondary,
-        ),
       ),
     );
   }
@@ -255,11 +344,11 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
   }
 
   Widget _buildPendingContent() {
-    final otherName = _viewModel.otherUserName ?? 'Nguoi kia';
+    final otherName = _viewModel.otherUserName ?? 'Người kia';
     return Column(
       children: [
         Text(
-          'Cho xac nhan',
+          'Chờ xác nhận',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -268,18 +357,18 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Dang cho $otherName xac nhan ket noi',
+          'Đang chờ $otherName xác nhận kết nối',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             color: BondyColors.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _buildCountdownTimer(),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
-          'Con lai: ${_viewModel.formattedRemainingTime}',
+          'Còn lại: ${_viewModel.formattedRemainingTime}',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -291,27 +380,73 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
   }
 
   Widget _buildConfirmedContent() {
-    final otherName = _viewModel.otherUserName ?? 'Nguoi kia';
+    final otherName = _viewModel.otherUserName ?? 'Người kia';
     return Column(
       children: [
         Text(
-          'Ket noi thanh cong!',
+          '✨ Tương hợp thành công! ✨',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
             color: BondyColors.textPrimary,
           ),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
-          'Ban va $otherName da xac nhan ket noi',
+          'Bạn và $otherName đã kết nối!\nHãy bắt đầu trò chuyện để hiểu nhau hơn nhé 💫',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
+            height: 1.5,
             color: BondyColors.textSecondary,
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 24),
+        _buildCompatibilityChips(),
       ],
+    );
+  }
+
+  Widget _buildCompatibilityChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        _buildChip('75% Phù hợp', Icons.favorite_border),
+        _buildChip('Cùng sở thích', Icons.bubble_chart_outlined),
+        _buildChip('Tâm hồn đồng điệu', Icons.auto_awesome),
+      ],
+    );
+  }
+
+  Widget _buildChip(String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: BondyColors.primary.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: BondyColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: BondyColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -343,7 +478,7 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
     return Column(
       children: [
         Text(
-          'Ket noi da dong',
+          'Kết nối đã đóng',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -352,7 +487,7 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Ket noi nay da het han hoac khong con kha dung',
+          'Kết nối này đã hết hạn hoặc không còn khả dụng',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             color: BondyColors.textSecondary,
@@ -367,23 +502,115 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen> {
     switch (_viewModel.status) {
       case MatchConfirmationStatus.pending:
         return _viewModel.isLoading
-            ? const CircularProgressIndicator(color: BondyColors.primary)
-            : ElevatedButton(
-                onPressed: _viewModel.confirmMatch,
-                child: const Text('Xac nhan ket noi'),
+            ? const Center(
+                child: CircularProgressIndicator(color: BondyColors.primary),
+              )
+            : Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: BondyColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: BondyColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _viewModel.confirmMatch,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  child: Text(
+                    'Xác nhận kết nối ❤️',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               );
       case MatchConfirmationStatus.confirmed:
-        return ElevatedButton(
-          onPressed: () {
-            final chatId = _viewModel.chatId;
-            if (chatId != null) _navigateToChat(chatId);
-          },
-          child: const Text('Bat dau tro chuyen'),
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: BondyColors.primaryGradient,
+                borderRadius: BorderRadius.circular(100),
+                boxShadow: [
+                  BoxShadow(
+                    color: BondyColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  final chatId = _viewModel.chatId;
+                  if (chatId != null) _navigateToChat(chatId);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+                child: Text(
+                  'Trò chuyện ngay 💬',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Tiếp tục khám phá',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: BondyColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: BondyColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       case MatchConfirmationStatus.expired:
         return OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Tiep tuc kham pha'),
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(100),
+            ),
+          ),
+          child: const Text('Quay lại'),
         );
     }
   }

@@ -22,6 +22,7 @@ import '../../widgets/common/bondy_feedback.dart';
 import '../../theme/app_theme.dart';
 import '../healing/healing_stitch_style.dart';
 import '../../core/ai_prompts_config.dart';
+import '../../services/relationship_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -38,6 +39,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late final AuthService _authService = AuthService();
   final ChatRealtimeService _realtime = ChatRealtimeService();
   final AudioRecorder _audioRecorder = AudioRecorder();
+  late final RelationshipService _relationshipService = RelationshipService(apiClient: _apiClient);
 
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -234,7 +236,285 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       case ChatRealtimeEventKind.connected:
         setState(() => _wsConnected = true);
         break;
+      case ChatRealtimeEventKind.relationshipAccepted:
+        final systemMsgData = event.data['systemMessage'];
+        if (systemMsgData != null) {
+          final systemMsg = ChatMessage.fromJson(systemMsgData as Map<String, dynamic>);
+          if (!_messages.any((m) => m.id == systemMsg.id)) {
+            setState(() {
+              _messages.add(systemMsg);
+            });
+            _scrollToBottom();
+          }
+        }
+        setState(() {
+          _showCollapsedBanner = false;
+        });
+        if (mounted) {
+          BondyFeedback.showSuccess(context, '💕 Hai bạn đã trở thành Tri kỷ!');
+        }
+        break;
     }
+  }
+
+  Map<String, dynamic>? _pendingInvite;
+  bool _showCollapsedBanner = false;
+
+  Future<void> _checkPendingInvite() async {
+    final matchId = _matchId;
+    if (matchId == null) return;
+    try {
+      final result = await _relationshipService.checkPendingInvite(matchId);
+      if (!mounted) return;
+      if (result['invitation'] != null) {
+        final invitation = result['invitation'] as Map<String, dynamic>;
+        if (invitation['inviterId']?.toString() != _currentUserId) {
+          setState(() {
+            _pendingInvite = invitation;
+          });
+          _showInviteDialog();
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _showInviteDialog() {
+    final invite = _pendingInvite;
+    if (invite == null) return;
+    
+    final inviterName = invite['inviterName']?.toString() ?? 'Người dùng';
+    final inviterPhoto = invite['inviterPhoto']?.toString();
+    final matchId = _matchId;
+    if (matchId == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: const Color(0xFFFFFAF8),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: BondyColors.textSecondary),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _showCollapsedBanner = true;
+                      });
+                    },
+                  ),
+                ),
+                CircleAvatar(
+                  radius: 36,
+                  backgroundImage: (inviterPhoto != null && inviterPhoto.startsWith('http'))
+                      ? NetworkImage(inviterPhoto)
+                      : null,
+                  child: (inviterPhoto == null || !inviterPhoto.startsWith('http'))
+                      ? const Icon(Icons.person, size: 36, color: BondyColors.primary)
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Lời mời Tri kỷ 💌',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: BondyColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$inviterName gửi lời mời kết nối Tri kỷ đến bạn. Hãy cùng nhau chia sẻ hành trình nhé!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: BondyColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _declineInvite();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          side: const BorderSide(color: Colors.grey),
+                        ),
+                        child: Text(
+                          'Từ chối',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: BondyColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: BondyColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(100),
+                          boxShadow: [
+                            BoxShadow(
+                              color: BondyColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await _acceptInvite();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            minimumSize: const Size(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                          ),
+                          child: Text(
+                            'Đồng ý ❤️',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _acceptInvite() async {
+    final matchId = _matchId;
+    if (matchId == null) return;
+    try {
+      final res = await _relationshipService.acceptByMatchId(matchId);
+      if (!mounted) return;
+      setState(() {
+        _showCollapsedBanner = false;
+        _pendingInvite = null;
+      });
+      if (res['systemMessage'] != null) {
+        final systemMsg = ChatMessage.fromJson(res['systemMessage'] as Map<String, dynamic>);
+        if (!_messages.any((m) => m.id == systemMsg.id)) {
+          setState(() {
+            _messages.add(systemMsg);
+          });
+          _scrollToBottom();
+        }
+      }
+      BondyFeedback.showSuccess(context, '💕 Đã trở thành Tri kỷ!');
+    } catch (e) {
+      if (mounted) {
+        BondyFeedback.showError(context, e, fallback: 'Không chấp nhận được lời mời.');
+      }
+    }
+  }
+
+  Future<void> _declineInvite() async {
+    final matchId = _matchId;
+    if (matchId == null) return;
+    try {
+      await _relationshipService.declineInvite(matchId);
+      if (!mounted) return;
+      setState(() {
+        _showCollapsedBanner = false;
+        _pendingInvite = null;
+      });
+      BondyFeedback.showSuccess(context, 'Đã từ chối lời mời.');
+    } catch (e) {
+      if (mounted) {
+        BondyFeedback.showError(context, e, fallback: 'Không từ chối được lời mời.');
+      }
+    }
+  }
+
+  Widget _buildCollapsedBanner() {
+    final invite = _pendingInvite;
+    if (!_showCollapsedBanner || invite == null) {
+      return const SizedBox.shrink();
+    }
+    final inviterName = invite['inviterName']?.toString() ?? 'Người dùng';
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: _showCollapsedBanner ? 48 : 0,
+      child: Container(
+        color: const Color(0xFFFFF0F5),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            const Icon(Icons.favorite_border, size: 16, color: BondyColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Lời mời Tri kỷ từ $inviterName đang chờ...',
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: BondyColors.textPrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _acceptInvite,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Đồng ý',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: BondyColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.close, size: 16, color: BondyColors.textSecondary),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                setState(() {
+                  _showCollapsedBanner = false;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pollMessages() async {
@@ -365,6 +645,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         await _connectRealtime(chatId);
       }
       _startPolling();
+      _checkPendingInvite();
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = BondyErrorMapper.message(e));
@@ -565,29 +846,42 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            _buildAvatar(_photo, _displayName, radius: 16),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: BondyColors.textPrimary,
+        title: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: _isLoading
+              ? null
+              : () {
+                  Navigator.pushNamed(context, '/chat/info', arguments: {
+                    'matchId': _matchId,
+                    'otherUserId': _otherUserId,
+                    'name': _displayName,
+                    'photo': _photo,
+                  });
+                },
+          child: Row(
+            children: [
+              _buildAvatar(_photo, _displayName, radius: 16),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: BondyColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  _buildPresenceSubtitle(),
-                ],
+                    _buildPresenceSubtitle(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -599,6 +893,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ),
       body: Column(
         children: [
+          _buildCollapsedBanner(),
           Expanded(child: _buildMessagesBody()),
           _buildInputBar(),
         ],
@@ -833,6 +1128,37 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildBubble(ChatMessage msg) {
+    // ── Tin nhắn hệ thống (SYSTEM) — hiển thị giữa, không dạng bubble ──
+    if (msg.messageType == 'SYSTEM') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFF5F3), Color(0xFFFFF0F5)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFFF6B6B).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Text(
+              msg.content,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFEA2A5A),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final isMine = msg.senderId == _currentUserId;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -962,6 +1288,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.info_outline, color: Color(0xFFFF6B6B)),
+              title: const Text('Thông tin'),
+              subtitle: const Text('Xem thông tin & mời Tri kỷ'),
+              onTap: () => Navigator.pop(context, 'info'),
+            ),
+            const Divider(height: 1),
+            ListTile(
               leading: const Icon(Icons.link_off),
               title: const Text('Bỏ kết nối'),
               onTap: () => Navigator.pop(context, 'unmatch'),
@@ -977,7 +1310,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
 
     if (!context.mounted) return;
-    if (result == 'unmatch') {
+    if (result == 'info') {
+      Navigator.pushNamed(context, '/chat/info', arguments: {
+        'matchId': _matchId,
+        'otherUserId': _otherUserId,
+        'name': _displayName,
+        'photo': _photo,
+      });
+    } else if (result == 'unmatch') {
       await _confirmUnmatch(context);
     } else if (result == 'block') {
       await _confirmBlock(context);

@@ -108,6 +108,35 @@ class RelationshipService {
     );
   }
 
+  /// Kiểm tra lời mời Tri kỷ đang chờ cho một matchId
+  Future<Map<String, dynamic>> checkPendingInvite(String matchId) async {
+    final response = await _apiClient.get(
+      '/relationships/invite/pending?matchId=$matchId',
+      authenticated: true,
+    );
+    return (response['data'] as Map<String, dynamic>?) ?? {};
+  }
+
+  /// Chấp nhận lời mời Tri kỷ qua matchId (luồng mới)
+  Future<Map<String, dynamic>> acceptByMatchId(String matchId) async {
+    final response = await _apiClient.post(
+      '/relationships/accept',
+      authenticated: true,
+      body: {'matchId': matchId},
+    );
+    return (response['data'] as Map<String, dynamic>?) ?? {};
+  }
+
+  /// Từ chối lời mời Tri kỷ
+  Future<void> declineInvite(String matchId) async {
+    await _apiClient.post(
+      '/relationships/invite/decline',
+      authenticated: true,
+      body: {'matchId': matchId},
+    );
+  }
+
+
   Future<void> submitCheckin({required String mood, String? note}) async {
     await _apiClient.post(
       '/relationships/checkins',
