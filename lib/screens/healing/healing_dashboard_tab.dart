@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'healing_stitch_style.dart';
+import '../../viewmodels/subscription/subscription_viewmodel.dart';
 
 class HealingDashboardTab extends StatelessWidget {
   final bool isActive;
@@ -262,6 +264,9 @@ class _AudioLibrary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subViewModel = context.watch<SubscriptionViewModel>();
+    final isPremium = subViewModel.currentSubscription?.premiumHealing == true;
+
     final items = [
       (
         HealingStitchAssets.dailyAudioWater,
@@ -280,8 +285,8 @@ class _AudioLibrary extends StatelessWidget {
       (
         HealingStitchAssets.dailyAudioForest,
         'Thiền định sâu',
-        'Premium',
-        true,
+        isPremium ? 'Đã mở khóa' : 'Premium',
+        !isPremium,
         '/healing/audio-player',
       ),
     ];
@@ -321,7 +326,13 @@ class _AudioLibrary extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = items[index];
               return GestureDetector(
-                onTap: () => Navigator.of(context).pushNamed(item.$5),
+                onTap: () {
+                  if (item.$4) {
+                    Navigator.of(context).pushNamed('/settings/premium');
+                  } else {
+                    Navigator.of(context).pushNamed(item.$5);
+                  }
+                },
                 child: _AudioCard(
                   image: item.$1,
                   title: item.$2,

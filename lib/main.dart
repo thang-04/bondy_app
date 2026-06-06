@@ -9,6 +9,7 @@ import 'theme/app_theme.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
 import 'viewmodels/survey/survey_viewmodel.dart';
+import 'viewmodels/subscription/subscription_viewmodel.dart';
 import 'services/analytics_service.dart';
 
 // Auth screens
@@ -153,6 +154,7 @@ class BondyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => SurveyViewModel()),
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        ChangeNotifierProvider(create: (_) => SubscriptionViewModel()..loadSubscription()),
       ],
       child: MaterialApp(
         title: 'Bondy',

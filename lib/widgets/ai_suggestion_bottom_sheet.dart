@@ -263,7 +263,7 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => Navigator.of(context).pushNamed('/settings/premium'),
             style: ElevatedButton.styleFrom(
               backgroundColor: BondyColors.primary,
               foregroundColor: Colors.white,
