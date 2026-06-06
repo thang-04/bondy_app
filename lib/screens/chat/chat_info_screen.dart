@@ -41,6 +41,13 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
   TriKyButtonState _triKyState = TriKyButtonState.idle;
   String? _errorMessage;
 
+  // Dữ liệu profile đối phương
+  String? _otherUserBio;
+  int? _otherUserAge;
+  String? _otherUserCity;
+  String? _otherUserDatingGoal;
+  double? _otherUserDistanceKm;
+
   // Dữ liệu route
   String? _matchId;
   String? _otherUserId;
@@ -108,6 +115,15 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
 
       final relationship = result['relationship'] as Map<String, dynamic>?;
       final invitation = result['invitation'] as Map<String, dynamic>?;
+      final profile = result['otherUserProfile'] as Map<String, dynamic>?;
+
+      if (profile != null) {
+        _otherUserBio = profile['bio'] as String?;
+        _otherUserAge = (profile['age'] as num?)?.toInt();
+        _otherUserCity = profile['city'] as String?;
+        _otherUserDatingGoal = profile['datingGoal'] as String?;
+        _otherUserDistanceKm = (profile['distanceKm'] as num?)?.toDouble();
+      }
 
       if (relationship != null && relationship['status'] == 'ACTIVE') {
         _triKyState = TriKyButtonState.active;
@@ -288,6 +304,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
                         children: [
                           const SizedBox(height: 12),
                           _buildAvatarSection(),
+                          _buildProfileInfo(),
                           const SizedBox(height: 32),
                           _buildTriKyCard(),
                           if (_errorMessage != null) ...[
@@ -626,6 +643,128 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
           ),
         ),
       ),
+    );
+  }
+
+  String _getDatingGoalText(String? goal) {
+    switch (goal) {
+      case 'LONG_TERM':
+        return 'Mối quan hệ lâu dài';
+      case 'MARRIAGE':
+        return 'Muốn tìm người bạn đời';
+      case 'DATING':
+        return 'Hẹn hò tìm hiểu';
+      case 'FRIENDSHIP':
+        return 'Kết bạn';
+      case 'NOT_SURE':
+        return 'Chưa xác định';
+      default:
+        return goal ?? 'Mối quan hệ lâu dài';
+    }
+  }
+
+  Widget _buildProfileInfo() {
+    final String distanceLabel = _otherUserDistanceKm != null
+        ? (_otherUserDistanceKm! % 1 == 0
+            ? 'Cách bạn ${_otherUserDistanceKm!.toInt()} km'
+            : 'Cách bạn ${_otherUserDistanceKm!.toStringAsFixed(1)} km')
+        : '';
+
+    final String locationText = [
+      if (_otherUserAge != null && _otherUserAge! > 0) '$_otherUserAge tuổi',
+      if (distanceLabel.isNotEmpty) distanceLabel,
+      if (_otherUserCity != null && _otherUserCity!.isNotEmpty) _otherUserCity,
+    ].join(' • ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (locationText.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            locationText,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: HealingStitchColors.textMuted,
+            ),
+          ),
+        ],
+        if (_otherUserDatingGoal != null && _otherUserDatingGoal!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F3FF), // Tím pastel
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.favorite_border_rounded,
+                  color: Color(0xFF8B5CF6),
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _getDatingGoalText(_otherUserDatingGoal),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF6D28D9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (_otherUserBio != null && _otherUserBio!.trim().isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [healingSoftShadow(0.04)],
+              border: Border.all(color: HealingStitchColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.menu_book_rounded,
+                      color: HealingStitchColors.coral,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Giới thiệu',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: HealingStitchColors.textMain,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _otherUserBio!,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: HealingStitchColors.textMuted,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
