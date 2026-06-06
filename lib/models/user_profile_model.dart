@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../core/media_url.dart';
 
 /// Model ánh xạ response từ GET /api/profile/me
@@ -51,9 +52,16 @@ class UserProfileModel {
     List<String> parsePhotos(dynamic raw) {
       if (raw == null) return [];
       if (raw is List) {
-        return raw
-            .map((e) => rewriteMediaUrl(e.toString()) ?? e.toString())
-            .toList();
+        final result = raw.map((e) {
+          final original = e.toString();
+          final rewritten = rewriteMediaUrl(original) ?? original;
+          if (original != rewritten) {
+            debugPrint('[IMG-DBG] rewrite: $original -> $rewritten');
+          }
+          return rewritten;
+        }).toList();
+        debugPrint('[IMG-DBG] photos after parse: $result');
+        return result;
       }
       return [];
     }
@@ -76,9 +84,12 @@ class UserProfileModel {
           ?? '',
       name: userNode?['name']?.toString()
           ?? json['name']?.toString(),
-      image: rewriteMediaUrl(
-            userNode?['image']?.toString() ?? json['image']?.toString(),
-          ),
+      image: () {
+            final rawImg = userNode?['image']?.toString() ?? json['image']?.toString();
+            final rewrittenImg = rewriteMediaUrl(rawImg);
+            debugPrint('[IMG-DBG] user.image raw=$rawImg rewritten=$rewrittenImg');
+            return rewrittenImg;
+          }(),
       phone: json['phone']?.toString(),
       // Profile fields (top-level trên server mới, nested trên format cũ)
       fullName: profileFields['fullName']?.toString(),

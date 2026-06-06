@@ -489,6 +489,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     ImageProvider? imageProvider;
     if (slot is String) {
+      debugPrint('[IMG-DBG] slot[$index] NetworkImage URL: $slot');
       imageProvider = NetworkImage(slot);
     } else if (slot is XFile) {
       if (kIsWeb) {

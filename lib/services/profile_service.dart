@@ -69,9 +69,12 @@ class ProfileService {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true && responseData['data'] != null) {
-          return responseData['data']['url'];
+          final url = responseData['data']['url'];
+          debugPrint('[IMG-DBG] upload returned URL: $url');
+          return url;
         }
       }
+      debugPrint('[IMG-DBG] upload failed: ${response.statusCode} ${response.body}');
       return null;
     } catch (e) {
       debugPrint('Upload media error: $e');

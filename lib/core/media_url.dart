@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 
 /// Rewrite URL ảnh/audio đã lưu DB sang host hiện tại của API client.
@@ -10,6 +11,33 @@ import '../services/auth_service.dart';
 String? rewriteMediaUrl(String? url) {
   if (url == null || url.trim().isEmpty) return null;
   final trimmed = url.trim();
+
+  // Nếu là relative path (bắt đầu bằng '/uploads', '/api/uploads', v.v.)
+  // hoặc không phải URL tuyệt đối nhưng cũng không phải data/asset
+  if (!trimmed.startsWith('http://') && 
+      !trimmed.startsWith('https://') && 
+      !trimmed.startsWith('data:') && 
+      !trimmed.startsWith('asset')) {
+    var path = trimmed;
+    if (!path.startsWith('/')) {
+      path = '/$path';
+    }
+    
+    try {
+      final apiBase = Uri.parse(AuthService.resolveBaseUrl());
+      final origin = Uri(
+        scheme: apiBase.scheme,
+        host: apiBase.host,
+        port: apiBase.hasPort ? apiBase.port : null,
+      ).toString().replaceAll(RegExp(r'/+$'), '');
+      
+      final fullUrl = '$origin$path';
+      debugPrint('[IMG-DBG] relative path rewritten: $trimmed -> $fullUrl');
+      return fullUrl;
+    } catch (_) {
+      return trimmed;
+    }
+  }
 
   // Không động vào URL không phải http(s) (data:, asset paths, blob:, ...).
   if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
@@ -40,11 +68,15 @@ String? rewriteMediaUrl(String? url) {
     return trimmed;
   }
 
-  return parsed
+  final rewritten = parsed
       .replace(
         scheme: apiBase.scheme,
         host: apiBase.host,
         port: apiBase.hasPort ? apiBase.port : null,
       )
       .toString();
+      
+  debugPrint('[IMG-DBG] dev host rewritten: $trimmed -> $rewritten');
+  return rewritten;
 }
+
