@@ -14,6 +14,8 @@ import '../../widgets/common/bondy_feedback.dart';
 import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/subscription/subscription_viewmodel.dart';
 
 String discoverSwipeActionForDirection(AxisDirection direction) {
   switch (direction) {
@@ -264,6 +266,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final subViewModel = context.watch<SubscriptionViewModel>();
+    final hasUnlimitedLikes = subViewModel.currentSubscription?.unlimitedLikes == true;
+
     return Scaffold(
       backgroundColor: BondyColors.background,
       appBar: AppBar(
@@ -279,7 +284,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                 padding: const EdgeInsets.only(right: 4),
                 child: Chip(
                   label: Text(
-                    '${_viewModel.quota!.remaining}/${_viewModel.quota!.limit} like',
+                    hasUnlimitedLikes
+                        ? '∞ like'
+                        : '${_viewModel.quota!.remaining}/${_viewModel.quota!.limit} like',
                     style: const TextStyle(fontSize: 11),
                   ),
                   padding: EdgeInsets.zero,

@@ -259,6 +259,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   Map<String, dynamic>? _pendingInvite;
   bool _showCollapsedBanner = false;
+  bool _hasRelationship = false;
 
   Future<void> _checkPendingInvite() async {
     final matchId = _matchId;
@@ -432,6 +433,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         }
       }
       BondyFeedback.showSuccess(context, '💕 Đã trở thành Tri kỷ!');
+      Navigator.pushNamed(context, '/relationship/established', arguments: {
+        'name': _displayName,
+        'photo': _photo,
+      });
     } catch (e) {
       if (mounted) {
         BondyFeedback.showError(context, e, fallback: 'Không chấp nhận được lời mời.');
@@ -515,6 +520,308 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  Future<void> _checkRelationshipStatus() async {
+    try {
+      final dash = await _relationshipService.getDashboard();
+      if (mounted) {
+        setState(() {
+          _hasRelationship = dash.hasRelationship;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Widget _buildRelationshipStatusIndicator() {
+    return Container(
+      width: double.infinity,
+      color: HealingStitchColors.warmBackground,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      alignment: Alignment.center,
+      child: InkWell(
+        onTap: () {
+          if (_hasRelationship) {
+            Navigator.pushNamed(context, '/relationship/home');
+          } else {
+            _showInvitationBottomSheet();
+          }
+        },
+        borderRadius: BorderRadius.circular(100),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [healingSoftShadow(0.02)],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.favorite,
+                color: _hasRelationship ? Colors.pinkAccent : Colors.grey,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _hasRelationship ? 'Đã kết nối Tri kỷ' : 'Chúng mình đang hẹn hò',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: HealingStitchColors.textMain,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showInvitationBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: const CircleAvatar(
+                          backgroundImage: NetworkImage(
+                            'https://lh3.googleusercontent.com/aida-public/AB6AXuCsgnYy8VW20CiYCVCqg8zVPiFE7qcVqSprT2bF4XVJHKShNuiZH4QvrSimg7ny5ofI1wWBMphBWGyCJiUUlCrwbfAHTcSo8XxION3MupzLDXLWzecVzCoTZGh3diOCqobJDjMkUh9Al1LTTSC4Ykd1BYxeDdHKqf-tzCT6SBTKAph-g5f0YldSABwVsW37Rmpz-oeeu8wgBttoAfisoCHmhmxONpBBjdzprzcIs2s3LZD_eJ7rgUtTBw6EqgyC9nHAdhSSKTmjAdd6',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: -12),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          backgroundImage: _photo != null && _photo!.startsWith('http')
+                              ? NetworkImage(_photo!)
+                              : const NetworkImage(
+                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
+                                ) as ImageProvider,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFEE2B5B), Color(0xFFFF6B6B)],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.favorite, color: Colors.white, size: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Bạn muốn xác nhận\nmối quan hệ này?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: HealingStitchColors.textMain,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Gửi lời mời đến $_displayName để chính thức xác nhận và mở khóa các tính năng dành riêng cho cặp đôi trên Bondy.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: HealingStitchColors.textSoft,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFEE2B5B), Color(0xFFFF6B6B)],
+                  ),
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFEE2B5B).withValues(alpha: 0.25),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await _sendRelationshipInvite();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.send, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Gửi lời mời',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'Để sau nhé',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: HealingStitchColors.textSoft,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_open, color: Colors.orange, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Mở khóa Bondy Love Space',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: HealingStitchColors.textSoft,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _sendRelationshipInvite() async {
+    final matchId = _matchId;
+    if (matchId == null) {
+      BondyFeedback.showError(context, 'Không tìm thấy thông tin match để gửi lời mời.');
+      return;
+    }
+    setState(() => _isSending = true);
+    try {
+      await _relationshipService.createInvite(matchId: matchId);
+      if (mounted) {
+        BondyFeedback.showSuccess(context, 'Đã gửi lời mời kết nối Tri kỷ đến $_displayName!');
+        if (_chatId != null) {
+          await _chatService.sendMessage(
+            _chatId!,
+            '💌 Tớ đã gửi lời mời xác nhận mối quan hệ Tri kỷ. Hãy bấm vào nút "Chúng mình đang hẹn hò" trong chat để đồng ý nhé!',
+          );
+          _loadMessages();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        BondyFeedback.showError(context, e, fallback: 'Không gửi được lời mời.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   Future<void> _pollMessages() async {
@@ -646,6 +953,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
       _startPolling();
       _checkPendingInvite();
+      _checkRelationshipStatus();
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = BondyErrorMapper.message(e));
@@ -893,6 +1201,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ),
       body: Column(
         children: [
+          _buildRelationshipStatusIndicator(),
           _buildCollapsedBanner(),
           Expanded(child: _buildMessagesBody()),
           _buildInputBar(),

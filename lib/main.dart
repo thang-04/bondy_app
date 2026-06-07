@@ -78,6 +78,7 @@ import 'screens/relationship/conflict_resolution_tool.dart';
 import 'screens/relationship/milestone_reminders_screen.dart';
 import 'screens/relationship/relationship_confirmed_screen.dart';
 import 'screens/relationship/relationship_invitation_screen.dart';
+import 'screens/relationship/relationship_connected_screen.dart';
 
 // Match screens
 import 'screens/match/match_confirmation_screen.dart';
@@ -290,6 +291,8 @@ class BondyApp extends StatelessWidget {
               const RelationshipConfirmedScreen(),
           '/relationship/invite': (context) =>
               const RelationshipInvitationScreen(),
+          '/relationship/established': (context) =>
+              const RelationshipConnectedScreen(),
           '/relationship/weekly-report': (context) =>
               const WeeklyReportScreen(),
           '/safety/pre-date-checkin': (context) =>
