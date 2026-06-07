@@ -13,6 +13,7 @@ import '../../services/chat_service.dart';
 import '../../services/chat_realtime_service.dart';
 import '../../services/match_service.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../../widgets/chat/voice_message_bubble.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -39,7 +40,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late final AuthService _authService = AuthService();
   final ChatRealtimeService _realtime = ChatRealtimeService();
   final AudioRecorder _audioRecorder = AudioRecorder();
-  late final RelationshipService _relationshipService = RelationshipService(apiClient: _apiClient);
+  late final RelationshipService _relationshipService = RelationshipService(
+    apiClient: _apiClient,
+  );
 
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -138,14 +141,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final msg = ChatMessage.fromJson(event.data);
         if (_messages.any((m) => m.id == msg.id)) return;
         setState(() => _messages.add(msg));
+        _updateChatSummary(msg);
         _scrollToBottom();
         final chatId = _chatId;
         if (msg.senderId != _currentUserId && !msg.isRead && chatId != null) {
-          _chatService.markAllAsRead(chatId).then((_) {
-            if (mounted) {
-              context.read<ChatViewModel>().clearUnread(chatId);
-            }
-          }).catchError((_) {});
+          _chatService
+              .markAllAsRead(chatId)
+              .then((_) {
+                if (mounted) {
+                  context.read<ChatViewModel>().clearUnread(chatId);
+                }
+              })
+              .catchError((_) {});
         }
         break;
       case ChatRealtimeEventKind.typing:
@@ -219,7 +226,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         if (eventUserId == _currentUserId) return;
         final isOnline = event.data['isOnline'] == true;
         final lastSeenRaw = event.data['lastSeenAt']?.toString();
-        final lastSeen = lastSeenRaw != null ? DateTime.tryParse(lastSeenRaw) : null;
+        final lastSeen = lastSeenRaw != null
+            ? DateTime.tryParse(lastSeenRaw)
+            : null;
         setState(() {
           _isPartnerOnline = isOnline;
           _partnerLastSeenAt = lastSeen ?? _partnerLastSeenAt;
@@ -227,32 +236,47 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final chatId = _chatId;
         if (chatId != null) {
           context.read<ChatViewModel>().updatePartnerPresence(
-                chatId: chatId,
-                isOnline: isOnline,
-                lastSeenAt: lastSeenRaw,
-              );
+            chatId: chatId,
+            isOnline: isOnline,
+            lastSeenAt: lastSeenRaw,
+          );
         }
         break;
       case ChatRealtimeEventKind.connected:
         setState(() => _wsConnected = true);
         break;
+      case ChatRealtimeEventKind.relationshipInvited:
+        final eventMatchId = event.data['matchId']?.toString();
+        if (eventMatchId != null && eventMatchId != _matchId) return;
+        final invitationData = event.data['invitation'];
+        if (invitationData is! Map<String, dynamic>) return;
+        final invitation = RelationshipInvitation.fromJson(invitationData);
+        if (invitation.inviterId == _currentUserId) return;
+        setState(() {
+          _pendingInvite = invitation.toJson();
+          _showCollapsedBanner = false;
+        });
+        _showInviteDialog();
+        break;
       case ChatRealtimeEventKind.relationshipAccepted:
         final systemMsgData = event.data['systemMessage'];
-        if (systemMsgData != null) {
-          final systemMsg = ChatMessage.fromJson(systemMsgData as Map<String, dynamic>);
+        if (systemMsgData is Map<String, dynamic>) {
+          final systemMsg = ChatMessage.fromJson(systemMsgData);
           if (!_messages.any((m) => m.id == systemMsg.id)) {
             setState(() {
               _messages.add(systemMsg);
             });
+            _updateChatSummary(systemMsg);
             _scrollToBottom();
           }
         }
         setState(() {
           _showCollapsedBanner = false;
+          _pendingInvite = null;
+          _hasRelationship = true;
         });
-        if (mounted) {
-          BondyFeedback.showSuccess(context, '💕 Hai bạn đã trở thành Tri kỷ!');
-        }
+        context.read<RelationshipViewModel>().loadDashboard();
+        BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
         break;
     }
   }
@@ -268,10 +292,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final result = await _relationshipService.checkPendingInvite(matchId);
       if (!mounted) return;
       if (result['invitation'] != null) {
-        final invitation = result['invitation'] as Map<String, dynamic>;
-        if (invitation['inviterId']?.toString() != _currentUserId) {
+        final invitation = RelationshipInvitation.fromJson(
+          result['invitation'] as Map<String, dynamic>,
+        );
+        if (invitation.inviterId != _currentUserId) {
           setState(() {
-            _pendingInvite = invitation;
+            _pendingInvite = invitation.toJson();
           });
           _showInviteDialog();
         }
@@ -282,7 +308,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void _showInviteDialog() {
     final invite = _pendingInvite;
     if (invite == null) return;
-    
+
     final inviterName = invite['inviterName']?.toString() ?? 'Người dùng';
     final inviterPhoto = invite['inviterPhoto']?.toString();
     final matchId = _matchId;
@@ -293,7 +319,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       barrierDismissible: false,
       builder: (ctx) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           backgroundColor: const Color(0xFFFFFAF8),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -303,7 +331,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: BondyColors.textSecondary),
+                    icon: const Icon(
+                      Icons.close,
+                      color: BondyColors.textSecondary,
+                    ),
                     onPressed: () {
                       Navigator.pop(ctx);
                       setState(() {
@@ -314,16 +345,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
                 CircleAvatar(
                   radius: 36,
-                  backgroundImage: (inviterPhoto != null && inviterPhoto.startsWith('http'))
+                  backgroundImage:
+                      (inviterPhoto != null && inviterPhoto.startsWith('http'))
                       ? NetworkImage(inviterPhoto)
                       : null,
-                  child: (inviterPhoto == null || !inviterPhoto.startsWith('http'))
-                      ? const Icon(Icons.person, size: 36, color: BondyColors.primary)
+                  child:
+                      (inviterPhoto == null || !inviterPhoto.startsWith('http'))
+                      ? const Icon(
+                          Icons.person,
+                          size: 36,
+                          color: BondyColors.primary,
+                        )
                       : null,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Lời mời Tri kỷ 💌',
+                  'Lời mời xác nhận mối quan hệ',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -332,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '$inviterName gửi lời mời kết nối Tri kỷ đến bạn. Hãy cùng nhau chia sẻ hành trình nhé!',
+                  '$inviterName muốn xác nhận mối quan hệ với bạn.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
@@ -424,22 +461,30 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _pendingInvite = null;
       });
       if (res['systemMessage'] != null) {
-        final systemMsg = ChatMessage.fromJson(res['systemMessage'] as Map<String, dynamic>);
+        final systemMsg = ChatMessage.fromJson(
+          res['systemMessage'] as Map<String, dynamic>,
+        );
         if (!_messages.any((m) => m.id == systemMsg.id)) {
           setState(() {
             _messages.add(systemMsg);
           });
+          _updateChatSummary(systemMsg);
           _scrollToBottom();
         }
       }
-      BondyFeedback.showSuccess(context, '💕 Đã trở thành Tri kỷ!');
-      Navigator.pushNamed(context, '/relationship/established', arguments: {
-        'name': _displayName,
-        'photo': _photo,
+      setState(() {
+        _hasRelationship = true;
       });
+      await context.read<RelationshipViewModel>().loadDashboard();
+      if (!mounted) return;
+      BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
     } catch (e) {
       if (mounted) {
-        BondyFeedback.showError(context, e, fallback: 'Không chấp nhận được lời mời.');
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không chấp nhận được lời mời.',
+        );
       }
     }
   }
@@ -457,7 +502,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       BondyFeedback.showSuccess(context, 'Đã từ chối lời mời.');
     } catch (e) {
       if (mounted) {
-        BondyFeedback.showError(context, e, fallback: 'Không từ chối được lời mời.');
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không từ chối được lời mời.',
+        );
       }
     }
   }
@@ -476,11 +525,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            const Icon(Icons.favorite_border, size: 16, color: BondyColors.primary),
+            const Icon(
+              Icons.favorite_border,
+              size: 16,
+              color: BondyColors.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Lời mời Tri kỷ từ $inviterName đang chờ...',
+                'Lời mời xác nhận mối quan hệ từ $inviterName',
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
@@ -507,7 +560,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.close, size: 16, color: BondyColors.textSecondary),
+              icon: const Icon(
+                Icons.close,
+                size: 16,
+                color: BondyColors.textSecondary,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               onPressed: () {
@@ -566,7 +623,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
               const SizedBox(width: 6),
               Text(
-                _hasRelationship ? 'Đã kết nối Tri kỷ' : 'Chúng mình đang hẹn hò',
+                _hasRelationship
+                    ? 'Đã xác nhận mối quan hệ'
+                    : 'Xác nhận mối quan hệ',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -653,11 +712,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ],
                         ),
                         child: CircleAvatar(
-                          backgroundImage: _photo != null && _photo!.startsWith('http')
+                          backgroundImage:
+                              _photo != null && _photo!.startsWith('http')
                               ? NetworkImage(_photo!)
                               : const NetworkImage(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
-                                ) as ImageProvider,
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
+                                    )
+                                    as ImageProvider,
                         ),
                       ),
                     ],
@@ -680,7 +741,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
-                        child: const Icon(Icons.favorite, color: Colors.white, size: 12),
+                        child: const Icon(
+                          Icons.favorite,
+                          color: Colors.white,
+                          size: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -768,7 +833,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(100),
@@ -799,25 +867,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _sendRelationshipInvite() async {
     final matchId = _matchId;
     if (matchId == null) {
-      BondyFeedback.showError(context, 'Không tìm thấy thông tin match để gửi lời mời.');
+      BondyFeedback.showError(
+        context,
+        'Không tìm thấy thông tin match để gửi lời mời.',
+      );
       return;
     }
     setState(() => _isSending = true);
     try {
       await _relationshipService.createInvite(matchId: matchId);
-      if (mounted) {
-        BondyFeedback.showSuccess(context, 'Đã gửi lời mời kết nối Tri kỷ đến $_displayName!');
-        if (_chatId != null) {
-          await _chatService.sendMessage(
-            _chatId!,
-            '💌 Tớ đã gửi lời mời xác nhận mối quan hệ Tri kỷ. Hãy bấm vào nút "Chúng mình đang hẹn hò" trong chat để đồng ý nhé!',
-          );
-          _loadMessages();
-        }
-      }
+      if (!mounted) return;
+      BondyFeedback.showSuccess(
+        context,
+        'Đã gửi lời mời xác nhận mối quan hệ đến $_displayName!',
+      );
     } catch (e) {
       if (mounted) {
-        BondyFeedback.showError(context, e, fallback: 'Không gửi được lời mời.');
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không gửi được lời mời.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -834,9 +904,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final added = messages.where((m) => !existingIds.contains(m.id)).toList();
       if (added.isEmpty) return;
       setState(() => _messages.addAll(added));
+      for (final message in added) {
+        _updateChatSummary(message);
+      }
       _scrollToBottom();
-      final hasIncoming =
-          added.any((m) => m.senderId != _currentUserId && !m.isRead);
+      final hasIncoming = added.any(
+        (m) => m.senderId != _currentUserId && !m.isRead,
+      );
       if (hasIncoming) {
         await _chatService.markAllAsRead(chatId);
         if (mounted) {
@@ -885,6 +959,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final message = await _chatService.sendImageMessage(chatId, picked);
       if (!mounted) return;
       setState(() => _messages.add(message));
+      _updateChatSummary(message);
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
@@ -893,8 +968,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (mounted) setState(() => _isSending = false);
     }
   }
-
-
 
   void _readRouteArguments() {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -1023,7 +1096,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       } catch (e) {
         if (!mounted) return;
         setState(() => _isRecording = false);
-        BondyFeedback.showError(context, e, fallback: 'Không dừng được ghi âm.');
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không dừng được ghi âm.',
+        );
         return;
       }
       setState(() => _isRecording = false);
@@ -1042,6 +1119,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final message = await _chatService.sendVoiceMessage(chatId, path);
         if (!mounted) return;
         setState(() => _messages.add(message));
+        _updateChatSummary(message);
         _scrollToBottom();
       } catch (e) {
         if (!mounted) return;
@@ -1095,7 +1173,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _isRecording = true);
     } catch (e) {
       if (!mounted) return;
-      BondyFeedback.showError(context, e, fallback: 'Không bắt đầu được ghi âm.');
+      BondyFeedback.showError(
+        context,
+        e,
+        fallback: 'Không bắt đầu được ghi âm.',
+      );
     }
   }
 
@@ -1113,6 +1195,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _messages.add(message);
         if (preset == null) _controller.clear();
       });
+      _updateChatSummary(message);
       _scrollToBottom();
       await _chatService.updateDeliveryStatus(message.id, 'DELIVERED');
       if (_isTypingSent) {
@@ -1131,6 +1214,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() => _isSending = false);
       }
     }
+  }
+
+  void _updateChatSummary(ChatMessage message) {
+    final chatId = _chatId;
+    final currentUserId = _currentUserId;
+    if (chatId == null || currentUserId == null) return;
+    context.read<ChatViewModel>().updateLatestMessage(
+      chatId: chatId,
+      message: message,
+      currentUserId: currentUserId,
+    );
   }
 
   void _scrollToBottom() {
@@ -1159,12 +1253,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           onTap: _isLoading
               ? null
               : () {
-                  Navigator.pushNamed(context, '/chat/info', arguments: {
-                    'matchId': _matchId,
-                    'otherUserId': _otherUserId,
-                    'name': _displayName,
-                    'photo': _photo,
-                  });
+                  Navigator.pushNamed(
+                    context,
+                    '/chat/info',
+                    arguments: {
+                      'matchId': _matchId,
+                      'otherUserId': _otherUserId,
+                      'name': _displayName,
+                      'photo': _photo,
+                    },
+                  );
                 },
           child: Row(
             children: [
@@ -1267,7 +1365,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
-                      avatar: const Icon(Icons.psychology, size: 16, color: BondyColors.primary),
+                      avatar: const Icon(
+                        Icons.psychology,
+                        size: 16,
+                        color: BondyColors.primary,
+                      ),
                       label: Text(
                         prompt,
                         style: GoogleFonts.plusJakartaSans(
@@ -1277,7 +1379,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       backgroundColor: Colors.white,
-                      side: BorderSide(color: BondyColors.primary.withValues(alpha: 0.2)),
+                      side: BorderSide(
+                        color: BondyColors.primary.withValues(alpha: 0.2),
+                      ),
                       onPressed: () {
                         setState(() {
                           _controller.text = prompt;
@@ -1297,45 +1401,70 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 height: 38,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: [
-                    '❤️', '😂', '👍', '😍', '🔥', '😭', '😮', '👏', '🎉', '✨', '🙌', '💯', '🤣', '🤔', '🙏', '🌸', '☕', '🍕', '🍰', '🎈'
-                  ].map((emoji) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () {
-                          final text = _controller.text;
-                          final selection = _controller.selection;
-                          int start = selection.start;
-                          int end = selection.end;
-                          if (start < 0 || end < 0) {
-                            start = text.length;
-                            end = text.length;
-                          }
-                          final newText = text.replaceRange(start, end, emoji);
-                          _controller.text = newText;
-                          _controller.selection = TextSelection.fromPosition(
-                            TextPosition(offset: start + emoji.length),
-                          );
-                          setState(() {});
-                        },
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            shape: BoxShape.circle,
+                  children:
+                      [
+                        '❤️',
+                        '😂',
+                        '👍',
+                        '😍',
+                        '🔥',
+                        '😭',
+                        '😮',
+                        '👏',
+                        '🎉',
+                        '✨',
+                        '🙌',
+                        '💯',
+                        '🤣',
+                        '🤔',
+                        '🙏',
+                        '🌸',
+                        '☕',
+                        '🍕',
+                        '🍰',
+                        '🎈',
+                      ].map((emoji) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(18),
+                            onTap: () {
+                              final text = _controller.text;
+                              final selection = _controller.selection;
+                              int start = selection.start;
+                              int end = selection.end;
+                              if (start < 0 || end < 0) {
+                                start = text.length;
+                                end = text.length;
+                              }
+                              final newText = text.replaceRange(
+                                start,
+                                end,
+                                emoji,
+                              );
+                              _controller.text = newText;
+                              _controller.selection =
+                                  TextSelection.fromPosition(
+                                    TextPosition(offset: start + emoji.length),
+                                  );
+                              setState(() {});
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                emoji,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            emoji,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        );
+                      }).toList(),
                 ),
               ),
               const SizedBox(height: 8),
@@ -1349,8 +1478,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 IconButton(
                   onPressed: _isSending ? null : _toggleVoiceRecording,
                   icon: Icon(
-                     _isRecording ? Icons.stop_circle : Icons.mic_none,
-                     color: _isRecording ? Colors.red : null,
+                    _isRecording ? Icons.stop_circle : Icons.mic_none,
+                    color: _isRecording ? Colors.red : null,
                   ),
                 ),
                 Expanded(
@@ -1599,7 +1728,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ListTile(
               leading: const Icon(Icons.info_outline, color: Color(0xFFFF6B6B)),
               title: const Text('Thông tin'),
-              subtitle: const Text('Xem thông tin & mời Tri kỷ'),
+              subtitle: const Text('Xem thông tin & xác nhận mối quan hệ'),
               onTap: () => Navigator.pop(context, 'info'),
             ),
             const Divider(height: 1),
@@ -1620,12 +1749,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     if (!context.mounted) return;
     if (result == 'info') {
-      Navigator.pushNamed(context, '/chat/info', arguments: {
-        'matchId': _matchId,
-        'otherUserId': _otherUserId,
-        'name': _displayName,
-        'photo': _photo,
-      });
+      Navigator.pushNamed(
+        context,
+        '/chat/info',
+        arguments: {
+          'matchId': _matchId,
+          'otherUserId': _otherUserId,
+          'name': _displayName,
+          'photo': _photo,
+        },
+      );
     } else if (result == 'unmatch') {
       await _confirmUnmatch(context);
     } else if (result == 'block') {

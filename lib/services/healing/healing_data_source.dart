@@ -33,7 +33,10 @@ abstract class HealingDataSource {
 
   Future<HealingCourse> fetchCourse(String id);
 
-  Future<HealingCourseStartResult> startCourse(String id);
+  Future<HealingCourseStartResult> startCourse(
+    String id, {
+    bool replaceActive = false,
+  });
 
   Future<HealingCompletionResult> completeLesson(
     String courseId,

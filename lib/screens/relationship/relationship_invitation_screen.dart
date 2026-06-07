@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../healing/healing_stitch_style.dart';
 
-/// Màn hình hướng dẫn Mời Tri kỷ (đã chuyển sang luồng in-app).
-/// Không còn sử dụng mã mời — hướng dẫn user tìm nút Tri kỷ trong Chat Info.
+/// Màn hình hướng dẫn xác nhận mối quan hệ trong ứng dụng.
+/// Không còn sử dụng mã mời, thao tác được thực hiện từ Chat Info.
 class RelationshipInvitationScreen extends StatelessWidget {
   const RelationshipInvitationScreen({super.key});
 
@@ -20,7 +20,7 @@ class RelationshipInvitationScreen extends StatelessWidget {
           onTap: () => Navigator.pop(context),
         ),
         title: Text(
-          'Mời tri kỷ',
+          'Xác nhận mối quan hệ',
           style: healingText(size: 16, weight: FontWeight.w800),
         ),
         centerTitle: true,
@@ -46,13 +46,13 @@ class RelationshipInvitationScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             Text(
-              'Mời Tri kỷ qua trò chuyện',
+              'Xác nhận mối quan hệ qua trò chuyện',
               style: healingText(size: 22, weight: FontWeight.w800),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'Giờ đây bạn có thể mời Tri kỷ trực tiếp từ cuộc trò chuyện — không cần mã mời!',
+              'Bạn có thể gửi lời mời xác nhận mối quan hệ trực tiếp từ cuộc trò chuyện, không cần mã mời.',
               style: healingText(
                 size: 14,
                 height: 1.6,
@@ -82,7 +82,8 @@ class RelationshipInvitationScreen extends StatelessWidget {
               number: '3',
               icon: Icons.info_outline,
               title: 'Chọn "Thông tin"',
-              description: 'Bạn sẽ thấy nút "Mời Tri kỷ" ở màn hình thông tin.',
+              description:
+                  'Bạn sẽ thấy nút "Xác nhận mối quan hệ" ở màn hình thông tin.',
             ),
 
             const SizedBox(height: 36),
@@ -92,10 +93,9 @@ class RelationshipInvitationScreen extends StatelessWidget {
               label: 'Đi tới Tin nhắn',
               icon: Icons.arrow_forward,
               onTap: () {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/home/matches',
-                  (route) => false,
-                );
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/home/matches', (route) => false);
               },
             ),
           ],
@@ -149,10 +149,7 @@ class RelationshipInvitationScreen extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       title,
-                      style: healingText(
-                        size: 14,
-                        weight: FontWeight.w700,
-                      ),
+                      style: healingText(size: 14, weight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -173,4 +170,3 @@ class RelationshipInvitationScreen extends StatelessWidget {
     );
   }
 }
-

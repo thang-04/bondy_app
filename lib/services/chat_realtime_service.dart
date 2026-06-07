@@ -5,13 +5,46 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'auth_service.dart';
 
-enum ChatRealtimeEventKind { message, typing, read, delivery, presence, connected, relationshipAccepted }
+enum ChatRealtimeEventKind {
+  message,
+  typing,
+  read,
+  delivery,
+  presence,
+  connected,
+  relationshipInvited,
+  relationshipAccepted,
+}
 
 class ChatRealtimeEvent {
   final ChatRealtimeEventKind kind;
   final Map<String, dynamic> data;
 
   ChatRealtimeEvent({required this.kind, required this.data});
+
+  static ChatRealtimeEvent? tryParse(dynamic raw) {
+    try {
+      final map = raw is String
+          ? jsonDecode(raw) as Map<String, dynamic>
+          : raw as Map<String, dynamic>;
+      final type = map['type']?.toString() ?? '';
+      final data = (map['data'] as Map<String, dynamic>?) ?? map;
+      final kind = switch (type) {
+        'message' => ChatRealtimeEventKind.message,
+        'typing' => ChatRealtimeEventKind.typing,
+        'read' => ChatRealtimeEventKind.read,
+        'delivery' => ChatRealtimeEventKind.delivery,
+        'presence' => ChatRealtimeEventKind.presence,
+        'connected' => ChatRealtimeEventKind.connected,
+        'relationship_invited' => ChatRealtimeEventKind.relationshipInvited,
+        'relationship_accepted' => ChatRealtimeEventKind.relationshipAccepted,
+        _ => null,
+      };
+      return kind == null ? null : ChatRealtimeEvent(kind: kind, data: data);
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class ChatRealtimeService {
@@ -27,46 +60,26 @@ class ChatRealtimeService {
     required String accessToken,
   }) async {
     await disconnect();
-    final wsUrl = AuthService.resolveWsUrl(chatId: chatId, accessToken: accessToken);
+    final wsUrl = AuthService.resolveWsUrl(
+      chatId: chatId,
+      accessToken: accessToken,
+    );
     _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
     _subscription = _channel!.stream.listen(
       _onMessage,
       onError: (_) => _controller.add(
-        ChatRealtimeEvent(kind: ChatRealtimeEventKind.connected, data: {'error': true}),
+        ChatRealtimeEvent(
+          kind: ChatRealtimeEventKind.connected,
+          data: {'error': true},
+        ),
       ),
       onDone: disconnect,
     );
   }
 
   void _onMessage(dynamic raw) {
-    try {
-      final map = jsonDecode(raw as String) as Map<String, dynamic>;
-      final type = map['type']?.toString() ?? '';
-      final data = (map['data'] as Map<String, dynamic>?) ?? map;
-      switch (type) {
-        case 'message':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.message, data: data));
-          break;
-        case 'typing':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.typing, data: data));
-          break;
-        case 'read':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.read, data: data));
-          break;
-        case 'delivery':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.delivery, data: data));
-          break;
-        case 'presence':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.presence, data: data));
-          break;
-        case 'connected':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.connected, data: data));
-          break;
-        case 'relationship_accepted':
-          _controller.add(ChatRealtimeEvent(kind: ChatRealtimeEventKind.relationshipAccepted, data: data));
-          break;
-      }
-    } catch (_) {}
+    final event = ChatRealtimeEvent.tryParse(raw);
+    if (event != null) _controller.add(event);
   }
 
   void sendTyping({required bool isTyping}) {

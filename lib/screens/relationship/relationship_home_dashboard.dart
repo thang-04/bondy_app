@@ -7,7 +7,9 @@ import '../../services/relationship_service.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
 
 class RelationshipHomeDashboard extends StatefulWidget {
-  const RelationshipHomeDashboard({super.key});
+  final RelationshipViewModel? viewModel;
+
+  const RelationshipHomeDashboard({super.key, this.viewModel});
 
   @override
   State<RelationshipHomeDashboard> createState() =>
@@ -17,15 +19,17 @@ class RelationshipHomeDashboard extends StatefulWidget {
 class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   late final RelationshipViewModel _viewModel;
   final AuthService _authService = AuthService();
-  
+
   String _myDisplayName = 'Bạn';
   String? _myPhotoUrl;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = RelationshipViewModel();
-    _viewModel.loadDashboard();
+    _viewModel = widget.viewModel ?? RelationshipViewModel();
+    if (_viewModel.dashboard == null) {
+      _viewModel.loadDashboard();
+    }
     _loadMyProfile();
   }
 
@@ -35,7 +39,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
       if (mounted) {
         setState(() {
           _myDisplayName = user['name']?.toString() ?? 'Bạn';
-          _myPhotoUrl = user['image']?.toString() ?? user['photoUrl']?.toString();
+          _myPhotoUrl =
+              user['image']?.toString() ?? user['photoUrl']?.toString();
         });
       }
     } catch (_) {}
@@ -43,7 +48,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
 
   @override
   void dispose() {
-    _viewModel.dispose();
+    if (widget.viewModel == null) {
+      _viewModel.dispose();
+    }
     super.dispose();
   }
 
@@ -71,7 +78,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
           return const Scaffold(
             backgroundColor: HealingStitchColors.warmBackground,
             body: Center(
-              child: CircularProgressIndicator(color: HealingStitchColors.coral),
+              child: CircularProgressIndicator(
+                color: HealingStitchColors.coral,
+              ),
             ),
           );
         }
@@ -112,15 +121,18 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: HealingStitchColors.coral.withValues(alpha: 0.25),
+                            color: HealingStitchColors.coral.withValues(
+                              alpha: 0.25,
+                            ),
                             blurRadius: 15,
                             offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () =>
-                            Navigator.of(context).pushNamed('/relationship/invite'),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamed('/relationship/invite'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -140,7 +152,11 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                            const Icon(
+                              Icons.arrow_forward,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ],
                         ),
                       ),
@@ -252,8 +268,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           iconColor: Colors.teal.shade600,
                           icon: Icons.favorite_border,
                           bgIcon: Icons.handshake_outlined,
-                          onTap: () => Navigator.of(context)
-                              .pushNamed('/relationship/conflict-tool'),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pushNamed('/relationship/conflict-tool'),
                         ),
                       ),
                     ],
@@ -304,11 +321,13 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               backgroundColor: Colors.white,
               child: CircleAvatar(
                 radius: 20,
-                backgroundImage: partnerPhoto != null && partnerPhoto.startsWith('http')
+                backgroundImage:
+                    partnerPhoto != null && partnerPhoto.startsWith('http')
                     ? NetworkImage(partnerPhoto)
                     : const NetworkImage(
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
-                      ) as ImageProvider,
+                            'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
+                          )
+                          as ImageProvider,
               ),
             ),
           ),
@@ -390,16 +409,25 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.wb_sunny_outlined, color: Colors.white, size: 13),
+                          const Icon(
+                            Icons.wb_sunny_outlined,
+                            color: Colors.white,
+                            size: 13,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Hành động nhỏ hôm nay',
@@ -452,7 +480,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: HealingStitchColors.coral.withValues(alpha: 0.2),
+                              color: HealingStitchColors.coral.withValues(
+                                alpha: 0.2,
+                              ),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -460,7 +490,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(context).pushNamed('/relationship/checkin');
+                            Navigator.of(
+                              context,
+                            ).pushNamed('/relationship/checkin');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -472,7 +504,11 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'Thực hiện',
@@ -533,7 +569,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   Widget _buildEmotionsBento(RelationshipDashboard dash) {
     CoupleCheckinEntry? myCheckin;
     CoupleCheckinEntry? partnerCheckin;
-    
+
     for (final c in dash.recentCheckins) {
       if (c.isMine && myCheckin == null) myCheckin = c;
       if (!c.isMine && partnerCheckin == null) partnerCheckin = c;
@@ -616,7 +652,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                             ),
                           ),
                           Text(
-                            myCheckin != null ? getLabel(myCheckin.mood) : 'Vui vẻ',
+                            myCheckin != null
+                                ? getLabel(myCheckin.mood)
+                                : 'Vui vẻ',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
@@ -656,7 +694,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            partnerCheckin != null ? getEmoji(partnerCheckin.mood) : '😌',
+                            partnerCheckin != null
+                                ? getEmoji(partnerCheckin.mood)
+                                : '😌',
                             style: const TextStyle(fontSize: 20),
                           ),
                         ),
@@ -676,7 +716,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                 ),
                               ),
                               Text(
-                                partnerCheckin != null ? getLabel(partnerCheckin.mood) : 'Bình yên',
+                                partnerCheckin != null
+                                    ? getLabel(partnerCheckin.mood)
+                                    : 'Bình yên',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.plusJakartaSans(
@@ -851,7 +893,11 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 14, color: HealingStitchColors.textMuted),
+                    const Icon(
+                      Icons.schedule,
+                      size: 14,
+                      color: HealingStitchColors.textMuted,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '19:00 • Nhà hàng Sen',
@@ -867,8 +913,12 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pushNamed('/relationship/milestones'),
-            icon: const Icon(Icons.chevron_right, color: HealingStitchColors.textMuted),
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/relationship/milestones'),
+            icon: const Icon(
+              Icons.chevron_right,
+              color: HealingStitchColors.textMuted,
+            ),
           ),
         ],
       ),
@@ -901,7 +951,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: const Icon(
@@ -927,7 +979,10 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
@@ -955,14 +1010,18 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => Navigator.of(context).pushNamed('/chatbot'),
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/chatbot'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: HealingStitchColors.coral,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),

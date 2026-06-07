@@ -90,8 +90,13 @@ class HealingService implements HealingDataSource {
   }
 
   @override
-  Future<HealingCourseStartResult> startCourse(String id) async {
-    return _read((source) => source.startCourse(id));
+  Future<HealingCourseStartResult> startCourse(
+    String id, {
+    bool replaceActive = false,
+  }) async {
+    return _read(
+      (source) => source.startCourse(id, replaceActive: replaceActive),
+    );
   }
 
   @override
@@ -264,10 +269,14 @@ class HealingApiDataSource implements HealingDataSource {
   }
 
   @override
-  Future<HealingCourseStartResult> startCourse(String id) async {
+  Future<HealingCourseStartResult> startCourse(
+    String id, {
+    bool replaceActive = false,
+  }) async {
     final response = await _apiClient.post(
       '/healing/courses/$id/start',
       authenticated: true,
+      body: {'replaceActive': replaceActive},
     );
     return HealingCourseStartResult.fromJson(_data(response));
   }

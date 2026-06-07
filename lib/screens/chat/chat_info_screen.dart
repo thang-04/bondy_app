@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../services/api_client.dart';
 import '../../services/relationship_service.dart';
 import '../../theme/app_theme.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../healing/healing_stitch_style.dart';
 
-/// Trạng thái nút "Mời Tri kỷ" trên màn hình thông tin chat.
-enum TriKyButtonState {
-  /// Chưa ai mời — hiển thị nút "Mời Tri kỷ"
+/// Trạng thái xác nhận mối quan hệ trên màn hình thông tin chat.
+enum RelationshipConfirmationState {
+  /// Chưa có lời mời.
   idle,
 
-  /// Người dùng hiện tại đã gửi lời mời — hiển thị "Đã gửi lời mời"
+  /// Người dùng hiện tại đã gửi lời mời.
   waitingForPartner,
 
-  /// Đối phương đã gửi lời mời cho mình — hiển thị "Chấp nhận / Từ chối"
+  /// Đối phương đã gửi lời mời cho mình.
   receivedInvite,
 
-  /// Đã là Tri kỷ — hiển thị "Tri kỷ ❤️"
+  /// Hai người đã xác nhận mối quan hệ.
   active,
 }
 
-/// Màn hình thông tin chat: Hiển thị avatar, tên, nút mời Tri kỷ, v.v.
+/// Màn hình thông tin chat và xác nhận mối quan hệ.
 class ChatInfoScreen extends StatefulWidget {
   const ChatInfoScreen({super.key});
 
@@ -30,15 +32,16 @@ class ChatInfoScreen extends StatefulWidget {
   State<ChatInfoScreen> createState() => _ChatInfoScreenState();
 }
 
-class _ChatInfoScreenState extends State<ChatInfoScreen>
-    with SingleTickerProviderStateMixin {
+class _ChatInfoScreenState extends State<ChatInfoScreen> {
   late final ApiClient _apiClient = ApiClient();
-  late final RelationshipService _relationshipService =
-      RelationshipService(apiClient: _apiClient);
+  late final RelationshipService _relationshipService = RelationshipService(
+    apiClient: _apiClient,
+  );
 
   bool _isLoading = true;
   bool _isSubmitting = false;
-  TriKyButtonState _triKyState = TriKyButtonState.idle;
+  RelationshipConfirmationState _relationshipState =
+      RelationshipConfirmationState.idle;
   String? _errorMessage;
 
   // Dữ liệu profile đối phương
@@ -54,34 +57,11 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
   String _displayName = 'Bondy user';
   String? _photo;
 
-  // Animation cho hiệu ứng shimmer
-  late AnimationController _shimmerController;
-  late Animation<double> _shimmerAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _shimmerAnimation = CurvedAnimation(
-      parent: _shimmerController,
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _readRouteArgs();
     _fetchInviteStatus();
-  }
-
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
   }
 
   void _readRouteArgs() {
@@ -126,18 +106,16 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
       }
 
       if (relationship != null && relationship['status'] == 'ACTIVE') {
-        _triKyState = TriKyButtonState.active;
+        _relationshipState = RelationshipConfirmationState.active;
       } else if (invitation != null) {
         final inviterId = invitation['inviterId']?.toString();
         if (inviterId == _otherUserId) {
-          // Đối phương gửi lời mời cho mình
-          _triKyState = TriKyButtonState.receivedInvite;
+          _relationshipState = RelationshipConfirmationState.receivedInvite;
         } else {
-          // Mình đã gửi lời mời
-          _triKyState = TriKyButtonState.waitingForPartner;
+          _relationshipState = RelationshipConfirmationState.waitingForPartner;
         }
       } else {
-        _triKyState = TriKyButtonState.idle;
+        _relationshipState = RelationshipConfirmationState.idle;
       }
     } catch (e) {
       _errorMessage = 'Không thể tải trạng thái lời mời';
@@ -160,15 +138,13 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
             const Text('💕', style: TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
             Text(
-              'Mời Tri kỷ',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w700,
-              ),
+              'Xác nhận mối quan hệ',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
           ],
         ),
         content: Text(
-          'Bạn muốn mời $_displayName trở thành Tri kỷ?\n\nĐây là mối quan hệ đặc biệt nhất trên Bondy.',
+          'Bạn muốn gửi lời mời xác nhận mối quan hệ đến $_displayName?',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             height: 1.5,
@@ -211,8 +187,14 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
     try {
       await _relationshipService.createInvite(matchId: matchId);
       if (!mounted) return;
-      setState(() => _triKyState = TriKyButtonState.waitingForPartner);
-      BondyFeedback.showSuccess(context, 'Đã gửi lời mời Tri kỷ! 💕');
+      setState(
+        () => _relationshipState =
+            RelationshipConfirmationState.waitingForPartner,
+      );
+      BondyFeedback.showSuccess(
+        context,
+        'Đã gửi lời mời xác nhận mối quan hệ!',
+      );
     } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(context, e, fallback: 'Không gửi được lời mời');
@@ -229,14 +211,17 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
     try {
       await _relationshipService.acceptByMatchId(matchId);
       if (!mounted) return;
-      setState(() => _triKyState = TriKyButtonState.active);
-      BondyFeedback.showSuccess(
-        context,
-        'Chúc mừng! Hai bạn đã trở thành Tri kỷ! 🎉',
-      );
+      setState(() => _relationshipState = RelationshipConfirmationState.active);
+      await context.read<RelationshipViewModel>().loadDashboard();
+      if (!mounted) return;
+      BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
     } catch (e) {
       if (!mounted) return;
-      BondyFeedback.showError(context, e, fallback: 'Không thể chấp nhận lời mời');
+      BondyFeedback.showError(
+        context,
+        e,
+        fallback: 'Không thể chấp nhận lời mời',
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -255,7 +240,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
         content: Text(
-          '$_displayName đã mời bạn trở thành Tri kỷ. Bạn chắc chắn muốn từ chối?',
+          '$_displayName đã gửi lời mời xác nhận mối quan hệ. Bạn chắc chắn muốn từ chối?',
           style: GoogleFonts.plusJakartaSans(fontSize: 14, height: 1.5),
         ),
         actions: [
@@ -278,7 +263,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
     try {
       await _relationshipService.declineInvite(matchId);
       if (!mounted) return;
-      setState(() => _triKyState = TriKyButtonState.idle);
+      setState(() => _relationshipState = RelationshipConfirmationState.idle);
     } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(context, e, fallback: 'Không thể từ chối');
@@ -306,7 +291,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
                           _buildAvatarSection(),
                           _buildProfileInfo(),
                           const SizedBox(height: 32),
-                          _buildTriKyCard(),
+                          _buildRelationshipCard(),
                           if (_errorMessage != null) ...[
                             const SizedBox(height: 16),
                             Text(
@@ -361,10 +346,10 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
           height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: _triKyState == TriKyButtonState.active
+            gradient: _relationshipState == RelationshipConfirmationState.active
                 ? HealingStitchColors.warmGradient
                 : null,
-            border: _triKyState != TriKyButtonState.active
+            border: _relationshipState != RelationshipConfirmationState.active
                 ? Border.all(color: HealingStitchColors.border, width: 3)
                 : null,
           ),
@@ -372,15 +357,12 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
           child: CircleAvatar(
             radius: 46,
             backgroundColor: Colors.white,
-            backgroundImage:
-                (_photo != null && _photo!.startsWith('http'))
-                    ? NetworkImage(_photo!)
-                    : null,
+            backgroundImage: (_photo != null && _photo!.startsWith('http'))
+                ? NetworkImage(_photo!)
+                : null,
             child: (_photo == null || !_photo!.startsWith('http'))
                 ? Text(
-                    _displayName.isEmpty
-                        ? 'B'
-                        : _displayName[0].toUpperCase(),
+                    _displayName.isEmpty ? 'B' : _displayName[0].toUpperCase(),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
@@ -399,7 +381,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
             color: HealingStitchColors.textMain,
           ),
         ),
-        if (_triKyState == TriKyButtonState.active) ...[
+        if (_relationshipState == RelationshipConfirmationState.active) ...[
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -408,7 +390,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '💕 Tri kỷ',
+              'Đã xác nhận mối quan hệ',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -421,7 +403,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
     );
   }
 
-  Widget _buildTriKyCard() {
+  Widget _buildRelationshipCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -451,7 +433,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
 
           // Tiêu đề
           Text(
-            'Tri kỷ',
+            'Xác nhận mối quan hệ',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -480,15 +462,15 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
   }
 
   String _getDescription() {
-    switch (_triKyState) {
-      case TriKyButtonState.idle:
-        return 'Mối quan hệ đặc biệt nhất trên Bondy.\nCùng theo dõi hành trình yêu thương.';
-      case TriKyButtonState.waitingForPartner:
-        return 'Bạn đã gửi lời mời cho $_displayName.\nĐang chờ phản hồi...';
-      case TriKyButtonState.receivedInvite:
-        return '$_displayName muốn trở thành Tri kỷ của bạn!\nHãy phản hồi ngay nhé.';
-      case TriKyButtonState.active:
-        return 'Hai bạn đã chính thức là Tri kỷ! 🎉\nHãy cùng viết nên câu chuyện đẹp.';
+    switch (_relationshipState) {
+      case RelationshipConfirmationState.idle:
+        return 'Gửi lời mời để cùng mở không gian dành riêng cho hai bạn.';
+      case RelationshipConfirmationState.waitingForPartner:
+        return 'Bạn đã gửi lời mời cho $_displayName.\nĐang chờ đối phương xác nhận.';
+      case RelationshipConfirmationState.receivedInvite:
+        return '$_displayName muốn xác nhận mối quan hệ với bạn.\nHãy phản hồi lời mời.';
+      case RelationshipConfirmationState.active:
+        return 'Hai bạn đã xác nhận mối quan hệ.\nHãy cùng viết nên câu chuyện đẹp.';
     }
   }
 
@@ -504,62 +486,39 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
       );
     }
 
-    switch (_triKyState) {
-      case TriKyButtonState.idle:
+    switch (_relationshipState) {
+      case RelationshipConfirmationState.idle:
         return _buildGradientButton(
-          label: 'Mời Tri kỷ 💕',
+          label: 'Xác nhận mối quan hệ',
           onTap: _sendInvite,
         );
 
-      case TriKyButtonState.waitingForPartner:
-        return AnimatedBuilder(
-          animation: _shimmerAnimation,
-          builder: (context, child) {
-            return Container(
-              width: double.infinity,
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: HealingStitchColors.paleCoral.withValues(
-                  alpha: 0.6 + 0.4 * _shimmerAnimation.value,
-                ),
-                border: Border.all(
-                  color: HealingStitchColors.coral.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: HealingStitchColors.coral.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Đã gửi lời mời',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: HealingStitchColors.coral,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+      case RelationshipConfirmationState.waitingForPartner:
+        return Container(
+          width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: HealingStitchColors.paleCoral,
+            border: Border.all(
+              color: HealingStitchColors.coral.withValues(alpha: 0.3),
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            'Đang chờ đối phương xác nhận',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: HealingStitchColors.coral,
+            ),
+          ),
         );
 
-      case TriKyButtonState.receivedInvite:
+      case RelationshipConfirmationState.receivedInvite:
         return Column(
           children: [
-            _buildGradientButton(
-              label: 'Chấp nhận 🎉',
-              onTap: _acceptInvite,
-            ),
+            _buildGradientButton(label: 'Chấp nhận 🎉', onTap: _acceptInvite),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
@@ -585,7 +544,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
           ],
         );
 
-      case TriKyButtonState.active:
+      case RelationshipConfirmationState.active:
         return Container(
           width: double.infinity,
           height: 52,
@@ -600,7 +559,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
               const Icon(Icons.favorite, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Tri kỷ',
+                'Đã xác nhận mối quan hệ',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -666,8 +625,8 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
   Widget _buildProfileInfo() {
     final String distanceLabel = _otherUserDistanceKm != null
         ? (_otherUserDistanceKm! % 1 == 0
-            ? 'Cách bạn ${_otherUserDistanceKm!.toInt()} km'
-            : 'Cách bạn ${_otherUserDistanceKm!.toStringAsFixed(1)} km')
+              ? 'Cách bạn ${_otherUserDistanceKm!.toInt()} km'
+              : 'Cách bạn ${_otherUserDistanceKm!.toStringAsFixed(1)} km')
         : '';
 
     final String locationText = [
@@ -690,7 +649,8 @@ class _ChatInfoScreenState extends State<ChatInfoScreen>
             ),
           ),
         ],
-        if (_otherUserDatingGoal != null && _otherUserDatingGoal!.isNotEmpty) ...[
+        if (_otherUserDatingGoal != null &&
+            _otherUserDatingGoal!.isNotEmpty) ...[
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

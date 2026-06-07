@@ -1,4 +1,43 @@
 import 'api_client.dart';
+import '../core/media_url.dart';
+
+class RelationshipInvitation {
+  final String id;
+  final String inviterId;
+  final String inviterName;
+  final String? inviterPhoto;
+  final String status;
+  final DateTime? createdAt;
+
+  const RelationshipInvitation({
+    required this.id,
+    required this.inviterId,
+    required this.inviterName,
+    required this.inviterPhoto,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory RelationshipInvitation.fromJson(Map<String, dynamic> json) {
+    return RelationshipInvitation(
+      id: json['id']?.toString() ?? '',
+      inviterId: json['inviterId']?.toString() ?? '',
+      inviterName: json['inviterName']?.toString() ?? 'Người dùng',
+      inviterPhoto: rewriteMediaUrl(json['inviterPhoto']?.toString()),
+      status: json['status']?.toString() ?? 'PENDING',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'inviterId': inviterId,
+    'inviterName': inviterName,
+    'inviterPhoto': inviterPhoto,
+    'status': status,
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+  };
+}
 
 class CoupleCheckinEntry {
   final String id;
@@ -20,7 +59,8 @@ class CoupleCheckinEntry {
       id: json['id']?.toString() ?? '',
       mood: json['mood']?.toString() ?? '',
       note: json['note']?.toString(),
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       isMine: json['isMine'] == true,
     );
@@ -64,7 +104,7 @@ class RelationshipDashboard {
       relationshipId: json['relationshipId']?.toString(),
       partnerId: partner['id']?.toString(),
       partnerName: partner['name']?.toString(),
-      partnerPhotoUrl: partner['photoUrl']?.toString(),
+      partnerPhotoUrl: rewriteMediaUrl(partner['photoUrl']?.toString()),
       streakDays: (json['streakDays'] as num?)?.toInt() ?? 0,
       daysTogether: (json['daysTogether'] as num?)?.toInt() ?? 0,
       nextMilestoneTitle: milestone?['title']?.toString(),
@@ -82,10 +122,14 @@ class RelationshipDashboard {
 class RelationshipService {
   final ApiClient _apiClient;
 
-  RelationshipService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  RelationshipService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   Future<RelationshipDashboard> getDashboard() async {
-    final response = await _apiClient.get('/relationships/me', authenticated: true);
+    final response = await _apiClient.get(
+      '/relationships/me',
+      authenticated: true,
+    );
     return RelationshipDashboard.fromJson(
       (response['data'] as Map<String, dynamic>?) ?? {},
     );
@@ -108,7 +152,7 @@ class RelationshipService {
     );
   }
 
-  /// Kiểm tra lời mời Tri kỷ đang chờ cho một matchId
+  /// Kiểm tra lời mời xác nhận mối quan hệ đang chờ cho một matchId.
   Future<Map<String, dynamic>> checkPendingInvite(String matchId) async {
     final response = await _apiClient.get(
       '/relationships/invite/pending?matchId=$matchId',
@@ -117,7 +161,7 @@ class RelationshipService {
     return (response['data'] as Map<String, dynamic>?) ?? {};
   }
 
-  /// Chấp nhận lời mời Tri kỷ qua matchId (luồng mới)
+  /// Chấp nhận lời mời xác nhận mối quan hệ qua matchId.
   Future<Map<String, dynamic>> acceptByMatchId(String matchId) async {
     final response = await _apiClient.post(
       '/relationships/accept',
@@ -127,7 +171,7 @@ class RelationshipService {
     return (response['data'] as Map<String, dynamic>?) ?? {};
   }
 
-  /// Từ chối lời mời Tri kỷ
+  /// Từ chối lời mời xác nhận mối quan hệ.
   Future<void> declineInvite(String matchId) async {
     await _apiClient.post(
       '/relationships/invite/decline',
@@ -135,7 +179,6 @@ class RelationshipService {
       body: {'matchId': matchId},
     );
   }
-
 
   Future<void> submitCheckin({required String mood, String? note}) async {
     await _apiClient.post(

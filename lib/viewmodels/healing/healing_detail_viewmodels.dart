@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/bondy_error_mapper.dart';
 import '../../models/healing/healing_models.dart';
+import '../../services/api_client.dart';
 import '../../services/healing/healing_progress_store.dart';
 import '../../services/healing/healing_service.dart';
 
@@ -177,7 +178,7 @@ class HealingCourseViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> startCourse() async {
+  Future<void> startCourse({bool replaceActive = false}) async {
     final current = course;
     if (current == null) return;
 
@@ -186,13 +187,20 @@ class HealingCourseViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _service.startCourse(current.id);
+      final result = await _service.startCourse(
+        current.id,
+        replaceActive: replaceActive,
+      );
       final progress = _progressFromObject(result.progress, current.progress);
       if (progress != null) {
         _progressStore.rememberCourseProgress(progress);
       }
       course = _withStoredProgress(await _service.fetchCourse(current.id));
     } catch (error) {
+      if (error is ApiClientException &&
+          error.code == 'ACTIVE_COURSE_CONFIRMATION_REQUIRED') {
+        rethrow;
+      }
       errorMessage = BondyErrorMapper.message(error);
     } finally {
       isMutating = false;

@@ -13,6 +13,7 @@ class RelationshipViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   String? inviteCode;
+  bool get hasActiveRelationship => dashboard?.hasRelationship == true;
 
   Future<void> loadDashboard() async {
     isLoading = true;
@@ -22,7 +23,7 @@ class RelationshipViewModel extends ChangeNotifier {
       dashboard = await _service.getDashboard();
     } catch (e) {
       errorMessage = BondyErrorMapper.message(e);
-      dashboard = RelationshipDashboard(hasRelationship: false);
+      dashboard ??= RelationshipDashboard(hasRelationship: false);
     } finally {
       isLoading = false;
       notifyListeners();

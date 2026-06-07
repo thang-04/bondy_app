@@ -24,6 +24,7 @@ class ChatMatch {
     ChatOtherUser? otherUser,
     ChatLastMessage? lastMessage,
     int? unreadCount,
+    DateTime? updatedAt,
   }) {
     return ChatMatch(
       id: id,
@@ -31,7 +32,7 @@ class ChatMatch {
       otherUser: otherUser ?? this.otherUser,
       lastMessage: lastMessage ?? this.lastMessage,
       unreadCount: unreadCount ?? this.unreadCount,
-      updatedAt: updatedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -39,9 +40,13 @@ class ChatMatch {
     return ChatMatch(
       id: json['id'] as String,
       matchId: json['matchId'] as String,
-      otherUser: ChatOtherUser.fromJson(json['otherUser'] as Map<String, dynamic>),
+      otherUser: ChatOtherUser.fromJson(
+        json['otherUser'] as Map<String, dynamic>,
+      ),
       lastMessage: json['lastMessage'] != null
-          ? ChatLastMessage.fromJson(json['lastMessage'] as Map<String, dynamic>)
+          ? ChatLastMessage.fromJson(
+              json['lastMessage'] as Map<String, dynamic>,
+            )
           : null,
       unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -189,13 +194,22 @@ class ChatService {
   Future<List<ChatMatch>> listChats() async {
     final response = await _apiClient.get('/chats', authenticated: true);
     final data = response['data'] as List<dynamic>;
-    return data.cast<Map<String, dynamic>>().map((e) => ChatMatch.fromJson(e)).toList();
+    return data
+        .cast<Map<String, dynamic>>()
+        .map((e) => ChatMatch.fromJson(e))
+        .toList();
   }
 
   Future<List<ChatMessage>> listMessages(String chatId) async {
-    final response = await _apiClient.get('/chats/$chatId/messages', authenticated: true);
+    final response = await _apiClient.get(
+      '/chats/$chatId/messages',
+      authenticated: true,
+    );
     final data = response['data'] as List<dynamic>;
-    return data.cast<Map<String, dynamic>>().map((e) => ChatMessage.fromJson(e)).toList();
+    return data
+        .cast<Map<String, dynamic>>()
+        .map((e) => ChatMessage.fromJson(e))
+        .toList();
   }
 
   Future<ChatMessage> sendMessage(
@@ -209,20 +223,14 @@ class ChatService {
     }
     final response = await _apiClient.post(
       '/chats/$chatId/messages',
-      body: {
-        'content': trimmedContent,
-        'messageType': messageType,
-      },
+      body: {'content': trimmedContent, 'messageType': messageType},
       authenticated: true,
     );
     return ChatMessage.fromJson(response['data'] as Map<String, dynamic>);
   }
 
   Future<void> markAsRead(String messageId) async {
-    await _apiClient.put(
-      '/messages/$messageId/read',
-      authenticated: true,
-    );
+    await _apiClient.put('/messages/$messageId/read', authenticated: true);
   }
 
   Future<bool> fetchPartnerTyping(String chatId) async {
@@ -234,7 +242,10 @@ class ChatService {
     return data['isTyping'] == true;
   }
 
-  Future<void> sendTypingIndicator(String chatId, {bool isTyping = true}) async {
+  Future<void> sendTypingIndicator(
+    String chatId, {
+    bool isTyping = true,
+  }) async {
     await _apiClient.post(
       '/chats/$chatId/typing',
       body: {'isTyping': isTyping},

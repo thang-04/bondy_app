@@ -11,8 +11,10 @@ import '../../widgets/common/bondy_feedback.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
+import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../healing/healing_mode_dashboard_screen.dart';
 import '../chat/matches_list_screen.dart';
+import '../relationship/relationship_home_dashboard.dart';
 import '../healing/healing_stitch_style.dart';
 import '../../viewmodels/community/community_viewmodel.dart';
 import '../../widgets/community/community_profile_card.dart';
@@ -35,19 +37,42 @@ class MainShellScreen extends StatefulWidget {
   State<MainShellScreen> createState() => _MainShellScreenState();
 }
 
-class _MainShellScreenState extends State<MainShellScreen> {
+class _MainShellScreenState extends State<MainShellScreen>
+    with WidgetsBindingObserver {
   late int _currentIndex;
   late final ProfileService _profileService;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _profileService = widget.profileService ?? ProfileService();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<ChatViewModel>().fetchChats();
+      context.read<RelationshipViewModel>().loadDashboard();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<RelationshipViewModel>().loadDashboard();
+    }
+  }
+
+  void _selectTab(int index) {
+    setState(() => _currentIndex = index);
+    if (index == 0) {
+      context.read<RelationshipViewModel>().loadDashboard();
+    }
   }
 
   @override
@@ -58,10 +83,15 @@ class _MainShellScreenState extends State<MainShellScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeDashboardScreen(
-            onNavigateToHealing: () => setState(() => _currentIndex = 1),
-            onNavigateToMatches: () => setState(() => _currentIndex = 2),
-            onNavigateToProfile: () => setState(() => _currentIndex = 3),
+          RelationshipModeHome(
+            standardHome: HomeDashboardScreen(
+              onNavigateToHealing: () => _selectTab(1),
+              onNavigateToMatches: () => _selectTab(2),
+              onNavigateToProfile: () => _selectTab(3),
+            ),
+            relationshipHome: RelationshipHomeDashboard(
+              viewModel: context.read<RelationshipViewModel>(),
+            ),
           ),
           HealingModeDashboardScreen(
             isActive: _currentIndex == 1,
@@ -74,11 +104,30 @@ class _MainShellScreenState extends State<MainShellScreen> {
       extendBody: true,
       bottomNavigationBar: BondyBottomNavBar(
         currentIndex: _currentIndex,
-        onTabSelected: (index) => setState(() => _currentIndex = index),
+        onTabSelected: _selectTab,
         onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
         hasMatchBadge: totalUnread > 0,
       ),
     );
+  }
+}
+
+class RelationshipModeHome extends StatelessWidget {
+  final Widget standardHome;
+  final Widget relationshipHome;
+
+  const RelationshipModeHome({
+    super.key,
+    required this.standardHome,
+    required this.relationshipHome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasRelationship = context
+        .watch<RelationshipViewModel>()
+        .hasActiveRelationship;
+    return hasRelationship ? relationshipHome : standardHome;
   }
 }
 
@@ -565,10 +614,9 @@ class _CommunityTabState extends State<_CommunityTab> {
             chatId: result.conversationId!,
           );
         } else {
-          await Navigator.of(context).pushNamed(
-            '/match-confirm',
-            arguments: {'matchId': result.matchId},
-          );
+          await Navigator.of(
+            context,
+          ).pushNamed('/match-confirm', arguments: {'matchId': result.matchId});
         }
       } else {
         // Test #11: one-way like ⇒ chỉ báo đã gửi, KHÔNG bảo "đã kết nối".
@@ -765,7 +813,8 @@ class _ProfileTab extends StatefulWidget {
           color: BondyColors.textPrimary,
         ),
       ),
-      trailing: trailing ??
+      trailing:
+          trailing ??
           const Icon(
             Icons.chevron_right_rounded,
             color: BondyColors.textHint,
@@ -891,7 +940,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                 ),
                 const SizedBox(height: 16),
               ],
-              
+
               // Nhóm 1: Cá nhân hóa & Premium
               Container(
                 decoration: BoxDecoration(
@@ -919,23 +968,36 @@ class _ProfileTabState extends State<_ProfileTab> {
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Color(0xFFF3F4F6),
+                      ),
                     ),
                     _ProfileTab._buildMenuItem(
                       icon: Icons.people_alt_outlined,
                       label: 'Mối quan hệ của tôi',
-                      onTap: () => Navigator.of(context).pushNamed('/relationship/home'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/relationship/home'),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Color(0xFFF3F4F6),
+                      ),
                     ),
                     _ProfileTab._buildMenuItem(
                       icon: Icons.star_outline_rounded,
                       label: 'Bondy Premium',
-                      onTap: () => Navigator.of(context).pushNamed('/settings/premium'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/settings/premium'),
                       trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
@@ -975,20 +1037,31 @@ class _ProfileTabState extends State<_ProfileTab> {
                     _ProfileTab._buildMenuItem(
                       icon: Icons.lock_outline_rounded,
                       label: 'Đổi mật khẩu',
-                      onTap: () => Navigator.of(context).pushNamed('/settings/change-password'),
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed('/settings/change-password'),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Color(0xFFF3F4F6),
+                      ),
                     ),
                     _ProfileTab._buildMenuItem(
                       icon: Icons.shield_outlined,
                       label: 'Quyền riêng tư',
-                      onTap: () => Navigator.of(context).pushNamed('/settings/privacy'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/settings/privacy'),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Color(0xFFF3F4F6),
+                      ),
                     ),
                     _ProfileTab._buildMenuItem(
                       icon: Icons.notifications_outlined,
@@ -1022,7 +1095,11 @@ class _ProfileTabState extends State<_ProfileTab> {
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, thickness: 0.5, color: Color(0xFFF3F4F6)),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: Color(0xFFF3F4F6),
+                      ),
                     ),
                     _ProfileTab._buildMenuItem(
                       icon: Icons.info_outline_rounded,
@@ -1083,7 +1160,7 @@ class _ProfileTabState extends State<_ProfileTab> {
     final displayName =
         profile?.displayName ??
         (_isLoading ? 'Đang tải...' : 'Người dùng Bondy');
-    
+
     final detailsList = [
       if (profile != null && profile.email.isNotEmpty) profile.email,
       if (profile?.bio?.isNotEmpty == true) profile!.bio!,
@@ -1192,10 +1269,7 @@ class _ProfileTabState extends State<_ProfileTab> {
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white, width: 2),
         ),
         child: avatarUrl == null
             ? _avatarPlaceholder(displayName)

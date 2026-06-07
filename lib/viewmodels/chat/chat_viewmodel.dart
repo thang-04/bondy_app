@@ -5,7 +5,7 @@ import '../../services/chat_service.dart';
 
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel({ChatService? service})
-      : _service = service ?? ChatService(ApiClient());
+    : _service = service ?? ChatService(ApiClient());
 
   final ChatService _service;
 
@@ -26,6 +26,7 @@ class ChatViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _chats = await _service.listChats();
+      _sortChats();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -45,8 +46,9 @@ class ChatViewModel extends ChangeNotifier {
   void incrementUnread(String chatId) {
     final idx = _chats.indexWhere((c) => c.id == chatId);
     if (idx == -1) return;
-    _chats[idx] =
-        _chats[idx].copyWith(unreadCount: _chats[idx].unreadCount + 1);
+    _chats[idx] = _chats[idx].copyWith(
+      unreadCount: _chats[idx].unreadCount + 1,
+    );
     notifyListeners();
   }
 
@@ -58,12 +60,38 @@ class ChatViewModel extends ChangeNotifier {
     final idx = _chats.indexWhere((c) => c.id == chatId);
     if (idx == -1) return;
     final updatedOther = _chats[idx].otherUser.copyWith(
-          isOnline: isOnline,
-          lastSeenAt: lastSeenAt,
-          presenceStatus: isOnline ? 'ONLINE' : 'OFFLINE',
-        );
+      isOnline: isOnline,
+      lastSeenAt: lastSeenAt,
+      presenceStatus: isOnline ? 'ONLINE' : 'OFFLINE',
+    );
     _chats[idx] = _chats[idx].copyWith(otherUser: updatedOther);
     notifyListeners();
+  }
+
+  void updateLatestMessage({
+    required String chatId,
+    required ChatMessage message,
+    required String currentUserId,
+  }) {
+    final idx = _chats.indexWhere((chat) => chat.id == chatId);
+    if (idx == -1) return;
+    final isMine = message.senderId == currentUserId;
+    final current = _chats[idx];
+    _chats[idx] = current.copyWith(
+      lastMessage: ChatLastMessage(
+        content: message.content,
+        createdAt: message.createdAt,
+        isMine: isMine,
+      ),
+      unreadCount: isMine ? current.unreadCount : current.unreadCount + 1,
+      updatedAt: message.createdAt,
+    );
+    _sortChats();
+    notifyListeners();
+  }
+
+  void _sortChats() {
+    _chats.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
   }
 
   void reset() {

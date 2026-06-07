@@ -8,6 +8,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'theme/app_theme.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
+import 'viewmodels/relationship/relationship_viewmodel.dart';
 import 'viewmodels/survey/survey_viewmodel.dart';
 import 'viewmodels/subscription/subscription_viewmodel.dart';
 import 'services/analytics_service.dart';
@@ -126,15 +127,11 @@ Future<void> main() async {
   // Crash reporting via Sentry — reads SENTRY_DSN from .env
   final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
   if (sentryDsn.isNotEmpty) {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = sentryDsn;
-        options.tracesSampleRate = 0.2;
-        options.environment =
-            dotenv.env['APP_ENV'] ?? 'production';
-      },
-      appRunner: () => runApp(const BondyApp()),
-    );
+    await SentryFlutter.init((options) {
+      options.dsn = sentryDsn;
+      options.tracesSampleRate = 0.2;
+      options.environment = dotenv.env['APP_ENV'] ?? 'production';
+    }, appRunner: () => runApp(const BondyApp()));
   } else {
     // Sentry not configured — run normally.
     // Forward Flutter framework errors to the logger so they remain visible.
@@ -155,7 +152,10 @@ class BondyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => SurveyViewModel()),
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
-        ChangeNotifierProvider(create: (_) => SubscriptionViewModel()..loadSubscription()),
+        ChangeNotifierProvider(create: (_) => RelationshipViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => SubscriptionViewModel()..loadSubscription(),
+        ),
       ],
       child: MaterialApp(
         title: 'Bondy',
@@ -166,7 +166,9 @@ class BondyApp extends StatelessWidget {
           final isWebLarge = mediaQuery.size.width > 500;
           if (isWebLarge) {
             return Scaffold(
-              backgroundColor: const Color(0xFFFFFBF9), // Match Bondy background color
+              backgroundColor: const Color(
+                0xFFFFFBF9,
+              ), // Match Bondy background color
               body: Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
@@ -181,9 +183,7 @@ class BondyApp extends StatelessWidget {
                       ],
                     ),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: 430,
-                      ),
+                      constraints: const BoxConstraints(maxWidth: 430),
                       child: child,
                     ),
                   ),
@@ -200,10 +200,7 @@ class BondyApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('vi'),
-          Locale('en'),
-        ],
+        supportedLocales: const [Locale('vi'), Locale('en')],
         locale: const Locale('vi'), // default locale
 
         initialRoute: '/auth-gate',
@@ -274,15 +271,12 @@ class BondyApp extends StatelessWidget {
               const ReflectionCompleteSheet(),
           '/healing/starter-recommendation': (context) =>
               const StarterRecommendationScreen(),
-          '/chat/deeper': (context) =>
-              const ActiveChatDeeperPromptsScreen(),
+          '/chat/deeper': (context) => const ActiveChatDeeperPromptsScreen(),
           '/content': (context) => const ContentHubLibraryScreen(),
           '/date-suggestions': (context) =>
               const WeekendDateSuggestionsScreen(),
-          '/relationship/home': (context) =>
-              const RelationshipHomeDashboard(),
-          '/relationship/checkin': (context) =>
-              const CouplesEmotionsCheckin(),
+          '/relationship/home': (context) => const RelationshipHomeDashboard(),
+          '/relationship/checkin': (context) => const CouplesEmotionsCheckin(),
           '/relationship/conflict-tool': (context) =>
               const ConflictResolutionTool(),
           '/relationship/milestones': (context) =>
@@ -295,8 +289,7 @@ class BondyApp extends StatelessWidget {
               const RelationshipConnectedScreen(),
           '/relationship/weekly-report': (context) =>
               const WeeklyReportScreen(),
-          '/safety/pre-date-checkin': (context) =>
-              const PreDateCheckinScreen(),
+          '/safety/pre-date-checkin': (context) => const PreDateCheckinScreen(),
           '/safety/active': (context) => const ActiveCheckinBanner(),
           '/community': (context) => const CommunityFeedScreen(),
           '/settings/premium': (context) => const PremiumPaywallScreen(),
@@ -306,16 +299,15 @@ class BondyApp extends StatelessWidget {
           '/settings/notifications': (context) =>
               const NotificationPrefsScreen(),
           '/settings/blocked': (context) => const BlockedUsersScreen(),
-          '/settings/account-delete': (context) =>
-              const AccountDeleteScreen(),
+          '/settings/account-delete': (context) => const AccountDeleteScreen(),
         },
         onGenerateRoute: (settings) {
           switch (settings.name) {
             case '/match-confirm':
               final args = settings.arguments as Map<String, dynamic>;
               return MaterialPageRoute(
-                builder: (_) => MatchConfirmationScreen(
-                    matchId: args['matchId'] as String),
+                builder: (_) =>
+                    MatchConfirmationScreen(matchId: args['matchId'] as String),
               );
             default:
               return null;

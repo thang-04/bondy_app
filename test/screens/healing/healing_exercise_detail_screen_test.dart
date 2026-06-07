@@ -85,8 +85,7 @@ class _FakeExerciseDataSource implements HealingDataSource {
     String id, {
     int? durationSeconds,
     Object? answers,
-  }) async =>
-      HealingCompletionResult.fromJson({'completed': true});
+  }) async => HealingCompletionResult.fromJson({'completed': true});
 
   @override
   Future<HealingHomeData> fetchHome() => throw UnimplementedError();
@@ -98,8 +97,7 @@ class _FakeExerciseDataSource implements HealingDataSource {
     String? context,
     String source = 'VOLUNTARY',
     String? note,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<HealingArticle> fetchArticle(String id) => throw UnimplementedError();
@@ -109,8 +107,7 @@ class _FakeExerciseDataSource implements HealingDataSource {
     String id, {
     int? durationSeconds,
     Object? answers,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<HealingAudio> fetchAudio(String id) => throw UnimplementedError();
@@ -122,8 +119,10 @@ class _FakeExerciseDataSource implements HealingDataSource {
   Future<HealingCourse> fetchCourse(String id) => throw UnimplementedError();
 
   @override
-  Future<HealingCourseStartResult> startCourse(String id) =>
-      throw UnimplementedError();
+  Future<HealingCourseStartResult> startCourse(
+    String id, {
+    bool replaceActive = false,
+  }) => throw UnimplementedError();
 
   @override
   Future<HealingCompletionResult> completeLesson(
@@ -131,8 +130,7 @@ class _FakeExerciseDataSource implements HealingDataSource {
     String lessonId, {
     int? durationSeconds,
     Object? answers,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<HealingEntryState> fetchEntryState({String entry = 'VOLUNTARY'}) =>
@@ -156,6 +154,5 @@ class _FakeExerciseDataSource implements HealingDataSource {
     required String completionType,
     int? durationSeconds,
     Object? answers,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }

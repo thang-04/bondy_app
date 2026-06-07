@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/healing/healing_models.dart';
+import '../../services/api_client.dart';
 import '../../viewmodels/healing/healing_detail_viewmodels.dart';
 import 'healing_navigation.dart';
 import 'healing_stitch_style.dart';
@@ -130,7 +131,7 @@ class _HealingCourseDetailScreenState extends State<HealingCourseDetailScreen> {
                     ? () {}
                     : () {
                         if (course?.progress == null) {
-                          _viewModel.startCourse();
+                          _startCourseWithConfirmation();
                         } else {
                           _openCurrentLesson(course);
                         }
@@ -149,6 +150,44 @@ class _HealingCourseDetailScreenState extends State<HealingCourseDetailScreen> {
     // sẽ silent load nhầm course → user thấy nội dung không phải họ chọn.
     // Trả chuỗi rỗng để loadCourse báo lỗi rõ thay vì show ghost content.
     return ModalRoute.of(context)?.settings.arguments?.toString() ?? '';
+  }
+
+  Future<void> _startCourseWithConfirmation() async {
+    try {
+      await _viewModel.startCourse();
+    } on ApiClientException catch (error) {
+      if (!mounted || error.code != 'ACTIVE_COURSE_CONFIRMATION_REQUIRED') {
+        return;
+      }
+      final activeCourse = error.data?['activeCourse'];
+      final activeTitle = activeCourse is Map
+          ? activeCourse['title']?.toString()
+          : null;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Thay đổi lộ trình?'),
+          content: Text(
+            '${activeTitle?.isNotEmpty == true ? activeTitle : 'Lộ trình hiện tại'} '
+            'sẽ được tạm dừng và toàn bộ tiến độ vẫn được giữ lại. '
+            'Bạn có muốn bắt đầu lộ trình mới không?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Giữ lộ trình hiện tại'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Xác nhận bắt đầu'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true && mounted) {
+        await _viewModel.startCourse(replaceActive: true);
+      }
+    }
   }
 
   void _openCurrentLesson(HealingCourse? course) {

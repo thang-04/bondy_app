@@ -620,8 +620,10 @@ class _FakeHealingDataSource implements HealingDataSource {
   Future<HealingCourse> fetchCourse(String id) => throw UnimplementedError();
 
   @override
-  Future<HealingCourseStartResult> startCourse(String id) =>
-      throw UnimplementedError();
+  Future<HealingCourseStartResult> startCourse(
+    String id, {
+    bool replaceActive = false,
+  }) => throw UnimplementedError();
 
   @override
   Future<HealingCompletionResult> completeLesson(
