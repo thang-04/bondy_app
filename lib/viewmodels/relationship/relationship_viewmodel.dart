@@ -10,7 +10,9 @@ class RelationshipViewModel extends ChangeNotifier {
     : _service = service ?? RelationshipService();
 
   RelationshipDashboard? dashboard;
+  RelationshipDailyAction? dailyAction;
   bool isLoading = false;
+  bool isDailyActionLoading = false;
   String? errorMessage;
   String? inviteCode;
   bool get hasActiveRelationship => dashboard?.hasRelationship == true;
@@ -45,6 +47,49 @@ class RelationshipViewModel extends ChangeNotifier {
   Future<void> acceptInvite(String code) async {
     await _service.acceptInvite(code);
     await loadDashboard();
+  }
+
+  Future<void> loadDailyAction({String? dateKey}) async {
+    if (!hasActiveRelationship) return;
+    isDailyActionLoading = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      dailyAction = await _service.fetchDailyAction(
+        dateKey: dateKey ?? relationshipDateKey(),
+      );
+    } catch (e) {
+      errorMessage = BondyErrorMapper.message(e);
+    } finally {
+      isDailyActionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setDailyActionState({
+    String? actionKey,
+    String? dateKey,
+    required RelationshipDailyActionStatus status,
+    DateTime? remindAt,
+  }) async {
+    final current = dailyAction;
+    if (current == null && (actionKey == null || dateKey == null)) {
+      throw StateError('Chưa có hành động hôm nay để cập nhật');
+    }
+
+    try {
+      dailyAction = await _service.updateDailyActionState(
+        actionKey: actionKey ?? current!.actionKey,
+        dateKey: dateKey ?? current!.dateKey,
+        status: status,
+        remindAt: remindAt,
+      );
+      notifyListeners();
+    } catch (e) {
+      errorMessage = BondyErrorMapper.message(e);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> submitCheckin(String mood, {String? note}) async {

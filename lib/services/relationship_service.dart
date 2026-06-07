@@ -1,6 +1,52 @@
 import 'api_client.dart';
 import '../core/media_url.dart';
 
+enum RelationshipTimelineItemType { started, milestone, checkin }
+
+enum RelationshipDailyActionStatus { active, reminded, skipped }
+
+String relationshipDateKey([DateTime? value]) {
+  final date = value ?? DateTime.now();
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '${date.year}-$month-$day';
+}
+
+RelationshipTimelineItemType _timelineItemTypeFromApi(String? value) {
+  switch (value) {
+    case 'STARTED':
+      return RelationshipTimelineItemType.started;
+    case 'CHECKIN':
+      return RelationshipTimelineItemType.checkin;
+    case 'MILESTONE':
+    default:
+      return RelationshipTimelineItemType.milestone;
+  }
+}
+
+RelationshipDailyActionStatus _dailyActionStatusFromApi(String? value) {
+  switch (value) {
+    case 'REMINDED':
+      return RelationshipDailyActionStatus.reminded;
+    case 'SKIPPED':
+      return RelationshipDailyActionStatus.skipped;
+    case 'ACTIVE':
+    default:
+      return RelationshipDailyActionStatus.active;
+  }
+}
+
+String _dailyActionStatusToApi(RelationshipDailyActionStatus status) {
+  switch (status) {
+    case RelationshipDailyActionStatus.reminded:
+      return 'REMINDED';
+    case RelationshipDailyActionStatus.skipped:
+      return 'SKIPPED';
+    case RelationshipDailyActionStatus.active:
+      return 'ACTIVE';
+  }
+}
+
 class RelationshipInvitation {
   final String id;
   final String inviterId;
@@ -119,6 +165,71 @@ class RelationshipDashboard {
   }
 }
 
+class RelationshipTimelineItem {
+  final String id;
+  final RelationshipTimelineItemType type;
+  final String title;
+  final String? description;
+  final DateTime occurredAt;
+  final String? actorName;
+  final String? mood;
+
+  const RelationshipTimelineItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    this.description,
+    required this.occurredAt,
+    this.actorName,
+    this.mood,
+  });
+
+  factory RelationshipTimelineItem.fromJson(Map<String, dynamic> json) {
+    return RelationshipTimelineItem(
+      id: json['id']?.toString() ?? '',
+      type: _timelineItemTypeFromApi(json['type']?.toString()),
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString(),
+      occurredAt:
+          DateTime.tryParse(json['occurredAt']?.toString() ?? '') ??
+          DateTime.now(),
+      actorName: json['actorName']?.toString(),
+      mood: json['mood']?.toString(),
+    );
+  }
+}
+
+class RelationshipDailyAction {
+  final String actionKey;
+  final String dateKey;
+  final String title;
+  final String description;
+  final RelationshipDailyActionStatus status;
+  final DateTime? remindAt;
+
+  const RelationshipDailyAction({
+    required this.actionKey,
+    required this.dateKey,
+    required this.title,
+    required this.description,
+    required this.status,
+    this.remindAt,
+  });
+
+  factory RelationshipDailyAction.fromJson(Map<String, dynamic> json) {
+    return RelationshipDailyAction(
+      actionKey: json['actionKey']?.toString() ?? 'gratitude_note',
+      dateKey: json['dateKey']?.toString() ?? relationshipDateKey(),
+      title: json['title']?.toString() ?? 'Gửi một lời cảm ơn chân thành',
+      description:
+          json['description']?.toString() ??
+          'Một lời cảm ơn nhỏ bé có thể thắp sáng cả ngày dài.',
+      status: _dailyActionStatusFromApi(json['status']?.toString()),
+      remindAt: DateTime.tryParse(json['remindAt']?.toString() ?? ''),
+    );
+  }
+}
+
 class RelationshipService {
   final ApiClient _apiClient;
 
@@ -155,8 +266,9 @@ class RelationshipService {
   /// Kiểm tra lời mời xác nhận mối quan hệ đang chờ cho một matchId.
   Future<Map<String, dynamic>> checkPendingInvite(String matchId) async {
     final response = await _apiClient.get(
-      '/relationships/invite/pending?matchId=$matchId',
+      '/relationships/invite/pending',
       authenticated: true,
+      queryParams: {'matchId': matchId},
     );
     return (response['data'] as Map<String, dynamic>?) ?? {};
   }
@@ -221,5 +333,49 @@ class RelationshipService {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<RelationshipTimelineItem>> fetchTimeline() async {
+    final response = await _apiClient.get(
+      '/relationships/timeline',
+      authenticated: true,
+    );
+    final data = (response['data'] as List<dynamic>?) ?? [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(RelationshipTimelineItem.fromJson)
+        .toList();
+  }
+
+  Future<RelationshipDailyAction> fetchDailyAction({String? dateKey}) async {
+    final response = await _apiClient.get(
+      '/relationships/daily-action',
+      authenticated: true,
+      queryParams: dateKey == null ? null : {'dateKey': dateKey},
+    );
+    return RelationshipDailyAction.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
+  Future<RelationshipDailyAction> updateDailyActionState({
+    required String actionKey,
+    required String dateKey,
+    required RelationshipDailyActionStatus status,
+    DateTime? remindAt,
+  }) async {
+    final response = await _apiClient.post(
+      '/relationships/daily-action/state',
+      authenticated: true,
+      body: {
+        'actionKey': actionKey,
+        'dateKey': dateKey,
+        'status': _dailyActionStatusToApi(status),
+        if (remindAt != null) 'remindAt': remindAt.toUtc().toIso8601String(),
+      },
+    );
+    return RelationshipDailyAction.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
   }
 }

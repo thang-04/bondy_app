@@ -80,6 +80,7 @@ import 'screens/relationship/milestone_reminders_screen.dart';
 import 'screens/relationship/relationship_confirmed_screen.dart';
 import 'screens/relationship/relationship_invitation_screen.dart';
 import 'screens/relationship/relationship_connected_screen.dart';
+import 'screens/relationship/relationship_timeline_screen.dart';
 
 // Match screens
 import 'screens/match/match_confirmation_screen.dart';
@@ -176,7 +177,7 @@ class BondyApp extends StatelessWidget {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -276,6 +277,8 @@ class BondyApp extends StatelessWidget {
           '/date-suggestions': (context) =>
               const WeekendDateSuggestionsScreen(),
           '/relationship/home': (context) => const RelationshipHomeDashboard(),
+          '/relationship/timeline': (context) =>
+              const RelationshipTimelineScreen(),
           '/relationship/checkin': (context) => const CouplesEmotionsCheckin(),
           '/relationship/conflict-tool': (context) =>
               const ConflictResolutionTool(),

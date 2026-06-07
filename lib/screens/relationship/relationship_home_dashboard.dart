@@ -5,6 +5,7 @@ import '../healing/healing_stitch_style.dart';
 import '../../services/auth_service.dart';
 import '../../services/relationship_service.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
+import '../../widgets/common/bondy_feedback.dart';
 
 class RelationshipHomeDashboard extends StatefulWidget {
   final RelationshipViewModel? viewModel;
@@ -27,10 +28,16 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   void initState() {
     super.initState();
     _viewModel = widget.viewModel ?? RelationshipViewModel();
-    if (_viewModel.dashboard == null) {
-      _viewModel.loadDashboard();
-    }
+    _loadInitialRelationshipData();
     _loadMyProfile();
+  }
+
+  Future<void> _loadInitialRelationshipData() async {
+    if (_viewModel.dashboard == null) {
+      await _viewModel.loadDashboard();
+    }
+    if (!mounted || !_viewModel.hasActiveRelationship) return;
+    await _viewModel.loadDailyAction();
   }
 
   Future<void> _loadMyProfile() async {
@@ -66,6 +73,48 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
       return parts.sublist(1).join(' ');
     }
     return mood;
+  }
+
+  String _initialFor(String? value) {
+    final clean = (value ?? '').trim();
+    if (clean.isEmpty) return '?';
+    return clean.substring(0, 1).toUpperCase();
+  }
+
+  String _partnerName(RelationshipDashboard dash) {
+    final name = dash.partnerName?.trim();
+    if (name == null || name.isEmpty) return 'người ấy';
+    return name;
+  }
+
+  DateTime _nextReminderAt() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day + 1, 9);
+  }
+
+  Future<void> _remindDailyAction() async {
+    try {
+      await _viewModel.setDailyActionState(
+        status: RelationshipDailyActionStatus.reminded,
+        remindAt: _nextReminderAt(),
+      );
+      if (!mounted) return;
+      BondyFeedback.showSuccess(context, 'Đã lưu lời nhắc');
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e);
+    }
+  }
+
+  Future<void> _skipDailyAction() async {
+    try {
+      await _viewModel.setDailyActionState(
+        status: RelationshipDailyActionStatus.skipped,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e);
+    }
   }
 
   @override
@@ -198,7 +247,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                         child: Stack(
                           children: [
                             IconButton(
-                              onPressed: () {},
+                              onPressed: () => Navigator.of(
+                                context,
+                              ).pushNamed('/relationship/milestones'),
                               icon: const Icon(
                                 Icons.notifications_none_outlined,
                                 color: HealingStitchColors.textMain,
@@ -225,7 +276,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
 
                   // Chào buổi sáng
                   Text(
-                    'Chào buổi sáng,\n$_myDisplayName & ${dash.partnerName ?? "Linh"} 👋',
+                    'Chào buổi sáng,\n$_myDisplayName & ${_partnerName(dash)} 👋',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -255,7 +306,10 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           iconColor: Colors.orange,
                           icon: Icons.photo_library_outlined,
                           bgIcon: Icons.history_edu,
-                          onTap: () {},
+                          buttonKey: const Key('relationship_timeline_button'),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pushNamed('/relationship/timeline'),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -302,36 +356,47 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
       height: 48,
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.white,
-            child: CircleAvatar(
-              radius: 20,
-              backgroundImage: myPhoto != null && myPhoto.startsWith('http')
-                  ? NetworkImage(myPhoto)
-                  : const NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCsgnYy8VW20CiYCVCqg8zVPiFE7qcVqSprT2bF4XVJHKShNuiZH4QvrSimg7ny5ofI1wWBMphBWGyCJiUUlCrwbfAHTcSo8XxION3MupzLDXLWzecVzCoTZGh3diOCqobJDjMkUh9Al1LTTSC4Ykd1BYxeDdHKqf-tzCT6SBTKAph-g5f0YldSABwVsW37Rmpz-oeeu8wgBttoAfisoCHmhmxONpBBjdzprzcIs2s3LZD_eJ7rgUtTBw6EqgyC9nHAdhSSKTmjAdd6',
-                    ),
-            ),
+          _buildAvatar(
+            photoUrl: myPhoto,
+            label: _myDisplayName,
+            backgroundColor: HealingStitchColors.paleCoral,
           ),
           Positioned(
             left: 24,
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.white,
-              child: CircleAvatar(
-                radius: 20,
-                backgroundImage:
-                    partnerPhoto != null && partnerPhoto.startsWith('http')
-                    ? NetworkImage(partnerPhoto)
-                    : const NetworkImage(
-                            'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
-                          )
-                          as ImageProvider,
-              ),
+            child: _buildAvatar(
+              photoUrl: partnerPhoto,
+              label: _partnerName(dash),
+              backgroundColor: const Color(0xFFFFF4E6),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar({
+    required String? photoUrl,
+    required String label,
+    required Color backgroundColor,
+  }) {
+    final hasRemotePhoto = photoUrl != null && photoUrl.startsWith('http');
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: Colors.white,
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: backgroundColor,
+        backgroundImage: hasRemotePhoto ? NetworkImage(photoUrl) : null,
+        child: hasRemotePhoto
+            ? null
+            : Text(
+                _initialFor(label),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: HealingStitchColors.textMain,
+                ),
+              ),
       ),
     );
   }
@@ -368,7 +433,14 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   }
 
   Widget _buildDailyActionCard(BuildContext context) {
+    final action = _viewModel.dailyAction;
+    if (action?.status == RelationshipDailyActionStatus.skipped) {
+      return const SizedBox.shrink();
+    }
+    final isReminded = action?.status == RelationshipDailyActionStatus.reminded;
+
     return Container(
+      key: const Key('relationship_daily_action_card'),
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -382,23 +454,24 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
         children: [
           Stack(
             children: [
-              Image.network(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuCfAdLeVU7m-Fg2qVh-06r1ZHHk6gF7AzYHjetwE4B3NZTWrOSrzjBJQxU3KxWThxfDN1xCDOj0GFBq8rq12UhR3lSdyMotKT0mfDdvqDIqFKvBn_dYv2EyhYi6_qE73OYBry4e_E2VtyBvWPduBB04i8IIc7YZisG-Ld-XJBxXq5z6QoyKJvrmKIXkui2dVFIeYKWEJ_a6zX1s0SqWxeFBSEdyKcMxDozNNoVr7Gi9WSDIU8r_LmGM-lDNg7wUeJWDRCvmQoFeHlGa',
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
               Container(
                 height: 200,
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.6),
-                    ],
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [HealingStitchColors.coral, Color(0xFFFFB199)],
                   ),
+                ),
+              ),
+              Positioned(
+                right: 18,
+                top: 18,
+                child: Icon(
+                  Icons.favorite,
+                  size: 84,
+                  color: Colors.white.withValues(alpha: 0.18),
                 ),
               ),
               Positioned(
@@ -442,7 +515,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Hôm nay hãy gửi một lời cảm ơn chân thành',
+                      action?.title ?? 'Gửi một lời cảm ơn chân thành',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -461,7 +534,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Một lời cảm ơn nhỏ bé có thể thắp sáng cả một ngày dài. Hãy nghĩ về điều gì đó đối phương đã làm gần đây nhé.',
+                  action?.description ??
+                      'Một lời cảm ơn nhỏ bé có thể thắp sáng cả một ngày dài. Hãy nghĩ về điều gì đó đối phương đã làm gần đây nhé.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: HealingStitchColors.textSoft,
@@ -526,7 +600,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        key: const Key('relationship_daily_remind_button'),
+                        onPressed: isReminded ? null : _remindDailyAction,
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 48),
                           shape: RoundedRectangleBorder(
@@ -535,7 +610,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           side: BorderSide(color: Colors.grey.shade300),
                         ),
                         child: Text(
-                          'Nhắc tôi',
+                          isReminded ? 'Đã hẹn nhắc' : 'Nhắc tôi',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -546,7 +621,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     ),
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed: () {},
+                      key: const Key('relationship_daily_skip_button'),
+                      onPressed: _skipDailyAction,
                       child: Text(
                         'Để sau',
                         style: GoogleFonts.plusJakartaSans(
@@ -590,7 +666,10 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () => Navigator.of(context).pushNamed(
+                '/relationship/timeline',
+                arguments: {'filter': 'CHECKIN'},
+              ),
               child: Row(
                 children: [
                   Text(
@@ -706,7 +785,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                dash.partnerName ?? 'Linh',
+                                _partnerName(dash),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.plusJakartaSans(
@@ -763,16 +842,18 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
     required IconData icon,
     required IconData bgIcon,
     required VoidCallback onTap,
+    Key? buttonKey,
   }) {
     return Material(
       color: color,
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
+        key: buttonKey,
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Container(
-          height: 120,
-          padding: const EdgeInsets.all(20),
+          height: 126,
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: HealingStitchColors.border),
@@ -835,7 +916,39 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
     );
   }
 
+  String _weekdayLabel(DateTime date) {
+    switch (date.weekday) {
+      case DateTime.monday:
+        return 'Thứ 2';
+      case DateTime.tuesday:
+        return 'Thứ 3';
+      case DateTime.wednesday:
+        return 'Thứ 4';
+      case DateTime.thursday:
+        return 'Thứ 5';
+      case DateTime.friday:
+        return 'Thứ 6';
+      case DateTime.saturday:
+        return 'Thứ 7';
+      case DateTime.sunday:
+      default:
+        return 'CN';
+    }
+  }
+
+  String _milestoneSubtitle(DateTime? date) {
+    if (date == null) {
+      return 'Lưu ngày hẹn, kỷ niệm hoặc dịp đặc biệt';
+    }
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute • ${date.day}/${date.month}/${date.year}';
+  }
+
   Widget _buildNextEventCard(RelationshipDashboard dash) {
+    final nextDate = dash.nextMilestoneDate;
+    final title = dash.nextMilestoneTitle ?? 'Thêm cột mốc tiếp theo';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -859,7 +972,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Thứ 6',
+                  nextDate == null ? '--' : _weekdayLabel(nextDate),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -867,7 +980,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                   ),
                 ),
                 Text(
-                  '14',
+                  nextDate == null ? '+' : nextDate.day.toString(),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -883,7 +996,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  dash.nextMilestoneTitle ?? 'Hẹn hò tối thứ 6',
+                  title,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -900,7 +1013,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '19:00 • Nhà hàng Sen',
+                      _milestoneSubtitle(nextDate),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
