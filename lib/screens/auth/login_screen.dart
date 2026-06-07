@@ -21,7 +21,99 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Lắng nghe ViewModel để show popup khi cần liên kết account Google
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AuthViewModel>().addListener(_onAuthChanged);
+      }
+    });
+  }
+
+  void _onAuthChanged() {
+    final auth = context.read<AuthViewModel>();
+    if (auth.hasPendingGoogleLink && mounted) {
+      _showLinkAccountDialog(auth.errorMessage ?? '');
+    }
+  }
+
+  void _showLinkAccountDialog(String message) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/google_logo.png',
+              width: 22,
+              height: 22,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Liên kết tài khoản',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            height: 1.5,
+            color: BondyColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Huỷ',
+              style: GoogleFonts.inter(color: BondyColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: BondyColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 10,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              context
+                  .read<AuthViewModel>()
+                  .confirmLinkGoogleAccount(context);
+            },
+            child: Text(
+              'Liên kết Google',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   void dispose() {
+    if (mounted) {
+      context.read<AuthViewModel>().removeListener(_onAuthChanged);
+    }
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -167,6 +259,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 )
                               : () {},
                         ),
+                        const SizedBox(height: 20),
+                        // ─── Divider ───
+                        const _OrDivider(),
+                        const SizedBox(height: 20),
+                        // ─── Nút Google Sign-In ───
+                        _GoogleSignInButton(
+                          isLoading: auth.isLoading,
+                          onPressed: () => context
+                              .read<AuthViewModel>()
+                              .loginWithGoogleAndNavigate(context),
+                        ),
                         const SizedBox(height: 48),
                       ],
                     ),
@@ -300,6 +403,88 @@ class _AuthFieldState extends State<_AuthField> {
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: BondyColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widget: Divider "hoặc"
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: BondyColors.divider)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'hoặc',
+            style: GoogleFonts.inter(
+              color: BondyColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: BondyColors.divider)),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widget: Nút đăng nhập bằng Google
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GoogleSignInButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _GoogleSignInButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onPressed,
+      child: AnimatedOpacity(
+        opacity: isLoading ? 0.6 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: BondyColors.divider, width: 1.5),
+            boxShadow: [bondySoftShadow(0.04)],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/google_logo.png',
+                width: 22,
+                height: 22,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Tiếp tục với Google',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: BondyColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

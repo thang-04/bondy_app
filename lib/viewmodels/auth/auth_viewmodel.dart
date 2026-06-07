@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/bondy_error_mapper.dart';
 import '../../services/auth_service.dart';
+import '../../services/google_sign_in_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   static const int minimumAge = 18;
@@ -17,6 +18,9 @@ class AuthViewModel extends ChangeNotifier {
   String? devOtp;
   String? devToken;
   bool isPasswordReset = false;
+
+  // Token tạm để xử lý flow liên kết tài khoản Google
+  String? _pendingGoogleIdToken;
 
   static final RegExp _emailRegex =
       RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
@@ -382,6 +386,94 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> skipEmailVerification(BuildContext context) async {
     await _navigateAfterAuth(context);
+  }
+
+  // ─── Google Sign-In ───────────────────────────────────────────────────────
+
+  /// Getter để UI biết có đang chờ user xác nhận liên kết account không
+  bool get hasPendingGoogleLink => _pendingGoogleIdToken != null;
+
+  /// Đăng nhập bằng Google — xử lý 3 case:
+  /// 1. Đăng nhập thành công (đã có account Google)
+  /// 2. Tạo user mới → đi qua onboarding
+  /// 3. Email đã có password → [hasPendingGoogleLink] = true → UI hiện popup
+  Future<void> loginWithGoogleAndNavigate(BuildContext context) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Lấy idToken từ Google
+      final idToken = await googleSignInService.getIdToken();
+      if (idToken == null) {
+        // User bấm huỷ → không làm gì
+        return;
+      }
+
+      try {
+        // 2. Gửi lên backend
+        final result = await googleSignInService.loginWithGoogle(idToken);
+
+        // 3. Lưu tokens vào secure storage
+        await _authService.saveTokens(
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          userId: result.userId,
+        );
+
+        if (!context.mounted) return;
+        await _navigateAfterAuth(context);
+      } on AccountExistsException catch (e) {
+        // 4. Backend trả 409 → lưu idToken tạm, UI sẽ hiện popup
+        _pendingGoogleIdToken = idToken;
+        errorMessage = e.message;
+        notifyListeners();
+      }
+    } catch (error) {
+      errorMessage = BondyErrorMapper.message(error);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage ?? 'Đăng nhập Google thất bại')),
+        );
+      }
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Được gọi sau khi user bấm "Liên kết" trong popup xác nhận
+  Future<void> confirmLinkGoogleAccount(BuildContext context) async {
+    final idToken = _pendingGoogleIdToken;
+    if (idToken == null) return;
+
+    isLoading = true;
+    errorMessage = null;
+    _pendingGoogleIdToken = null;
+    notifyListeners();
+
+    try {
+      final result = await googleSignInService.confirmLinkAccount(idToken);
+      await _authService.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        userId: result.userId,
+      );
+      if (!context.mounted) return;
+      await _navigateAfterAuth(context);
+    } catch (error) {
+      errorMessage = BondyErrorMapper.message(error);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage ?? 'Liên kết tài khoản thất bại'),
+          ),
+        );
+      }
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _navigateAfterAuth(BuildContext context) async {

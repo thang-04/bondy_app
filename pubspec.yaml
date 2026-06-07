@@ -55,6 +55,7 @@ dependencies:
   path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   confetti: ^0.7.0
+  google_sign_in: ^6.2.2
 
   # Observability
   sentry_flutter: ^8.13.3

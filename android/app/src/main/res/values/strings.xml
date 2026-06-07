@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Web Client ID cho Google Sign-In (dùng để lấy idToken) -->
+    <string name="default_web_client_id">204544826846-vnb5h7bh3j3acpncjq0ba3evnscn5d0l.apps.googleusercontent.com</string>
+</resources>

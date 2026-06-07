@@ -566,6 +566,17 @@ class AuthService {
     await clearSession();
   }
 
+  /// Lưu tokens sau đăng nhập OAuth (dùng chung cho Google Sign-In)
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+    required String userId,
+  }) async {
+    await _storage.write(key: _accessTokenKey, value: accessToken);
+    await _storage.write(key: _refreshTokenKey, value: refreshToken);
+    await _storage.write(key: _userIdKey, value: userId);
+  }
+
   Future<String?> getAccessToken() => _storage.read(key: _accessTokenKey);
 
   Future<String?> getToken() => getAccessToken();

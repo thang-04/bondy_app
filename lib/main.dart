@@ -105,7 +105,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Hide Android gesture bar
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       systemNavigationBarColor: Colors.transparent,
