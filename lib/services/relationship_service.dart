@@ -292,6 +292,16 @@ class RelationshipService {
     );
   }
 
+  /// Hủy/rút lời mời xác nhận mối quan hệ đã gửi.
+  Future<Map<String, dynamic>> cancelInvite(String matchId) async {
+    final response = await _apiClient.post(
+      '/relationships/invite/cancel',
+      authenticated: true,
+      body: {'matchId': matchId},
+    );
+    return (response['data'] as Map<String, dynamic>?) ?? {};
+  }
+
   Future<void> submitCheckin({required String mood, String? note}) async {
     await _apiClient.post(
       '/relationships/checkins',

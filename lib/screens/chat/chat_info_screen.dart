@@ -272,6 +272,52 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
     }
   }
 
+  Future<void> _cancelInvite() async {
+    final matchId = _matchId;
+    if (matchId == null || _isSubmitting) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Rút lời mời?',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Bạn chắc chắn muốn rút lời mời xác nhận mối quan hệ với $_displayName?',
+          style: GoogleFonts.plusJakartaSans(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Huỷ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Rút lời mời'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _relationshipService.cancelInvite(matchId);
+      if (!mounted) return;
+      setState(() => _relationshipState = RelationshipConfirmationState.idle);
+      BondyFeedback.showSuccess(context, 'Đã rút lời mời thành công.');
+    } catch (e) {
+      if (!mounted) return;
+      BondyFeedback.showError(context, e, fallback: 'Không thể rút lời mời');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -494,25 +540,51 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
         );
 
       case RelationshipConfirmationState.waitingForPartner:
-        return Container(
-          width: double.infinity,
-          height: 52,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            color: HealingStitchColors.paleCoral,
-            border: Border.all(
-              color: HealingStitchColors.coral.withValues(alpha: 0.3),
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: HealingStitchColors.paleCoral,
+                border: Border.all(
+                  color: HealingStitchColors.coral.withValues(alpha: 0.3),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Đang chờ đối phương xác nhận',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: HealingStitchColors.coral,
+                ),
+              ),
             ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            'Đang chờ đối phương xác nhận',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: HealingStitchColors.coral,
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: _cancelInvite,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: HealingStitchColors.textMuted,
+                  side: const BorderSide(color: HealingStitchColors.border),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  'Rút lời mời',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         );
 
       case RelationshipConfirmationState.receivedInvite:

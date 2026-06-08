@@ -251,8 +251,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final invitationData = event.data['invitation'];
         if (invitationData is! Map<String, dynamic>) return;
         final invitation = RelationshipInvitation.fromJson(invitationData);
-        if (invitation.inviterId == _currentUserId) return;
+        if (invitation.inviterId == _currentUserId) {
+          setState(() {
+            _sentPendingInvite = true;
+            _pendingInvite = invitation.toJson();
+          });
+          return;
+        }
         setState(() {
+          _sentPendingInvite = false;
           _pendingInvite = invitation.toJson();
           _showCollapsedBanner = false;
         });
@@ -273,10 +280,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() {
           _showCollapsedBanner = false;
           _pendingInvite = null;
+          _sentPendingInvite = false;
           _hasRelationship = true;
         });
         context.read<RelationshipViewModel>().loadDashboard();
         BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
+        break;
+      case ChatRealtimeEventKind.relationshipInviteCanceled:
+        final eventMatchId = event.data['matchId']?.toString();
+        if (eventMatchId != null && eventMatchId != _matchId) return;
+        setState(() {
+          _pendingInvite = null;
+          _sentPendingInvite = false;
+          _showCollapsedBanner = false;
+        });
+        BondyFeedback.showSuccess(context, 'Lời mời xác nhận mối quan hệ đã bị hủy.');
         break;
     }
   }
@@ -284,6 +302,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? _pendingInvite;
   bool _showCollapsedBanner = false;
   bool _hasRelationship = false;
+  bool _sentPendingInvite = false;
 
   Future<void> _checkPendingInvite() async {
     final matchId = _matchId;
@@ -295,12 +314,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final invitation = RelationshipInvitation.fromJson(
           result['invitation'] as Map<String, dynamic>,
         );
-        if (invitation.inviterId != _currentUserId) {
+        if (invitation.inviterId == _currentUserId) {
           setState(() {
+            _sentPendingInvite = true;
+            _pendingInvite = invitation.toJson();
+          });
+        } else {
+          setState(() {
+            _sentPendingInvite = false;
             _pendingInvite = invitation.toJson();
           });
           _showInviteDialog();
         }
+      } else {
+        setState(() {
+          _sentPendingInvite = false;
+          _pendingInvite = null;
+        });
       }
     } catch (_) {}
   }
@@ -618,14 +648,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             children: [
               Icon(
                 Icons.favorite,
-                color: _hasRelationship ? Colors.pinkAccent : Colors.grey,
+                color: _hasRelationship
+                    ? Colors.pinkAccent
+                    : (_sentPendingInvite ? Colors.orange : Colors.grey),
                 size: 16,
               ),
               const SizedBox(width: 6),
               Text(
                 _hasRelationship
                     ? 'Đã xác nhận mối quan hệ'
-                    : 'Xác nhận mối quan hệ',
+                    : (_sentPendingInvite
+                        ? 'Đang chờ phản hồi'
+                        : 'Xác nhận mối quan hệ'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -646,6 +680,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _showInvitationBottomSheet() {
+    if (_sentPendingInvite) {
+      _showPendingInvitationBottomSheet();
+      return;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -875,8 +913,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
     setState(() => _isSending = true);
     try {
-      await _relationshipService.createInvite(matchId: matchId);
+      final result = await _relationshipService.createInvite(matchId: matchId);
       if (!mounted) return;
+      setState(() {
+        _sentPendingInvite = true;
+        _pendingInvite = result;
+      });
       BondyFeedback.showSuccess(
         context,
         'Đã gửi lời mời xác nhận mối quan hệ đến $_displayName!',
@@ -887,6 +929,214 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           context,
           e,
           fallback: 'Không gửi được lời mời.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  void _showPendingInvitationBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: const CircleAvatar(
+                          backgroundImage: NetworkImage(
+                            'https://lh3.googleusercontent.com/aida-public/AB6AXuCsgnYy8VW20CiYCVCqg8zVPiFE7qcVqSprT2bF4XVJHKShNuiZH4QvrSimg7ny5ofI1wWBMphBWGyCJiUUlCrwbfAHTcSo8XxION3MupzLDXLWzecVzCoTZGh3diOCqobJDjMkUh9Al1LTTSC4Ykd1BYxeDdHKqf-tzCT6SBTKAph-g5f0YldSABwVsW37Rmpz-oeeu8wgBttoAfisoCHmhmxONpBBjdzprzcIs2s3LZD_eJ7rgUtTBw6EqgyC9nHAdhSSKTmjAdd6',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: -12),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          backgroundImage:
+                              _photo != null && _photo!.startsWith('http')
+                              ? NetworkImage(_photo!)
+                              : const NetworkImage(
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
+                                    )
+                                    as ImageProvider,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.hourglass_empty,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Đang chờ xác nhận',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: HealingStitchColors.textMain,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Lời mời xác nhận mối quan hệ đã được gửi đến $_displayName và đang chờ đối phương đồng ý.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: HealingStitchColors.textSoft,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                 ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await _cancelRelationshipInvite();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.close, color: HealingStitchColors.textMain, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Rút lời mời',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: HealingStitchColors.textMain,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'Đóng',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: HealingStitchColors.textSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _cancelRelationshipInvite() async {
+    final matchId = _matchId;
+    if (matchId == null) return;
+    setState(() => _isSending = true);
+    try {
+      await _relationshipService.cancelInvite(matchId);
+      if (!mounted) return;
+      setState(() {
+        _sentPendingInvite = false;
+        _pendingInvite = null;
+      });
+      BondyFeedback.showSuccess(
+        context,
+        'Đã rút lời mời xác nhận mối quan hệ!',
+      );
+    } catch (e) {
+      if (mounted) {
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không rút được lời mời.',
         );
       }
     } finally {
