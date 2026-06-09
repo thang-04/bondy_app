@@ -7,6 +7,8 @@ import '../viewmodels/ai/ai_coach_viewmodel.dart';
 class AiSuggestionBottomSheet extends StatelessWidget {
   final String conversationId;
   final String userId;
+  final String? matchId;
+  final String? partnerName;
   final VoidCallback onDismiss;
   final ValueChanged<String> onSuggestionSelected;
 
@@ -14,6 +16,8 @@ class AiSuggestionBottomSheet extends StatelessWidget {
     super.key,
     required this.conversationId,
     required this.userId,
+    this.matchId,
+    this.partnerName,
     required this.onDismiss,
     required this.onSuggestionSelected,
   });
@@ -25,6 +29,8 @@ class AiSuggestionBottomSheet extends StatelessWidget {
       child: _AiSuggestionBottomSheetContent(
         conversationId: conversationId,
         userId: userId,
+        matchId: matchId,
+        partnerName: partnerName,
         onDismiss: onDismiss,
         onSuggestionSelected: onSuggestionSelected,
       ),
@@ -35,12 +41,16 @@ class AiSuggestionBottomSheet extends StatelessWidget {
 class _AiSuggestionBottomSheetContent extends StatelessWidget {
   final String conversationId;
   final String userId;
+  final String? matchId;
+  final String? partnerName;
   final VoidCallback onDismiss;
   final ValueChanged<String> onSuggestionSelected;
 
   const _AiSuggestionBottomSheetContent({
     required this.conversationId,
     required this.userId,
+    this.matchId,
+    this.partnerName,
     required this.onDismiss,
     required this.onSuggestionSelected,
   });
@@ -78,7 +88,7 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
             children: [
               const Text('✨ ', style: TextStyle(fontSize: 22)),
               Text(
-                'AI Gợi ý',
+                partnerName == null ? 'AI Gợi ý' : 'AI gợi ý cho $partnerName',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -161,10 +171,20 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: () => viewModel.getSuggestions(
-              conversationId: conversationId,
-              userId: userId,
-            ),
+            onPressed: () {
+              final selectedMatchId = matchId;
+              if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
+                viewModel.getPersonalizedSuggestions(
+                  chatId: conversationId,
+                  matchId: selectedMatchId,
+                );
+              } else {
+                viewModel.getSuggestions(
+                  conversationId: conversationId,
+                  userId: userId,
+                );
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: BondyColors.primary,
               foregroundColor: Colors.white,
@@ -263,7 +283,8 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pushNamed('/settings/premium'),
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/settings/premium'),
             style: ElevatedButton.styleFrom(
               backgroundColor: BondyColors.primary,
               foregroundColor: Colors.white,
@@ -296,10 +317,20 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () => viewModel.getSuggestions(
-              conversationId: conversationId,
-              userId: userId,
-            ),
+            onPressed: () {
+              final selectedMatchId = matchId;
+              if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
+                viewModel.getPersonalizedSuggestions(
+                  chatId: conversationId,
+                  matchId: selectedMatchId,
+                );
+              } else {
+                viewModel.getSuggestions(
+                  conversationId: conversationId,
+                  userId: userId,
+                );
+              }
+            },
             child: Text(
               'Thử lại',
               style: GoogleFonts.plusJakartaSans(

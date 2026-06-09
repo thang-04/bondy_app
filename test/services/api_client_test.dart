@@ -102,6 +102,15 @@ class _MockAuthService implements AuthService {
   Future<String?> getCurrentUserId() async => null;
   @override
   Future<String?> getToken() async => _accessToken;
+  @override
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+    required String userId,
+  }) async {
+    _accessToken = accessToken;
+    _refreshToken = refreshToken;
+  }
   String get baseUrl => 'https://api.example.com/api';
 }
 

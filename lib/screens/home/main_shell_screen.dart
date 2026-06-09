@@ -91,6 +91,7 @@ class _MainShellScreenState extends State<MainShellScreen>
             ),
             relationshipHome: RelationshipHomeDashboard(
               viewModel: context.read<RelationshipViewModel>(),
+              showBackButton: false,
             ),
           ),
           HealingModeDashboardScreen(
@@ -98,7 +99,10 @@ class _MainShellScreenState extends State<MainShellScreen>
             showBottomNavigation: false,
           ),
           const _MatchesTab(),
-          _ProfileTab(profileService: _profileService),
+          _ProfileTab(
+            profileService: _profileService,
+            onNavigateToHome: () => _selectTab(0),
+          ),
         ],
       ),
       extendBody: true,
@@ -727,8 +731,9 @@ class _CommunityTabState extends State<_CommunityTab> {
 // ===== PROFILE TAB =====
 class _ProfileTab extends StatefulWidget {
   final ProfileService profileService;
+  final VoidCallback? onNavigateToHome;
 
-  const _ProfileTab({required this.profileService});
+  const _ProfileTab({required this.profileService, this.onNavigateToHome});
 
   @override
   State<_ProfileTab> createState() => _ProfileTabState();
@@ -966,20 +971,7 @@ class _ProfileTabState extends State<_ProfileTab> {
                         ),
                       ),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: Color(0xFFF3F4F6),
-                      ),
-                    ),
-                    _ProfileTab._buildMenuItem(
-                      icon: Icons.people_alt_outlined,
-                      label: 'Mối quan hệ của tôi',
-                      onTap: () =>
-                          Navigator.of(context).pushNamed('/relationship/home'),
-                    ),
+
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Divider(

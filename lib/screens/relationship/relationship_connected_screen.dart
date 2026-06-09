@@ -363,7 +363,7 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/relationship/home',
+                          '/home',
                           (route) => false,
                         );
                       },

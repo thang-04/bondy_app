@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../healing/healing_stitch_style.dart';
 import '../../services/auth_service.dart';
 import '../../services/relationship_service.dart';
+import '../../services/profile_service.dart';
+import '../../services/chat_service.dart';
+import '../../services/api_client.dart';
+import '../../core/media_url.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../../widgets/common/bondy_feedback.dart';
 
 class RelationshipHomeDashboard extends StatefulWidget {
   final RelationshipViewModel? viewModel;
+  final bool showBackButton;
 
-  const RelationshipHomeDashboard({super.key, this.viewModel});
+  const RelationshipHomeDashboard({
+    super.key,
+    this.viewModel,
+    this.showBackButton = true,
+  });
 
   @override
   State<RelationshipHomeDashboard> createState() =>
@@ -20,6 +30,8 @@ class RelationshipHomeDashboard extends StatefulWidget {
 class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   late final RelationshipViewModel _viewModel;
   final AuthService _authService = AuthService();
+  late final ApiClient _apiClient = ApiClient();
+  late final ChatService _chatService = ChatService(_apiClient);
 
   String _myDisplayName = 'Bạn';
   String? _myPhotoUrl;
@@ -27,7 +39,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
   @override
   void initState() {
     super.initState();
-    _viewModel = widget.viewModel ?? RelationshipViewModel();
+    _viewModel = widget.viewModel ?? context.read<RelationshipViewModel>();
     _loadInitialRelationshipData();
     _loadMyProfile();
   }
@@ -42,22 +54,31 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
 
   Future<void> _loadMyProfile() async {
     try {
-      final user = await _authService.getCurrentUser();
+      final profile = await ProfileService().getProfile();
       if (mounted) {
         setState(() {
-          _myDisplayName = user['name']?.toString() ?? 'Bạn';
-          _myPhotoUrl =
-              user['image']?.toString() ?? user['photoUrl']?.toString();
+          _myDisplayName = profile.displayName;
+          _myPhotoUrl = profile.image ??
+              (profile.photos.isNotEmpty ? profile.photos.first : null);
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      try {
+        final user = await _authService.getCurrentUser();
+        if (mounted) {
+          setState(() {
+            _myDisplayName = user['name']?.toString() ?? 'Bạn';
+            _myPhotoUrl = rewriteMediaUrl(
+              user['image']?.toString() ?? user['photoUrl']?.toString(),
+            );
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   @override
   void dispose() {
-    if (widget.viewModel == null) {
-      _viewModel.dispose();
-    }
     super.dispose();
   }
 
@@ -115,6 +136,279 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
       if (!mounted) return;
       BondyFeedback.showError(context, e);
     }
+  }
+
+  List<String> _getDailyActionSuggestions(String actionKey) {
+    switch (actionKey) {
+      case 'gratitude_note':
+        return [
+          'Cảm ơn vì đã luôn lắng nghe tớ chia sẻ hôm nay nhé ❤️',
+          'Cảm ơn cậu vì bữa ăn/cốc nước siêu ngon lúc nãy nha 🥤',
+          'Biết ơn vì cậu luôn ở bên cạnh động viên tớ mỗi khi mệt mỏi 🥰',
+        ];
+      case 'hug_remind':
+        return [
+          'Hôm nay về ôm tớ một cái thật chặt nhé, nhớ cậu quá 🫂',
+          'Gửi cậu một chiếc ôm từ xa thật ấm áp nè, ngày mới tốt lành nha ☀️',
+          'Tối nay gặp nhau cho tớ ôm bù cả ngày dài mệt mỏi nhé 💕',
+        ];
+      case 'compliment':
+        return [
+          'Hôm nay cậu mặc đồ trông xinh/đẹp trai xỉu luôn á! 😍',
+          'Cậu cười trông siêu tỏa nắng luôn, cứ thế phát huy nha ✨',
+          'Tớ tự hào về cậu và những gì cậu đang nỗ lực làm lắm 😘',
+        ];
+      default:
+        return [
+          'Tớ muốn gửi một lời nhắn yêu thương đến cậu nè! ❤️',
+          'Chúc cậu một ngày thật nhiều niềm vui và năng lượng tích cực nha 🌟',
+          'Hôm nay cùng cố gắng và luôn nhớ có tớ ở bên cạnh nhé 💑',
+        ];
+    }
+  }
+
+  Future<void> _showDailyActionDialog(RelationshipDailyAction action) async {
+    final suggestions = _getDailyActionSuggestions(action.actionKey);
+    final textController = TextEditingController();
+    bool isSending = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          action.title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: HealingStitchColors.textMain,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          action.description,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: HealingStitchColors.textSoft,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (suggestions.isNotEmpty) ...[
+                          Text(
+                            'Gợi ý nhanh:',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: HealingStitchColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 38,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: suggestions.length,
+                              itemBuilder: (context, index) {
+                                final text = suggestions[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ActionChip(
+                                    label: Text(
+                                      text,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: HealingStitchColors.textMain,
+                                      ),
+                                    ),
+                                    backgroundColor: const Color(0xFFF9FAFB),
+                                    side: BorderSide(
+                                      color: HealingStitchColors.border.withValues(alpha: 0.8),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    onPressed: () {
+                                      textController.text = text;
+                                      textController.selection = TextSelection.fromPosition(
+                                        TextPosition(offset: text.length),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        TextField(
+                          controller: textController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Nhập tin nhắn yêu thương...',
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: HealingStitchColors.textMuted,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF9FAFB),
+                            contentPadding: const EdgeInsets.all(16),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: HealingStitchColors.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: HealingStitchColors.border),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: HealingStitchColors.coral, width: 1.5),
+                            ),
+                          ),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            color: HealingStitchColors.textMain,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: isSending ? null : () => Navigator.pop(dialogContext),
+                              child: Text(
+                                'Hủy',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: HealingStitchColors.textSoft,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              height: 40,
+                              decoration: BoxDecoration(
+                                gradient: isSending ? null : HealingStitchColors.warmGradient,
+                                color: isSending ? Colors.grey.shade300 : null,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: isSending
+                                    ? null
+                                    : () async {
+                                        final content = textController.text.trim();
+                                        if (content.isEmpty) {
+                                          BondyFeedback.showError(
+                                            context,
+                                            'Vui lòng nhập tin nhắn',
+                                          );
+                                          return;
+                                        }
+
+                                        setState(() {
+                                          isSending = true;
+                                        });
+
+                                        try {
+                                          final partnerId = _viewModel.dashboard?.partnerId;
+                                          if (partnerId == null) {
+                                            throw Exception('Không tìm thấy đối tác');
+                                          }
+
+                                          final chats = await _chatService.listChats();
+                                          final match = chats.firstWhere(
+                                            (c) => c.otherUser.id == partnerId,
+                                            orElse: () => throw Exception(
+                                              'Không tìm thấy cuộc trò chuyện với đối phương',
+                                            ),
+                                          );
+
+                                          await _chatService.sendMessage(match.id, content);
+
+                                          await _viewModel.setDailyActionState(
+                                            status: RelationshipDailyActionStatus.skipped,
+                                          );
+
+                                          await _viewModel.loadDashboard();
+
+                                          if (context.mounted) {
+                                            Navigator.pop(dialogContext);
+                                            BondyFeedback.showSuccess(
+                                              context,
+                                              'Đã thực hiện và gửi tin nhắn thành công!',
+                                            );
+                                          }
+                                        } catch (e) {
+                                          setState(() {
+                                            isSending = false;
+                                          });
+                                          if (context.mounted) {
+                                            BondyFeedback.showError(context, e);
+                                          }
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                ),
+                                child: Text(
+                                  'Gửi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isSending)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: HealingStitchColors.coral,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -232,6 +526,16 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     children: [
                       Row(
                         children: [
+                          if (widget.showBackButton && Navigator.of(context).canPop()) ...[
+                            IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: HealingStitchColors.textMain,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                           _buildHeaderAvatars(dash),
                           const SizedBox(width: 12),
                           _buildStreakBadge(dash),
@@ -255,18 +559,19 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                 color: HealingStitchColors.textMain,
                               ),
                             ),
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
+                            if (dash.nextMilestoneDate != null)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -564,9 +869,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed('/relationship/checkin');
+                            if (action != null) {
+                              _showDailyActionDialog(action);
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -694,58 +999,79 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
         Row(
           children: [
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: HealingStitchColors.border),
-                  boxShadow: [healingSoftShadow(0.03)],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF5F5),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        myCheckin != null ? getEmoji(myCheckin.mood) : '😄',
-                        style: const TextStyle(fontSize: 20),
-                      ),
+              child: GestureDetector(
+                onTap: myCheckin != null
+                    ? null
+                    : () => Navigator.of(context).pushNamed('/relationship/checkin'),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: myCheckin != null ? Colors.white : const Color(0xFFFFF5F5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: myCheckin != null
+                          ? HealingStitchColors.border
+                          : HealingStitchColors.coral.withValues(alpha: 0.35),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bạn',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: HealingStitchColors.textMuted,
-                            ),
-                          ),
-                          Text(
-                            myCheckin != null
-                                ? getLabel(myCheckin.mood)
-                                : 'Vui vẻ',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: HealingStitchColors.textMain,
-                            ),
-                          ),
-                        ],
+                    boxShadow: [healingSoftShadow(0.03)],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: myCheckin != null
+                              ? const Color(0xFFFFF5F5)
+                              : HealingStitchColors.coral,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: myCheckin != null
+                            ? Text(
+                                getEmoji(myCheckin.mood),
+                                style: const TextStyle(fontSize: 20),
+                              )
+                            : const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bạn',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: myCheckin != null
+                                    ? HealingStitchColors.textMuted
+                                    : HealingStitchColors.coral,
+                              ),
+                            ),
+                            Text(
+                              myCheckin != null
+                                  ? getLabel(myCheckin.mood)
+                                  : 'Check-in ngay',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: myCheckin != null
+                                    ? HealingStitchColors.textMain
+                                    : HealingStitchColors.coral,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

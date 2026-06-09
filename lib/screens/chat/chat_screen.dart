@@ -12,9 +12,11 @@ import '../../services/block_service.dart';
 import '../../services/chat_service.dart';
 import '../../services/chat_realtime_service.dart';
 import '../../services/match_service.dart';
+import '../../viewmodels/ai/ai_coach_viewmodel.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../../widgets/chat/voice_message_bubble.dart';
+import '../../widgets/inline_ai_suggestion_panel.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -46,6 +48,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  final _messageFocusNode = FocusNode();
+  final _aiCoachViewModel = AiCoachViewModel();
   final List<ChatMessage> _messages = [];
 
   bool _didReadArguments = false;
@@ -67,6 +71,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   DateTime? _partnerLastSeenAt;
   bool _isRecording = false;
   bool _showEmojiKeyboard = false;
+  bool _showAiPanel = false;
   final ImagePicker _imagePicker = ImagePicker();
   StreamSubscription<ChatRealtimeEvent>? _realtimeSub;
 
@@ -74,6 +79,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _aiCoachViewModel.addListener(_handleAiCoachChanged);
   }
 
   @override
@@ -108,8 +114,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _realtime.sendTyping(isTyping: false);
     }
     _audioRecorder.dispose();
+    _aiCoachViewModel.removeListener(_handleAiCoachChanged);
+    _aiCoachViewModel.dispose();
     _controller.dispose();
     _scrollController.dispose();
+    _messageFocusNode.dispose();
     super.dispose();
   }
 
@@ -134,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _handleRealtimeEvent(ChatRealtimeEvent event) {
+  Future<void> _handleRealtimeEvent(ChatRealtimeEvent event) async {
     if (!mounted) return;
     switch (event.kind) {
       case ChatRealtimeEventKind.message:
@@ -283,8 +292,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           _sentPendingInvite = false;
           _hasRelationship = true;
         });
-        context.read<RelationshipViewModel>().loadDashboard();
-        BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
+        await context.read<RelationshipViewModel>().loadDashboard();
+        if (!mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/relationship/established',
+          (route) => false,
+          arguments: {'name': _displayName, 'photo': _photo},
+        );
         break;
       case ChatRealtimeEventKind.relationshipInviteCanceled:
         final eventMatchId = event.data['matchId']?.toString();
@@ -294,7 +308,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           _sentPendingInvite = false;
           _showCollapsedBanner = false;
         });
-        BondyFeedback.showSuccess(context, 'Lời mời xác nhận mối quan hệ đã bị hủy.');
+        BondyFeedback.showSuccess(
+          context,
+          'Lời mời xác nhận mối quan hệ đã bị hủy.',
+        );
         break;
     }
   }
@@ -507,7 +524,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       });
       await context.read<RelationshipViewModel>().loadDashboard();
       if (!mounted) return;
-      BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/relationship/established',
+        (route) => false,
+        arguments: {'name': _displayName, 'photo': _photo},
+      );
     } catch (e) {
       if (mounted) {
         BondyFeedback.showError(
@@ -614,13 +635,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final dash = await _relationshipService.getDashboard();
       if (mounted) {
         setState(() {
-          _hasRelationship = dash.hasRelationship;
+          _hasRelationship =
+              dash.hasRelationship && dash.partnerId == _otherUserId;
         });
       }
     } catch (_) {}
   }
 
   Widget _buildRelationshipStatusIndicator() {
+    if (!_hasRelationship && _pendingInvite == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       width: double.infinity,
       color: HealingStitchColors.warmBackground,
@@ -630,8 +656,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         onTap: () {
           if (_hasRelationship) {
             Navigator.pushNamed(context, '/relationship/home');
-          } else {
-            _showInvitationBottomSheet();
+          } else if (_sentPendingInvite) {
+            _showPendingInvitationBottomSheet();
+          } else if (_pendingInvite != null) {
+            _showInviteDialog();
           }
         },
         borderRadius: BorderRadius.circular(100),
@@ -658,8 +686,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 _hasRelationship
                     ? 'Đã xác nhận mối quan hệ'
                     : (_sentPendingInvite
-                        ? 'Đang chờ phản hồi'
-                        : 'Xác nhận mối quan hệ'),
+                          ? 'Đang chờ phản hồi'
+                          : 'Xác nhận mối quan hệ'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -925,11 +953,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
     } catch (e) {
       if (mounted) {
-        BondyFeedback.showError(
-          context,
-          e,
-          fallback: 'Không gửi được lời mời.',
-        );
+        final msg = BondyErrorMapper.message(e);
+        if (msg.contains('đang hoạt động') ||
+            msg.contains('đang chờ phản hồi') ||
+            msg.contains('đã có một mối quan hệ') ||
+            msg.contains('đã xác nhận mối quan hệ') ||
+            msg.contains('đang chờ cho kết nối này')) {
+          await _showRelationshipRuleDialog(msg);
+        } else {
+          BondyFeedback.showError(
+            context,
+            e,
+            fallback: 'Không gửi được lời mời.',
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -1057,7 +1094,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   color: HealingStitchColors.textSoft,
                   fontWeight: FontWeight.w500,
                   height: 1.5,
-                 ),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
@@ -1083,7 +1120,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.close, color: HealingStitchColors.textMain, size: 16),
+                      const Icon(
+                        Icons.close,
+                        color: HealingStitchColors.textMain,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Rút lời mời',
@@ -1477,6 +1518,110 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
+  void _handleAiCoachChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _toggleAiSuggestions() async {
+    if (_showAiPanel) {
+      _aiCoachViewModel.cancelPendingRequest();
+      setState(() => _showAiPanel = false);
+      return;
+    }
+
+    await _hydrateChatMetadata();
+    if (!mounted) return;
+
+    final matchId = _matchId;
+    final chatId = _chatId;
+    final partnerId = _otherUserId;
+    if (matchId == null ||
+        matchId.trim().isEmpty ||
+        chatId == null ||
+        chatId.trim().isEmpty ||
+        partnerId == null ||
+        partnerId.trim().isEmpty) {
+      BondyFeedback.showError(
+        context,
+        'Không tìm thấy đủ thông tin cuộc trò chuyện để Bondy gợi ý tin nhắn.',
+      );
+      return;
+    }
+
+    _aiCoachViewModel.reset();
+    _aiCoachViewModel.selectIntent(AiIntent.continueChat);
+    setState(() {
+      _showAiPanel = true;
+      _showEmojiKeyboard = false;
+    });
+    await _loadAiSuggestions();
+  }
+
+  Future<void> _loadAiSuggestions({AiIntent? intent}) async {
+    final matchId = _matchId;
+    final chatId = _chatId;
+    final partnerId = _otherUserId;
+    if (matchId == null ||
+        matchId.trim().isEmpty ||
+        chatId == null ||
+        chatId.trim().isEmpty ||
+        partnerId == null ||
+        partnerId.trim().isEmpty) {
+      return;
+    }
+
+    if (intent != null) {
+      _aiCoachViewModel.selectIntent(intent);
+    }
+    await _aiCoachViewModel.getPersonalizedSuggestions(
+      chatId: chatId,
+      matchId: matchId,
+      expectedPartnerId: partnerId,
+    );
+  }
+
+  Future<void> _applyAiSuggestion(String suggestion) async {
+    final currentDraft = _controller.text.trim();
+    if (currentDraft.isNotEmpty && currentDraft != suggestion.trim()) {
+      final shouldReplace = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Thay nội dung đang nhập?'),
+          content: const Text(
+            'Gợi ý AI sẽ thay draft hiện tại. Bạn vẫn có thể chỉnh sửa trước khi gửi.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Giữ draft'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Dùng gợi ý'),
+            ),
+          ],
+        ),
+      );
+      if (shouldReplace != true || !mounted) return;
+    }
+
+    setState(() {
+      _controller.text = suggestion;
+      _controller.selection = TextSelection.collapsed(
+        offset: suggestion.length,
+      );
+      _showAiPanel = false;
+      _showEmojiKeyboard = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _messageFocusNode.requestFocus();
+      }
+    });
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
@@ -1609,9 +1754,36 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               height: 42,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: AIPromptsConfig.deeperPrompts.length,
+                itemCount: AIPromptsConfig.deeperPrompts.length + 1,
                 itemBuilder: (context, index) {
-                  final prompt = AIPromptsConfig.deeperPrompts[index];
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ActionChip(
+                        avatar: const Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: BondyColors.primary,
+                        ),
+                        label: Text(
+                          'AI gợi ý nhắn tin',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        backgroundColor: const Color(0xFFFFF1EE),
+                        side: BorderSide(
+                          color: BondyColors.primary.withValues(alpha: 0.28),
+                        ),
+                        onPressed: _isSending || _isLoading
+                            ? null
+                            : _toggleAiSuggestions,
+                      ),
+                    );
+                  }
+                  final prompt = AIPromptsConfig.deeperPrompts[index - 1];
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
@@ -1645,6 +1817,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 },
               ),
             ),
+            if (_showAiPanel)
+              InlineAiSuggestionPanel(
+                viewModel: _aiCoachViewModel,
+                partnerName: _displayName,
+                onClose: () {
+                  _aiCoachViewModel.cancelPendingRequest();
+                  setState(() => _showAiPanel = false);
+                },
+                onRetry: _loadAiSuggestions,
+                onIntentSelected: (intent) =>
+                    _loadAiSuggestions(intent: intent),
+                onSuggestionSelected: _applyAiSuggestion,
+              ),
             const SizedBox(height: 8),
             if (_showEmojiKeyboard) ...[
               SizedBox(
@@ -1736,6 +1921,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   child: TextField(
                     key: const Key('message_input'),
                     controller: _controller,
+                    focusNode: _messageFocusNode,
                     onChanged: (value) {
                       setState(() {});
                       _onTextChanged(value);
@@ -2140,5 +2326,88 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (diff.inHours < 24) return 'Hoạt động ${diff.inHours} giờ trước';
     if (diff.inDays < 7) return 'Hoạt động ${diff.inDays} ngày trước';
     return 'Ngoại tuyến';
+  }
+
+  Future<void> _showRelationshipRuleDialog(String message) async {
+    String title = 'Không thể gửi lời mời';
+    String content = message;
+    String emoji = '🔒';
+
+    if (message.contains('Bạn đã có một mối quan hệ đang hoạt động')) {
+      title = 'Bạn đã có kết nối';
+      content =
+          'Tài khoản của bạn hiện đang trong một mối quan hệ hoạt động.\n\nMỗi tài khoản chỉ có thể kết nối với một đối phương duy nhất. Để kết nối với người này, bạn cần kết thúc mối quan hệ hiện tại trước.';
+      emoji = '🔗';
+    } else if (message.contains(
+      'Đối phương đã có một mối quan hệ đang hoạt động',
+    )) {
+      title = 'Đối phương đã có kết nối';
+      content =
+          'Người này hiện đang trong một mối quan hệ hoạt động khác.\n\nHọ cần kết thúc mối quan hệ hiện tại của họ trước khi có thể nhận lời mời mới từ bạn.';
+      emoji = '👥';
+    } else if (message.contains(
+      'Bạn đang có một lời mời khác đang chờ phản hồi',
+    )) {
+      title = 'Đang có lời mời chờ';
+      content =
+          'Bạn đang có một lời mời kết nối khác đang chờ phản hồi. Bạn cần hủy lời mời đó trước khi có thể gửi lời mời mới.';
+      emoji = '⏳';
+    } else if (message.contains('Đã có lời mời đang chờ cho kết nối này')) {
+      title = 'Lời mời đã gửi';
+      content =
+          'Một lời mời kết nối đã được gửi cho người này và đang chờ xác nhận.';
+      emoji = '💌';
+    } else if (message.contains('Hai bạn đã xác nhận mối quan hệ rồi')) {
+      title = 'Đã kết nối';
+      content = 'Hai bạn hiện đã là một cặp trong ứng dụng!';
+      emoji = '💖';
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: const Color(0xFF2D2A26),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          content,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            height: 1.6,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFFF6B6B),
+            ),
+            child: Text(
+              'Đã hiểu',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,9 +1,31 @@
 import 'package:bondy/models/user_profile_model.dart';
 import 'package:bondy/screens/home/main_shell_screen.dart';
 import 'package:bondy/services/profile_service.dart';
+import 'package:bondy/services/chat_service.dart';
+import 'package:bondy/services/relationship_service.dart';
+import 'package:bondy/services/api_client.dart';
+import 'package:bondy/viewmodels/chat/chat_viewmodel.dart';
+import 'package:bondy/viewmodels/relationship/relationship_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+class _FakeChatService extends ChatService {
+  _FakeChatService() : super(ApiClient());
+
+  @override
+  Future<List<ChatMatch>> listChats() async => [];
+}
+
+class _FakeRelationshipService extends RelationshipService {
+  @override
+  Future<RelationshipDashboard> getDashboard() async {
+    return RelationshipDashboard(
+      hasRelationship: false,
+    );
+  }
+}
 
 void main() {
   setUpAll(() {
@@ -16,20 +38,30 @@ void main() {
     final profileService = _FakeProfileService();
 
     await tester.pumpWidget(
-      MaterialApp(
-        routes: {
-          '/': (context) => MainShellScreen(profileService: profileService),
-          '/edit-profile': (context) =>
-              const Scaffold(body: Text('edit profile screen')),
-          '/discover': (context) => const Scaffold(body: Text('discover')),
-          '/chatbot': (context) => const Scaffold(body: Text('chatbot')),
-          '/relationship/home': (context) =>
-              const Scaffold(body: Text('relationship')),
-          '/settings/premium': (context) =>
-              const Scaffold(body: Text('premium')),
-          '/settings/change-password': (context) =>
-              const Scaffold(body: Text('change password')),
-        },
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => ChatViewModel(service: _FakeChatService()),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => RelationshipViewModel(service: _FakeRelationshipService()),
+          ),
+        ],
+        child: MaterialApp(
+          routes: {
+            '/': (context) => MainShellScreen(profileService: profileService),
+            '/edit-profile': (context) =>
+                const Scaffold(body: Text('edit profile screen')),
+            '/discover': (context) => const Scaffold(body: Text('discover')),
+            '/chatbot': (context) => const Scaffold(body: Text('chatbot')),
+            '/relationship/home': (context) =>
+                const Scaffold(body: Text('relationship')),
+            '/settings/premium': (context) =>
+                const Scaffold(body: Text('premium')),
+            '/settings/change-password': (context) =>
+                const Scaffold(body: Text('change password')),
+          },
+        ),
       ),
     );
 
@@ -43,7 +75,7 @@ void main() {
     expect(find.textContaining('Yeu cafe va am nhac'), findsOneWidget);
     expect(find.text('Người dùng Bondy'), findsNothing);
 
-    await tester.tap(find.text('Chỉnh sửa hồ sơ'));
+    await tester.tap(find.byIcon(Icons.edit_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('edit profile screen'), findsOneWidget);

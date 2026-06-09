@@ -310,8 +310,64 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
   }
 
   Widget _buildCountdownBanner(Map<String, dynamic>? nextMilestone, int daysLeft) {
-    final title = nextMilestone != null ? nextMilestone['title']?.toString() ?? '' : 'Kỷ niệm ngày yêu';
-    final dateStr = nextMilestone != null ? nextMilestone['milestoneDate']?.toString() : null;
+    if (nextMilestone == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: HealingStitchColors.border),
+          boxShadow: [healingSoftShadow(0.04)],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('📅', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 16),
+            Text(
+              'Chưa có cột mốc nào sắp tới',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: HealingStitchColors.textMain,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Hãy cùng nhau tạo những cột mốc kỷ niệm ý nghĩa như ngày yêu nhau, ngày gặp đầu tiên...',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: HealingStitchColors.textSoft,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _showAddDialog,
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(
+                'Thêm cột mốc đầu tiên',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HealingStitchColors.coral,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final title = nextMilestone['title']?.toString() ?? '';
+    final dateStr = nextMilestone['milestoneDate']?.toString();
     String dateLabel = 'Chưa thiết lập';
     if (dateStr != null) {
       final date = DateTime.tryParse(dateStr);

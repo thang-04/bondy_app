@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../healing/healing_stitch_style.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
@@ -15,7 +16,7 @@ class CouplesEmotionsCheckin extends StatefulWidget {
 class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
   String? _selectedEmoji;
   final TextEditingController _noteController = TextEditingController();
-  final RelationshipViewModel _viewModel = RelationshipViewModel();
+  late final RelationshipViewModel _viewModel;
   bool _submitting = false;
 
   final List<Map<String, String>> _emotions = [
@@ -26,9 +27,14 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _viewModel = context.read<RelationshipViewModel>();
+  }
+
+  @override
   void dispose() {
     _noteController.dispose();
-    _viewModel.dispose();
     super.dispose();
   }
 

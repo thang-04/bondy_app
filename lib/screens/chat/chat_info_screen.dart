@@ -6,6 +6,7 @@ import '../../services/api_client.dart';
 import '../../services/relationship_service.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
+import '../../core/bondy_error_mapper.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../healing/healing_stitch_style.dart';
 
@@ -197,7 +198,16 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      BondyFeedback.showError(context, e, fallback: 'Không gửi được lời mời');
+      final msg = BondyErrorMapper.message(e);
+      if (msg.contains('đang hoạt động') ||
+          msg.contains('đang chờ phản hồi') ||
+          msg.contains('đã có một mối quan hệ') ||
+          msg.contains('đã xác nhận mối quan hệ') ||
+          msg.contains('đang chờ cho kết nối này')) {
+        await _showRelationshipRuleDialog(msg);
+      } else {
+        BondyFeedback.showError(context, e, fallback: 'Không gửi được lời mời');
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -213,8 +223,14 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
       if (!mounted) return;
       setState(() => _relationshipState = RelationshipConfirmationState.active);
       await context.read<RelationshipViewModel>().loadDashboard();
-      if (!mounted) return;
-      BondyFeedback.showSuccess(context, 'Hai bạn đã xác nhận mối quan hệ!');
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/relationship/established',
+        (route) => false,
+        arguments: {
+          'name': _displayName,
+          'photo': _photo,
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(
@@ -797,6 +813,84 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Future<void> _showRelationshipRuleDialog(String message) async {
+    String title = 'Không thể gửi lời mời';
+    String content = message;
+    String emoji = '🔒';
+
+    if (message.contains('Bạn đã có một mối quan hệ đang hoạt động')) {
+      title = 'Bạn đã có kết nối';
+      content =
+          'Tài khoản của bạn hiện đang trong một mối quan hệ hoạt động.\n\nMỗi tài khoản chỉ có thể kết nối với một đối phương duy nhất. Để kết nối với người này, bạn cần kết thúc mối quan hệ hiện tại trước.';
+      emoji = '🔗';
+    } else if (message.contains('Đối phương đã có một mối quan hệ đang hoạt động')) {
+      title = 'Đối phương đã có kết nối';
+      content =
+          'Người này hiện đang trong một mối quan hệ hoạt động khác.\n\nHọ cần kết thúc mối quan hệ hiện tại của họ trước khi có thể nhận lời mời mới từ bạn.';
+      emoji = '👥';
+    } else if (message.contains('Bạn đang có một lời mời khác đang chờ phản hồi')) {
+      title = 'Đang có lời mời chờ';
+      content =
+          'Bạn đang có một lời mời kết nối khác đang chờ phản hồi. Bạn cần hủy lời mời đó trước khi có thể gửi lời mời mới.';
+      emoji = '⏳';
+    } else if (message.contains('Đã có lời mời đang chờ cho kết nối này')) {
+      title = 'Lời mời đã gửi';
+      content = 'Một lời mời kết nối đã được gửi cho người này và đang chờ xác nhận.';
+      emoji = '💌';
+    } else if (message.contains('Hai bạn đã xác nhận mối quan hệ rồi')) {
+      title = 'Đã kết nối';
+      content = 'Hai bạn hiện đã là một cặp trong ứng dụng!';
+      emoji = '💖';
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: const Color(0xFF2D2A26),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          content,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            height: 1.6,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFFF6B6B),
+            ),
+            child: Text(
+              'Đã hiểu',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

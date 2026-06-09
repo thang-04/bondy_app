@@ -10,7 +10,6 @@ import '../../services/match_service.dart';
 import '../../theme/app_theme.dart';
 import '../../core/ai_prompts_config.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
-import '../../widgets/chat/ask_bondy_bottom_sheet.dart';
 
 class MatchesListScreen extends StatefulWidget {
   final bool embedded;
@@ -33,7 +32,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadAll();
+    });
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 15),
       (_) => _loadAll(silent: true),
@@ -58,8 +59,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
         _matchService.listMatches().then((matches) {
           if (!mounted) return;
           setState(() {
-            _pendingMatches =
-                matches.where((m) => m.needsConfirmation).toList();
+            _pendingMatches = matches
+                .where((m) => m.needsConfirmation)
+                .toList();
           });
         }),
       ]);
@@ -85,7 +87,12 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final body = RefreshIndicator(
       onRefresh: _loadAll,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(16, widget.embedded ? 16 : 8, 16, widget.embedded ? 165 : 24),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          widget.embedded ? 16 : 8,
+          16,
+          widget.embedded ? 120 : 24,
+        ),
         children: [
           _buildHeaderTitle(context),
           const SizedBox(height: 12),
@@ -142,58 +149,6 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
 
     final mainContent = widget.embedded ? SafeArea(child: body) : body;
 
-    final stackBody = Stack(
-      children: [
-        mainContent,
-        Positioned(
-          bottom: widget.embedded ? 100 : 24,
-          right: 24,
-          child: FloatingActionButton(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) => AskBondyBottomSheet(
-                  onSubmit: (msg) {
-                    Navigator.pop(context);
-                    Navigator.of(context).pushNamed(
-                      '/bondy-ai',
-                      arguments: {'initialMessage': msg},
-                    ).then((_) => _loadAll(silent: true));
-                  },
-                ),
-              );
-            },
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFEA2A5A).withValues(alpha: 0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-
     final scaffold = Scaffold(
       backgroundColor: BondyColors.background,
       appBar: widget.embedded
@@ -205,7 +160,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               ),
               title: const Text('Tin nhắn'),
             ),
-      body: stackBody,
+      body: mainContent,
     );
 
     return scaffold;
@@ -227,7 +182,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           icon: const Icon(Icons.tune, color: Color(0xFF0F172A), size: 24),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tính năng lọc đang được phát triển')),
+              const SnackBar(
+                content: Text('Tính năng lọc đang được phát triển'),
+              ),
             );
           },
         ),
@@ -256,7 +213,10 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               },
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm người ấy...',
-                hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 13),
+                hintStyle: GoogleFonts.plusJakartaSans(
+                  color: Colors.grey,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
               ),
               style: GoogleFonts.plusJakartaSans(fontSize: 14),
@@ -310,10 +270,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed(
-                '/match-confirm',
-                arguments: {'matchId': match.id},
-              ).then((_) => _loadAll(silent: true)),
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/match-confirm', arguments: {'matchId': match.id})
+                  .then((_) => _loadAll(silent: true)),
               child: Column(
                 children: [
                   Stack(
@@ -354,7 +313,8 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
 
   bool _isNewConnection(ChatMatch chat) {
     if (chat.lastMessage == null) return true;
-    if (!chat.lastMessage!.isMine && DateTime.now().difference(chat.updatedAt).inHours < 24) {
+    if (!chat.lastMessage!.isMine &&
+        DateTime.now().difference(chat.updatedAt).inHours < 24) {
       return true;
     }
     return false;
@@ -383,11 +343,13 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     final displayName = chat.otherUser.displayName.isEmpty
         ? 'Bondy user'
         : chat.otherUser.displayName;
-    
-    final bool isNewChat = chat.lastMessage == null || chat.lastMessage!.content.isEmpty;
+
+    final bool isNewChat =
+        chat.lastMessage == null || chat.lastMessage!.content.isEmpty;
     final int seed = chat.id.hashCode;
-    final String icebreaker = AIPromptsConfig.icebreakers[seed % AIPromptsConfig.icebreakers.length];
-    
+    final String icebreaker =
+        AIPromptsConfig.icebreakers[seed % AIPromptsConfig.icebreakers.length];
+
     final bool isUnread = chat.unreadCount > 0;
     final bool showNewBadge = _isNewConnection(chat);
 
@@ -405,8 +367,15 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        leading: _buildAvatar(chat.otherUser.photo, displayName, showNewBadge: showNewBadge),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        leading: _buildAvatar(
+          chat.otherUser.photo,
+          displayName,
+          showNewBadge: showNewBadge,
+        ),
         title: Text(
           displayName,
           style: GoogleFonts.plusJakartaSans(
@@ -420,7 +389,11 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(
                   children: [
-                    const Icon(Icons.local_florist, size: 14, color: BondyColors.primary),
+                    const Icon(
+                      Icons.local_florist,
+                      size: 14,
+                      color: BondyColors.primary,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -444,7 +417,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
-                    color: isUnread ? const Color(0xFF0F172A) : BondyColors.textSecondary,
+                    color: isUnread
+                        ? const Color(0xFF0F172A)
+                        : BondyColors.textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -455,13 +430,17 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              _formatRelativeTime(chat.lastMessage?.createdAt ?? chat.updatedAt),
+              _formatRelativeTime(
+                chat.lastMessage?.createdAt ?? chat.updatedAt,
+              ),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: isUnread ? FontWeight.w700 : FontWeight.normal,
-                color: showNewBadge 
+                color: showNewBadge
                     ? const Color(0xFFEF4444)
-                    : (isUnread ? const Color(0xFF0F172A) : BondyColors.textHint),
+                    : (isUnread
+                          ? const Color(0xFF0F172A)
+                          : BondyColors.textHint),
               ),
             ),
             if (isUnread) ...[
@@ -521,7 +500,11 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
   }
 
-  Widget _buildAvatar(String? photo, String displayName, {bool showNewBadge = false}) {
+  Widget _buildAvatar(
+    String? photo,
+    String displayName, {
+    bool showNewBadge = false,
+  }) {
     Widget avatar;
     if (photo != null && photo.startsWith('http')) {
       avatar = CircleAvatar(radius: 26, backgroundImage: NetworkImage(photo));
