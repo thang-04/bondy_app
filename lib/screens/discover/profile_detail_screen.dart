@@ -307,7 +307,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        if (profile.tags.isEmpty)
+                        if (profile.tags.isEmpty && _buildDeepMatchTags(profile).isEmpty)
                           Text(
                             'Chưa có sở thích.',
                             style: GoogleFonts.plusJakartaSans(
@@ -319,7 +319,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: profile.tags.map(_buildTag).toList(),
+                            children: [
+                              ..._buildDeepMatchTags(profile),
+                              ...profile.tags.map(_buildTag),
+                            ],
                           ),
                       ],
                     ),
@@ -731,41 +734,44 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildCompatibility(DiscoverProfile profile) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      height: 106,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF0F5), // Hồng pastel
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.favorite_rounded,
-            color: Color(0xFFEC4899),
-            size: 24,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '${profile.matchPercentage}% Match',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF9D174D),
+    return GestureDetector(
+      onTap: () => _showCompatibilityBottomSheet(profile),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        height: 106,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF0F5), // Hồng pastel
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.favorite_rounded,
+              color: Color(0xFFEC4899),
+              size: 24,
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Mức độ hòa hợp',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFFC97A9E),
+            const SizedBox(height: 10),
+            Text(
+              '${profile.matchPercentage}% Match',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF9D174D),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 2),
+            Text(
+              'Mức độ hòa hợp',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFFC97A9E),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -796,5 +802,349 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         ),
       ),
     );
+  }
+  // Static translations
+  static const Map<String, String> _zodiacNames = {
+    'aries': 'Bạch Dương',
+    'taurus': 'Kim Ngưu',
+    'gemini': 'Song Tử',
+    'cancer': 'Cự Giải',
+    'leo': 'Sư Tử',
+    'virgo': 'Xử Nữ',
+    'libra': 'Thiên Bình',
+    'scorpio': 'Bọ Cạp',
+    'sagittarius': 'Nhân Mã',
+    'capricorn': 'Ma Kết',
+    'aquarius': 'Bảo Bình',
+    'pisces': 'Song Ngư',
+  };
+
+  static const Map<String, String> _zodiacSymbols = {
+    'aries': '♈',
+    'taurus': '♉',
+    'gemini': '♊',
+    'cancer': '♋',
+    'leo': '♌',
+    'virgo': '♍',
+    'libra': '♎',
+    'scorpio': '♏',
+    'sagittarius': '♐',
+    'capricorn': '♑',
+    'aquarius': '♒',
+    'pisces': '♓',
+  };
+
+  static const Map<String, String> _freeTimeLabels = {
+    'morning': 'Sáng',
+    'afternoon': 'Chiều',
+    'evening': 'Tối',
+    'weekend': 'Cuối tuần',
+    'flexible': 'Linh hoạt',
+  };
+
+  static const Map<String, String> _partnerTypeLabels = {
+    'confidant': 'Bạn tâm sự',
+    'lover': 'Người yêu',
+    'life_partner': 'Bạn đời',
+    'undecided': 'Chưa xác định',
+  };
+
+  List<Widget> _buildDeepMatchTags(DiscoverProfile profile) {
+    final dm = profile.deepMatch;
+    if (dm == null) return const [];
+
+    final list = <Widget>[];
+
+    if (dm.zodiacSign != null) {
+      final signLower = dm.zodiacSign!.toLowerCase();
+      final name = _zodiacNames[signLower] ?? dm.zodiacSign;
+      final symbol = _zodiacSymbols[signLower] ?? '';
+      list.add(_buildSpecialTag('$symbol Cung $name', const Color(0xFFFDF2F8), const Color(0xFFDB2777)));
+    }
+
+    if (dm.lifePathNumber != null) {
+      list.add(_buildSpecialTag('🔢 Số chủ đạo ${dm.lifePathNumber}', const Color(0xFFF5F3FF), const Color(0xFF7C3AED)));
+    }
+
+    if (dm.desiredPartnerType != null) {
+      final partnerName = _partnerTypeLabels[dm.desiredPartnerType] ?? dm.desiredPartnerType;
+      list.add(_buildSpecialTag('🎯 Tìm: $partnerName', const Color(0xFFECFDF5), const Color(0xFF059669)));
+    }
+
+    if (dm.freeTimeSlots.isNotEmpty) {
+      final times = dm.freeTimeSlots.map((t) => _freeTimeLabels[t] ?? t).join(', ');
+      list.add(_buildSpecialTag('⏰ Rảnh: $times', const Color(0xFFFFF7ED), const Color(0xFFEA580C)));
+    }
+
+    return list;
+  }
+
+  Widget _buildSpecialTag(String label, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: fg.withOpacity(0.15), width: 1),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: fg,
+        ),
+      ),
+    );
+  }
+
+  void _showCompatibilityBottomSheet(DiscoverProfile profile) {
+    final factors = profile.compatibilityFactors;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.only(top: 14, left: 24, right: 24, bottom: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Mức độ tương thích sâu',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: BondyColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                    ).createShader(bounds),
+                    child: Text(
+                      '${profile.matchPercentage}%',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 54,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Match',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: BondyColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              if (factors.isEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Text(
+                    'Độ tương thích được tính dựa trên các yếu tố cơ bản. Hãy trò chuyện để hiểu nhau hơn nhé!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      color: BondyColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                ...factors.map((factor) {
+                  final title = _getFactorTitle(factor.type);
+                  final desc = _getFactorDesc(factor.type, factor.score);
+                  final percent = (factor.score * 100).toInt();
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              title,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: BondyColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              '$percent%',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: BondyColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: 8,
+                                width: double.infinity,
+                                color: BondyColors.primaryLight,
+                              ),
+                              FractionallySizedBox(
+                                widthFactor: factor.score.clamp(0.0, 1.0),
+                                child: Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          desc,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: BondyColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+              const SizedBox(height: 12),
+              const Divider(color: Colors.black12),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Text('✨', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Hai bạn có nhiều tần số rung động tương đồng. Đừng ngần ngại gửi một lượt thích nhé!',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: BondyColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _getFactorTitle(String type) {
+    switch (type) {
+      case 'zodiac':
+        return 'Hòa hợp Cung hoàng đạo';
+      case 'lifePath':
+        return 'Kết nối Tần số học';
+      case 'schedule':
+        return 'Đồng điệu Lịch biểu';
+      case 'interest':
+        return 'Điểm chung Sở thích';
+      case 'datingGoal':
+        return 'Đồng nhất Mục tiêu';
+      case 'vibe':
+        return 'Đồng điệu Tâm hồn';
+      default:
+        return 'Yếu tố tương đồng';
+    }
+  }
+
+  String _getFactorDesc(String type, double score) {
+    if (score >= 0.8) {
+      switch (type) {
+        case 'zodiac':
+          return 'Cung hoàng đạo của hai bạn cực kỳ lý tưởng để tạo nên mối quan hệ bền vững.';
+        case 'lifePath':
+          return 'Con số chủ đạo cộng hưởng mạnh mẽ, thúc đẩy sự thấu hiểu sâu sắc.';
+        case 'schedule':
+          return 'Khung giờ rảnh trùng khớp hoàn hảo, rất thuận tiện để trò chuyện và gặp gỡ.';
+        case 'interest':
+          return 'Có rất nhiều sở thích chung để cùng nhau trải nghiệm.';
+        case 'datingGoal':
+          return 'Mục tiêu kết nối hoàn toàn đồng nhất, cùng nhìn về một hướng.';
+        default:
+          return 'Độ tương thích cực kỳ cao, hai tâm hồn rất hòa hợp.';
+      }
+    } else if (score >= 0.5) {
+      switch (type) {
+        case 'zodiac':
+          return 'Mối liên kết cung hoàng đạo khá tốt, dễ dàng chia sẻ cảm xúc.';
+        case 'lifePath':
+          return 'Tần số học chỉ ra hai bạn có thể học hỏi và hỗ trợ nhau phát triển.';
+        case 'schedule':
+          return 'Có những khoảng thời gian chung trong ngày để kết nối.';
+        case 'interest':
+          return 'Chia sẻ một vài thói quen và đam mê chung thú vị.';
+        case 'datingGoal':
+          return 'Quan điểm về mối quan hệ khá tương đồng.';
+        default:
+          return 'Có nhiều điểm chung tốt đẹp để cùng nhau xây dựng kết nối.';
+      }
+    } else {
+      switch (type) {
+        case 'zodiac':
+          return 'Cung hoàng đạo cần sự nhường nhịn và thấu hiểu nhau hơn.';
+        case 'lifePath':
+          return 'Hai bạn sở hữu những nét cá tính riêng biệt đầy cuốn hút.';
+        case 'schedule':
+          return 'Lịch biểu hơi lệch nhưng sự chủ động sẽ xóa nhòa khoảng cách.';
+        case 'interest':
+          return 'Thế giới sở thích khác biệt là cơ hội tuyệt vời để khám phá điều mới từ nhau.';
+        case 'datingGoal':
+          return 'Hãy kiên nhẫn tìm hiểu thêm để tìm ra tiếng nói chung.';
+        default:
+          return 'Một chút khác biệt sẽ làm cho hành trình khám phá nhau thêm phần thú vị.';
+      }
+    }
   }
 }

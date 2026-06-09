@@ -10,7 +10,7 @@ import 'common/bondy_widgets.dart';
 /// variants keep their classic Material treatment.
 class BondyButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isOutlined;
   final bool isLoading;
   final IconData? icon;
@@ -19,7 +19,7 @@ class BondyButton extends StatelessWidget {
   const BondyButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isOutlined = false,
     this.isLoading = false,
     this.icon,

@@ -29,6 +29,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   UserProfileModel? _profile;
 
+  // Static translations
+  final Map<String, String> _zodiacNames = const {
+    'aries': 'Bạch Dương',
+    'taurus': 'Kim Ngưu',
+    'gemini': 'Song Tử',
+    'cancer': 'Cự Giải',
+    'leo': 'Sư Tử',
+    'virgo': 'Xử Nữ',
+    'libra': 'Thiên Bình',
+    'scorpio': 'Bọ Cạp',
+    'sagittarius': 'Nhân Mã',
+    'capricorn': 'Ma Kết',
+    'aquarius': 'Bảo Bình',
+    'pisces': 'Song Ngư',
+  };
+
+  final Map<String, String> _zodiacSymbols = const {
+    'aries': '♈',
+    'taurus': '♉',
+    'gemini': '♊',
+    'cancer': '♋',
+    'leo': '♌',
+    'virgo': '♍',
+    'libra': '♎',
+    'scorpio': '♏',
+    'sagittarius': '♐',
+    'capricorn': '♑',
+    'aquarius': '♒',
+    'pisces': '♓',
+  };
+
+  final Map<String, String> _freeTimeLabels = const {
+    'morning': 'Buổi sáng',
+    'afternoon': 'Buổi chiều',
+    'evening': 'Buổi tối',
+    'weekend': 'Cuối tuần',
+    'flexible': 'Linh hoạt',
+  };
+
+  final Map<String, String> _partnerTypeLabels = const {
+    'confidant': 'Bạn tâm sự',
+    'lover': 'Người yêu',
+    'life_partner': 'Bạn đời',
+    'undecided': 'Chưa xác định',
+  };
+
   // Ảnh: kết hợp URL server + ảnh mới chọn từ máy
   // Index 0-5; giá trị là String (URL) hoặc XFile (local)
   final List<dynamic> _imageSlots = List.generate(6, (_) => null);
@@ -360,6 +406,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: _buildLocationSelector(),
           ),
           const SizedBox(height: 24),
+          _buildDeepMatchSection(),
+          const SizedBox(height: 24),
           const PromptsEditorSection(),
           const SizedBox(height: 40),
         ],
@@ -669,6 +717,107 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+    );
+  }
+
+  Widget _buildDeepMatchSection() {
+    final profile = _profile;
+    if (profile == null) return const SizedBox.shrink();
+
+    final hasZodiac = profile.zodiacSign != null;
+    final zodiacName = hasZodiac ? (_zodiacNames[profile.zodiacSign!.toLowerCase()] ?? profile.zodiacSign) : 'Chưa thiết lập';
+    final zodiacSymbol = hasZodiac ? (_zodiacSymbols[profile.zodiacSign!.toLowerCase()] ?? '') : '';
+
+    final hasLifePath = profile.lifePathNumber != null;
+    final lifePathText = hasLifePath ? 'Số ${profile.lifePathNumber}' : 'Chưa thiết lập';
+
+    final freeTimes = profile.freeTimeSlots.map((slot) => _freeTimeLabels[slot] ?? slot).join(', ');
+    final freeTimeText = freeTimes.isNotEmpty ? freeTimes : 'Chưa thiết lập';
+
+    final partnerType = profile.desiredPartnerType != null ? (_partnerTypeLabels[profile.desiredPartnerType!] ?? profile.desiredPartnerType) : 'Chưa thiết lập';
+
+    return _buildFieldSection(
+      title: 'Tương thích sâu (DeepMatch)',
+      icon: Icons.favorite_outline,
+      child: GestureDetector(
+        onTap: () async {
+          final result = await Navigator.pushNamed(
+            context,
+            '/deep-match/setup',
+            arguments: {'isEditMode': true},
+          );
+          if (result == true) {
+            _loadProfile();
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDeepMatchRow('Cung hoàng đạo', hasZodiac ? '$zodiacSymbol $zodiacName' : 'Chưa thiết lập'),
+              const Divider(height: 20, color: Color(0xFFE5E7EB)),
+              _buildDeepMatchRow('Số chủ đạo', lifePathText),
+              const Divider(height: 20, color: Color(0xFFE5E7EB)),
+              _buildDeepMatchRow('Khung giờ rảnh', freeTimeText),
+              const Divider(height: 20, color: Color(0xFFE5E7EB)),
+              _buildDeepMatchRow('Đối tượng mong muốn', partnerType!),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Chỉnh sửa thiết lập',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: BondyColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios, size: 12, color: BondyColors.primary),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeepMatchRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: BondyColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

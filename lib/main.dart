@@ -35,6 +35,7 @@ import 'screens/auth/google_map_location_screen.dart';
 import 'screens/survey/survey_intro_screen.dart';
 import 'screens/survey/survey_question_screen.dart';
 import 'screens/survey/survey_result_screen.dart';
+import 'screens/survey/deep_match_setup_screen.dart';
 
 // Main app screens
 import 'screens/home/main_shell_screen.dart';
@@ -234,6 +235,7 @@ class BondyApp extends StatelessWidget {
           '/image-upload': (context) => const ImageUploadScreen(),
           '/location-setup': (context) => const GoogleMapLocationScreen(),
           '/survey/result': (context) => const SurveyResultScreen(),
+          '/deep-match/setup': (context) => const DeepMatchSetupScreen(),
           '/home': (context) => const MainShellScreen(),
           '/home/healing': (context) => const MainShellScreen(initialIndex: 1),
           '/home/matches': (context) => const MainShellScreen(initialIndex: 2),

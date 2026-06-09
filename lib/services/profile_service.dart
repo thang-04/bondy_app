@@ -218,6 +218,27 @@ class ProfileService {
     );
     return (body['data'] as Map<String, dynamic>?) ?? const {};
   }
+
+  Future<Map<String, dynamic>> saveDeepMatch({
+    String? zodiacSign,
+    List<String>? zodiacPreferences,
+    List<String>? freeTimeSlots,
+    String? desiredPartnerType,
+  }) async {
+    final data = <String, dynamic>{};
+    if (zodiacSign != null) data['zodiacSign'] = zodiacSign;
+    if (zodiacPreferences != null) data['zodiacPreferences'] = zodiacPreferences;
+    if (freeTimeSlots != null) data['freeTimeSlots'] = freeTimeSlots;
+    if (desiredPartnerType != null) data['desiredPartnerType'] = desiredPartnerType;
+
+    final body = await _apiClient.put(
+      '/profile/deep-match',
+      body: data,
+      authenticated: true,
+    );
+
+    return (body['data'] as Map<String, dynamic>?) ?? body;
+  }
 }
 
 class SnoozeStatus {

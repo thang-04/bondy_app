@@ -14,6 +14,53 @@ class DiscoverPrompt {
   }
 }
 
+class CompatibilityFactor {
+  final String type;
+  final double weight;
+  final double score;
+
+  const CompatibilityFactor({
+    required this.type,
+    required this.weight,
+    required this.score,
+  });
+
+  factory CompatibilityFactor.fromJson(Map<String, dynamic> json) {
+    return CompatibilityFactor(
+      type: json['type']?.toString() ?? '',
+      weight: (json['weight'] as num?)?.toDouble() ?? 0.0,
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class DeepMatchData {
+  final String? zodiacSign;
+  final List<String> zodiacPreferences;
+  final int? lifePathNumber;
+  final List<String> freeTimeSlots;
+  final String? desiredPartnerType;
+
+  const DeepMatchData({
+    this.zodiacSign,
+    this.zodiacPreferences = const [],
+    this.lifePathNumber,
+    this.freeTimeSlots = const [],
+    this.desiredPartnerType,
+  });
+
+  factory DeepMatchData.fromJson(Map<String, dynamic> json) {
+    return DeepMatchData(
+      zodiacSign: json['zodiacSign']?.toString(),
+      zodiacPreferences: List<String>.from(json['zodiacPreferences'] ?? []),
+      lifePathNumber: json['lifePathNumber'] as int?,
+      freeTimeSlots: List<String>.from(json['freeTimeSlots'] ?? []),
+      desiredPartnerType: json['desiredPartnerType']?.toString(),
+    );
+  }
+}
+
+
 class DiscoverProfile {
   final String id;
   final String name;
@@ -28,6 +75,8 @@ class DiscoverProfile {
   final List<String> photos;
   final String? datingGoal;
   final double? distanceKm;
+  final DeepMatchData? deepMatch;
+  final List<CompatibilityFactor> compatibilityFactors;
 
   const DiscoverProfile({
     required this.id,
@@ -43,6 +92,8 @@ class DiscoverProfile {
     this.photos = const [],
     this.datingGoal,
     this.distanceKm,
+    this.deepMatch,
+    this.compatibilityFactors = const [],
   });
 
   factory DiscoverProfile.fromJson(Map<String, dynamic> json) {
@@ -82,6 +133,18 @@ class DiscoverProfile {
       if (city.isNotEmpty) city,
     ].join(' • ');
 
+    final deepMatchRaw = json['deepMatch'] as Map<String, dynamic>?;
+    final deepMatch = deepMatchRaw != null ? DeepMatchData.fromJson(deepMatchRaw) : null;
+
+    final compatibilityRaw = json['compatibility'] as Map<String, dynamic>?;
+    final factorsRaw = compatibilityRaw?['factors'] as List<dynamic>?;
+    final List<CompatibilityFactor> compatibilityFactors = factorsRaw != null
+        ? factorsRaw
+            .whereType<Map<String, dynamic>>()
+            .map((e) => CompatibilityFactor.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+        : const [];
+
     return DiscoverProfile(
       id: json['userId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Ẩn danh',
@@ -107,6 +170,8 @@ class DiscoverProfile {
       photos: photosList,
       datingGoal: json['datingGoal']?.toString(),
       distanceKm: distanceKm,
+      deepMatch: deepMatch,
+      compatibilityFactors: compatibilityFactors,
     );
   }
 }

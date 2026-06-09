@@ -21,6 +21,13 @@ class UserProfileModel {
   final List<String> photos;
   final bool isHidden;
 
+  // DeepMatch fields
+  final String? zodiacSign;
+  final List<String> zodiacPreferences;
+  final int? lifePathNumber;
+  final List<String> freeTimeSlots;
+  final String? desiredPartnerType;
+
   const UserProfileModel({
     required this.id,
     required this.email,
@@ -35,6 +42,11 @@ class UserProfileModel {
     this.datingGoal,
     this.photos = const [],
     this.isHidden = false,
+    this.zodiacSign,
+    this.zodiacPreferences = const [],
+    this.lifePathNumber,
+    this.freeTimeSlots = const [],
+    this.desiredPartnerType,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -102,6 +114,11 @@ class UserProfileModel {
       datingGoal: profileFields['datingGoal']?.toString(),
       photos: parsePhotos(profileFields['photos']),
       isHidden: isHidden,
+      zodiacSign: profileFields['zodiacSign']?.toString(),
+      zodiacPreferences: List<String>.from(profileFields['zodiacPreferences'] ?? []),
+      lifePathNumber: profileFields['lifePathNumber'] as int?,
+      freeTimeSlots: List<String>.from(profileFields['freeTimeSlots'] ?? []),
+      desiredPartnerType: profileFields['desiredPartnerType']?.toString(),
     );
   }
 
@@ -127,5 +144,10 @@ class UserProfileModel {
         'datingGoal': datingGoal,
         'photos': photos,
         'isHidden': isHidden,
+        'zodiacSign': zodiacSign,
+        'zodiacPreferences': zodiacPreferences,
+        'lifePathNumber': lifePathNumber,
+        'freeTimeSlots': freeTimeSlots,
+        'desiredPartnerType': desiredPartnerType,
       };
 }

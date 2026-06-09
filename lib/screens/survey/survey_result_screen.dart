@@ -18,6 +18,17 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
   bool _didPrompt = false;
   String? _finalModeCode;
 
+  void _navigateToDeepMatchSetup(String targetRoute, [Map<String, dynamic>? targetArgs]) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/deep-match/setup',
+      (_) => false,
+      arguments: {
+        'targetRoute': targetRoute,
+        if (targetArgs != null) 'targetArguments': targetArgs,
+      },
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -80,27 +91,23 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                BondyButton(
+                 BondyButton(
                   text: 'Bắt đầu ngay',
                   onPressed: () async {
                     await _healingService.startRecommendedPlan();
                     if (!sheetContext.mounted) return;
                     Navigator.of(sheetContext).pop();
                     if (!mounted) return;
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      healingPlanRoute,
-                      (_) => false,
-                    );
+                    _navigateToDeepMatchSetup(healingPlanRoute);
                   },
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
+                    _navigateToDeepMatchSetup(
                       healingPlanRoute,
-                      (_) => false,
-                      arguments: const {'preview': true},
+                      const {'preview': true},
                     );
                   },
                   child: const Text('Xem trước'),
@@ -108,10 +115,7 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home/healing',
-                      (_) => false,
-                    );
+                    _navigateToDeepMatchSetup('/home/healing');
                   },
                   child: const Text('Để sau'),
                 ),
@@ -158,24 +162,18 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 18),
-                BondyButton(
+                 BondyButton(
                   text: 'Khám phá ngay',
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/discover',
-                      (_) => false,
-                    );
+                    _navigateToDeepMatchSetup('/discover');
                   },
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home/healing',
-                      (_) => false,
-                    );
+                    _navigateToDeepMatchSetup('/home/healing');
                   },
                   child: const Text('Xem Content Hub trước'),
                 ),
@@ -287,13 +285,10 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                   ),
                 ),
                 const Spacer(),
-                BondyButton(
+                 BondyButton(
                   text: 'Vào Healing',
                   onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home/healing',
-                      (route) => false,
-                    );
+                    _navigateToDeepMatchSetup('/home/healing');
                   },
                 ),
                 const SizedBox(height: 32),
