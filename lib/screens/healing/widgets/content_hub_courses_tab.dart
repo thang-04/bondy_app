@@ -197,7 +197,7 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 250,
+          height: 290,
           child: courses.isEmpty
               ? const Center(child: _EmptyState(message: 'Chưa có khoá học phổ biến.'))
               : ListView.separated(
@@ -459,7 +459,7 @@ class _PopularCourseCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: AspectRatio(
-                aspectRatio: 4 / 3,
+                aspectRatio: 16 / 9,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
