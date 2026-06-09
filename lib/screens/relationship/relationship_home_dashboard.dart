@@ -372,6 +372,7 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  minimumSize: const Size(0, 40),
                                 ),
                                 child: Text(
                                   'Gửi',
