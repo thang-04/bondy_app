@@ -8,6 +8,10 @@ import '../services/auth_service.dart';
 /// chuyển sang máy thật (qua LAN/adb reverse), URL cũ không reach được nên
 /// ảnh không hiện. Hàm này thay host trong URL bằng host của baseUrl hiện tại,
 /// giữ nguyên path. Trả về null nếu input null/rỗng.
+///
+/// Trên **web**, relative path `/uploads/...` được route qua API proxy
+/// (`/api-proxy/uploads/...`) để Vercel forward request tới backend server,
+/// tránh lỗi HTTPS certificate khi truy cập trực tiếp IP.
 String? rewriteMediaUrl(String? url) {
   if (url == null || url.trim().isEmpty) return null;
   final trimmed = url.trim();
@@ -24,7 +28,22 @@ String? rewriteMediaUrl(String? url) {
     }
     
     try {
-      final apiBase = Uri.parse(AuthService.resolveBaseUrl());
+      final baseUrl = AuthService.resolveBaseUrl();
+
+      // ── Web: route qua API proxy ──────────────────────────────────────
+      // baseUrl trên web = "https://bondy-apk.vercel.app/api-proxy"
+      // /uploads/user/file.jpg → .../api-proxy/uploads/user/file.jpg
+      // Vercel rewrite: /api-proxy/* → http://server:3000/api/*
+      // → backend serve file tại /api/uploads/user/file.jpg ✓
+      if (kIsWeb) {
+        final cleanBase = baseUrl.replaceAll(RegExp(r'/+$'), '');
+        final fullUrl = '$cleanBase$path';
+        debugPrint('[IMG-DBG] relative path rewritten (web): $trimmed -> $fullUrl');
+        return fullUrl;
+      }
+
+      // ── Native (mobile/desktop): dùng origin (scheme + host + port) ───
+      final apiBase = Uri.parse(baseUrl);
       final origin = Uri(
         scheme: apiBase.scheme,
         host: apiBase.host,
@@ -49,6 +68,30 @@ String? rewriteMediaUrl(String? url) {
     parsed = Uri.parse(trimmed);
   } catch (_) {
     return trimmed;
+  }
+
+  // ── Web: rewrite URL trỏ trực tiếp tới IP server ───────────────────
+  // VD: https://103.149.86.25/api/uploads/... → .../api-proxy/uploads/...
+  // Tránh lỗi self-signed cert / mixed content khi iOS Safari truy cập IP.
+  if (kIsWeb) {
+    final hostLower = parsed.host.toLowerCase();
+    if (hostLower == '103.149.86.25') {
+      final baseUrl = AuthService.resolveBaseUrl().replaceAll(RegExp(r'/+$'), '');
+      // Server path: /api/uploads/... → strip /api → /uploads/...
+      // vì baseUrl đã chứa /api-proxy (map tới /api trên backend)
+      var serverPath = parsed.path;
+      if (serverPath.startsWith('/api/')) {
+        serverPath = serverPath.substring(4); // /api/uploads/... → /uploads/...
+      } else if (serverPath.startsWith('/api')) {
+        serverPath = serverPath.substring(4);
+        if (serverPath.isNotEmpty && !serverPath.startsWith('/')) {
+          serverPath = '/$serverPath';
+        }
+      }
+      final fullUrl = '$baseUrl$serverPath';
+      debugPrint('[IMG-DBG] IP URL rewritten (web): $trimmed -> $fullUrl');
+      return fullUrl;
+    }
   }
 
   // Chỉ rewrite các host được biết là loopback/emulator/dev. Domain prod giữ
@@ -79,4 +122,3 @@ String? rewriteMediaUrl(String? url) {
   debugPrint('[IMG-DBG] dev host rewritten: $trimmed -> $rewritten');
   return rewritten;
 }
-
