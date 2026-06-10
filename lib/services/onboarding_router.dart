@@ -30,8 +30,30 @@ class OnboardingRouter {
       final nav = Navigator.of(context);
       final user = await _authService.getCurrentUser();
 
+      final profile = user['profile'];
+      bool isDeepMatchComplete = false;
+      if (profile is Map<String, dynamic>) {
+        final zodiacSign = profile['zodiacSign'];
+        final desiredPartnerType = profile['desiredPartnerType'];
+        final freeTimeSlots = profile['freeTimeSlots'];
+        if (zodiacSign != null &&
+            desiredPartnerType != null &&
+            freeTimeSlots is List &&
+            freeTimeSlots.isNotEmpty) {
+          isDeepMatchComplete = true;
+        }
+      }
+
       if (user['profileComplete'] == true) {
         if (user['surveyComplete'] != true) {
+          if (!isDeepMatchComplete) {
+            nav.pushNamedAndRemoveUntil(
+              '/deep-match/setup',
+              (r) => false,
+              arguments: const {'targetRoute': '/survey/intro'},
+            );
+            return;
+          }
           nav.pushNamedAndRemoveUntil('/survey/intro', (r) => false);
           return;
         }
@@ -42,6 +64,14 @@ class OnboardingRouter {
       final status = user['profileCompletionStatus'];
       if (status is Map<String, dynamic>) {
         final nextAction = status['nextAction'] as String?;
+        if (nextAction == 'COMPLETE_SURVEY' && !isDeepMatchComplete) {
+          nav.pushNamedAndRemoveUntil(
+            '/deep-match/setup',
+            (r) => false,
+            arguments: const {'targetRoute': '/survey/intro'},
+          );
+          return;
+        }
         final route = routeForAction(nextAction);
         nav.pushNamedAndRemoveUntil(route, (r) => false);
         return;

@@ -58,31 +58,62 @@ class _AuthGateScreenState extends State<AuthGateScreen> with SingleTickerProvid
     );
     if (!mounted) return;
 
-    final route = result.status == SessionRestoreStatus.authenticated
-        ? _routeForUser(result.user ?? const {})
-        : '/onboarding';
-    Navigator.of(context).pushReplacementNamed(route);
-  }
-
-  String _routeForUser(Map<String, dynamic> userData) {
-    final emailVerified = userData['emailVerified'] != null;
-    if (!emailVerified) {
-      return '/verify-email';
-    }
-
-    if (userData['profileComplete'] == true) {
-      if (userData['surveyComplete'] != true) {
-        return '/survey/intro';
+    if (result.status == SessionRestoreStatus.authenticated) {
+      final user = result.user ?? const {};
+      final emailVerified = user['emailVerified'] != null;
+      if (!emailVerified) {
+        Navigator.of(context).pushReplacementNamed('/verify-email');
+        return;
       }
-      return '/home';
-    }
 
-    final profileStatus = userData['profileCompletionStatus'];
-    if (profileStatus != null && profileStatus is Map<String, dynamic>) {
-      final nextAction = profileStatus['nextAction'] as String?;
-      return OnboardingRouter.routeForAction(nextAction);
+      final profile = user['profile'];
+      bool isDeepMatchComplete = false;
+      if (profile is Map<String, dynamic>) {
+        final zodiacSign = profile['zodiacSign'];
+        final desiredPartnerType = profile['desiredPartnerType'];
+        final freeTimeSlots = profile['freeTimeSlots'];
+        if (zodiacSign != null &&
+            desiredPartnerType != null &&
+            freeTimeSlots is List &&
+            freeTimeSlots.isNotEmpty) {
+          isDeepMatchComplete = true;
+        }
+      }
+
+      if (user['profileComplete'] == true) {
+        if (user['surveyComplete'] != true) {
+          if (!isDeepMatchComplete) {
+            Navigator.of(context).pushReplacementNamed(
+              '/deep-match/setup',
+              arguments: const {'targetRoute': '/survey/intro'},
+            );
+            return;
+          }
+          Navigator.of(context).pushReplacementNamed('/survey/intro');
+          return;
+        }
+        Navigator.of(context).pushReplacementNamed('/home');
+        return;
+      }
+
+      final profileStatus = user['profileCompletionStatus'];
+      if (profileStatus != null && profileStatus is Map<String, dynamic>) {
+        final nextAction = profileStatus['nextAction'] as String?;
+        if (nextAction == 'COMPLETE_SURVEY' && !isDeepMatchComplete) {
+          Navigator.of(context).pushReplacementNamed(
+            '/deep-match/setup',
+            arguments: const {'targetRoute': '/survey/intro'},
+          );
+          return;
+        }
+        final route = OnboardingRouter.routeForAction(nextAction);
+        Navigator.of(context).pushReplacementNamed(route);
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed('/profile-setup');
+    } else {
+      Navigator.of(context).pushReplacementNamed('/onboarding');
     }
-    return '/profile-setup';
   }
 
   @override

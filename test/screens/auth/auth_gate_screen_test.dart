@@ -24,6 +24,8 @@ Widget _testApp(AuthService authService) {
       '/home': (context) => const Text('home'),
       '/profile-setup': (context) => const Text('profile setup'),
       '/verify-email': (context) => const Text('verify email'),
+      '/deep-match/setup': (context) => const Text('deep match setup'),
+      '/survey/intro': (context) => const Text('survey intro'),
     },
   );
 }
@@ -81,6 +83,59 @@ void main() {
 
       expect(find.text('profile setup'), findsOneWidget);
       expect(find.text('onboarding'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'navigates to deep match setup when profile is complete but deep match is incomplete',
+    (tester) async {
+      final authService = _FakeAuthService(
+        () async => const SessionRestoreResult.authenticated({
+          'id': 'user-id',
+          'emailVerified': '2026-05-22T00:00:00.000Z',
+          'profileComplete': true,
+          'surveyComplete': false,
+          'profile': {
+            'fullName': 'User',
+            'gender': 'MALE',
+            'birthDate': '2000-01-01',
+          },
+        }),
+      );
+
+      await tester.pumpWidget(_testApp(authService));
+      await tester.pumpAndSettle();
+
+      expect(find.text('deep match setup'), findsOneWidget);
+      expect(find.text('survey intro'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'navigates to survey intro when profile is complete and deep match is complete',
+    (tester) async {
+      final authService = _FakeAuthService(
+        () async => const SessionRestoreResult.authenticated({
+          'id': 'user-id',
+          'emailVerified': '2026-05-22T00:00:00.000Z',
+          'profileComplete': true,
+          'surveyComplete': false,
+          'profile': {
+            'fullName': 'User',
+            'gender': 'MALE',
+            'birthDate': '2000-01-01',
+            'zodiacSign': 'capricorn',
+            'desiredPartnerType': 'confidant',
+            'freeTimeSlots': ['evening'],
+          },
+        }),
+      );
+
+      await tester.pumpWidget(_testApp(authService));
+      await tester.pumpAndSettle();
+
+      expect(find.text('survey intro'), findsOneWidget);
+      expect(find.text('deep match setup'), findsNothing);
     },
   );
 }
