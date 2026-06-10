@@ -1488,7 +1488,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       });
       _updateChatSummary(message);
       _scrollToBottom();
-      await _chatService.updateDeliveryStatus(message.id, 'DELIVERED');
+      try {
+        await _chatService.updateDeliveryStatus(message.id, 'DELIVERED');
+      } catch (e) {
+        debugPrint('[CHAT-DBG] Không thể cập nhật trạng thái đã nhận: $e');
+      }
       if (_isTypingSent) {
         _isTypingSent = false;
         await _chatService.sendTypingIndicator(chatId, isTyping: false);
@@ -1922,6 +1926,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     key: const Key('message_input'),
                     controller: _controller,
                     focusNode: _messageFocusNode,
+                    minLines: 1,
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
                     onChanged: (value) {
                       setState(() {});
                       _onTextChanged(value);
@@ -1953,7 +1960,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 8,
+                        vertical: 10,
                       ),
                       hintStyle: GoogleFonts.plusJakartaSans(
                         color: BondyColors.textHint,
@@ -2049,6 +2056,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ],
           Flexible(
             child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.72,
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: isMine
@@ -2091,6 +2101,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: msg.messageType == 'EMOJI' ? 28 : 14,
                         color: isMine ? Colors.white : BondyColors.textPrimary,
+                        height: 1.35,
                       ),
                     ),
                   const SizedBox(height: 4),

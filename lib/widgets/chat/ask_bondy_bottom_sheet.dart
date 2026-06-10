@@ -212,16 +212,21 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                 children: [
                   Expanded(
                     child: Container(
-                      height: 48,
+                      constraints: const BoxConstraints(
+                        minHeight: 48,
+                        maxHeight: 120,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       child: TextField(
                         controller: _controller,
+                        minLines: 1,
+                        maxLines: 4,
+                        keyboardType: TextInputType.multiline,
                         decoration: InputDecoration(
                           hintText: 'Nhập câu hỏi của bạn...',
                           hintStyle: GoogleFonts.plusJakartaSans(
@@ -230,7 +235,7 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                           ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                         style: GoogleFonts.plusJakartaSans(fontSize: 14),
                       ),

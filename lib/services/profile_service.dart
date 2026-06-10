@@ -45,7 +45,28 @@ class ProfileService {
       final fileName = file.name;
       final bytes = await file.readAsBytes();
       final ext = fileName.split('.').last.toLowerCase();
-      final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+      final String mimeType;
+      if (ext == 'png') {
+        mimeType = 'image/png';
+      } else if (ext == 'webp') {
+        mimeType = 'image/webp';
+      } else if (ext == 'gif') {
+        mimeType = 'image/gif';
+      } else if (ext == 'jpg' || ext == 'jpeg') {
+        mimeType = 'image/jpeg';
+      } else if (ext == 'm4a') {
+        mimeType = 'audio/m4a';
+      } else if (ext == 'mp3') {
+        mimeType = 'audio/mpeg';
+      } else if (ext == 'aac') {
+        mimeType = 'audio/aac';
+      } else if (ext == 'webm') {
+        mimeType = 'audio/webm';
+      } else if (ext == 'ogg') {
+        mimeType = 'audio/ogg';
+      } else {
+        mimeType = 'application/octet-stream';
+      }
 
       final token = await AuthService().getToken();
       final uri = Uri.parse('${_apiClient.baseUrl}/upload');

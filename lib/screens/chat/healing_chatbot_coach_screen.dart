@@ -157,6 +157,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                       Expanded(
                         child: TextField(
                           controller: _controller,
+                          minLines: 1,
+                          maxLines: 5,
+                          keyboardType: TextInputType.multiline,
                           decoration: InputDecoration(
                             hintText: 'Chia sẻ với Bondy...',
                             border: InputBorder.none,
@@ -351,6 +354,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
           ],
           Flexible(
             child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.72,
+              ),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: msg.isUser
@@ -374,7 +380,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                   fontSize: 14,
                   color:
                       msg.isUser ? Colors.white : BondyColors.textPrimary,
-                  height: 1.5,
+                  height: 1.35,
                 ),
               ),
             ),
