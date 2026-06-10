@@ -68,93 +68,95 @@ class _ReportBottomSheetState extends State<ReportBottomSheet> {
         color: Color(0xFF1E1E1E),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Báo cáo người dùng',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Chọn lý do báo cáo',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              color: Colors.white60,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ..._reasons.map((reason) => _buildReasonTile(reason)),
-          if (_error != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              _error!,
+              'Báo cáo người dùng',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                color: Colors.red,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
               textAlign: TextAlign.center,
             ),
-          ],
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _selectedReason != null && !_isLoading ? _submit : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: BondyColors.primary,
-              disabledBackgroundColor: BondyColors.primary.withValues(alpha: 0.3),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Xác nhận',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Hủy',
+            const SizedBox(height: 8),
+            Text(
+              'Chọn lý do báo cáo',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: Colors.white60,
               ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            ..._reasons.map((reason) => _buildReasonTile(reason)),
+            if (_error != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: Colors.red,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _selectedReason != null && !_isLoading ? _submit : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: BondyColors.primary,
+                disabledBackgroundColor: BondyColors.primary.withValues(alpha: 0.3),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Xác nhận',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Hủy',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: Colors.white60,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

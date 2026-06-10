@@ -262,14 +262,14 @@ class _FeaturedCourseCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 16,
-                left: 16,
+                top: 12,
+                left: 12,
                 child: _Badge(label: course.accessLevel == 'PREMIUM' ? 'Premium' : 'Nổi bật'),
               ),
               Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
+                bottom: 12,
+                left: 12,
+                right: 12,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -279,18 +279,18 @@ class _FeaturedCourseCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       course.summary,
                       style: healingText(size: 13, color: Colors.white.withValues(alpha: 0.8)),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
                           gradient: HealingStitchColors.warmGradient,
                           borderRadius: BorderRadius.circular(999),
@@ -311,6 +311,7 @@ class _FeaturedCourseCard extends StatelessWidget {
                   ],
                 ),
               ),
+
             ],
           ),
         ),

@@ -25,19 +25,21 @@ class CompatibilityReceiptModal extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHandle(),
-          const SizedBox(height: 20),
-          _buildHeader(context),
-          const SizedBox(height: 28),
-          _buildScoreCircle(),
-          const SizedBox(height: 24),
-          _buildFactors(),
-          const SizedBox(height: 28),
-          _buildActions(context),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHandle(),
+            const SizedBox(height: 20),
+            _buildHeader(context),
+            const SizedBox(height: 28),
+            _buildScoreCircle(),
+            const SizedBox(height: 24),
+            _buildFactors(),
+            const SizedBox(height: 28),
+            _buildActions(context),
+          ],
+        ),
       ),
     );
   }

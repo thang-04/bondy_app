@@ -38,57 +38,60 @@ class AiSuggestBottomSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: BondyColors.divider,
-              borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: BondyColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          // Header
-          Row(
-            children: [
-              const Text('💡 ', style: TextStyle(fontSize: 20)),
-              Text(
-                'Gợi ý từ AI Coach',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+            const SizedBox(height: 16),
+            // Header
+            Row(
+              children: [
+                const Text('💡 ', style: TextStyle(fontSize: 20)),
+                Text(
+                  'Gợi ý từ AI Coach',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: onDismiss,
+                  icon: const Icon(Icons.close, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Content
+            if (isLoading) ...[
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
                 ),
               ),
-              const Spacer(),
-              IconButton(
-                onPressed: onDismiss,
-                icon: const Icon(Icons.close, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+            ] else if (isLimitReached) ...[
+              _buildLimitReachedContent(context),
+            ] else if (errorMessage != null) ...[
+              _buildErrorContent(context),
+            ] else ...[
+              _buildSuggestionsList(context),
             ],
-          ),
-          const SizedBox(height: 12),
-          // Content
-          if (isLoading) ...[
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          ] else if (isLimitReached) ...[
-            _buildLimitReachedContent(context),
-          ] else if (errorMessage != null) ...[
-            _buildErrorContent(context),
-          ] else ...[
-            _buildSuggestionsList(context),
           ],
-        ],
+        ),
       ),
+
     );
   }
 

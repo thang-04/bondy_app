@@ -41,20 +41,23 @@ class NewMatchReceiptSheet extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHandle(),
-              const SizedBox(height: 20),
-              _buildAvatarPair(),
-              const SizedBox(height: 18),
-              _buildHeader(),
-              const SizedBox(height: 18),
-              _buildScoreRow(safeScore),
-              const SizedBox(height: 20),
-              _buildActions(),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHandle(),
+                const SizedBox(height: 20),
+                _buildAvatarPair(),
+                const SizedBox(height: 18),
+                _buildHeader(),
+                const SizedBox(height: 18),
+                _buildScoreRow(safeScore),
+                const SizedBox(height: 20),
+                _buildActions(),
+              ],
+            ),
           ),
+
         ),
       ),
     );

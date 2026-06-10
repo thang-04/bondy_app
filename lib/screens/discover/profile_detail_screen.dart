@@ -912,168 +912,170 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: const EdgeInsets.only(top: 14, left: 24, right: 24, bottom: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Mức độ tương thích sâu',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: BondyColors.textSecondary,
+                const SizedBox(height: 24),
+                Text(
+                  'Mức độ tương thích sâu',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: BondyColors.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
-                    ).createShader(bounds),
-                    child: Text(
-                      '${profile.matchPercentage}%',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 54,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                      ).createShader(bounds),
+                      child: Text(
+                        '${profile.matchPercentage}%',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 54,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Match',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: BondyColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              if (factors.isEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
-                  child: Text(
-                    'Độ tương thích được tính dựa trên các yếu tố cơ bản. Hãy trò chuyện để hiểu nhau hơn nhé!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      color: BondyColors.textSecondary,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ] else ...[
-                ...factors.map((factor) {
-                  final title = _getFactorTitle(factor.type);
-                  final desc = _getFactorDesc(factor.type, factor.score);
-                  final percent = (factor.score * 100).toInt();
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              title,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: BondyColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              '$percent%',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: BondyColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: 8,
-                                width: double.infinity,
-                                color: BondyColors.primaryLight,
-                              ),
-                              FractionallySizedBox(
-                                widthFactor: factor.score.clamp(0.0, 1.0),
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          desc,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: BondyColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-              const SizedBox(height: 12),
-              const Divider(color: Colors.black12),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const Text('✨', style: TextStyle(fontSize: 20)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Hai bạn có nhiều tần số rung động tương đồng. Đừng ngần ngại gửi một lượt thích nhé!',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: BondyColors.textSecondary,
-                          height: 1.4,
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Match',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: BondyColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 28),
+                if (factors.isEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Text(
+                      'Độ tương thích được tính dựa trên các yếu tố cơ bản. Hãy trò chuyện để hiểu nhau hơn nhé!',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: BondyColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  ...factors.map((factor) {
+                    final title = _getFactorTitle(factor.type);
+                    final desc = _getFactorDesc(factor.type, factor.score);
+                    final percent = (factor.score * 100).toInt();
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                title,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: BondyColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '$percent%',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: BondyColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Stack(
+                              children: [
+                                Container(
+                                  height: 8,
+                                  width: double.infinity,
+                                  color: BondyColors.primaryLight,
+                                ),
+                                FractionallySizedBox(
+                                  widthFactor: factor.score.clamp(0.0, 1.0),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            desc,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: BondyColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+                const SizedBox(height: 12),
+                const Divider(color: Colors.black12),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('✨', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Hai bạn có nhiều tần số rung động tương đồng. Đừng ngần ngại gửi một lượt thích nhé!',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: BondyColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

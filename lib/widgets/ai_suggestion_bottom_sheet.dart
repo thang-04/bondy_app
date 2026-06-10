@@ -70,50 +70,53 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: BondyColors.divider,
-              borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: BondyColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          // Header
-          Row(
-            children: [
-              const Text('✨ ', style: TextStyle(fontSize: 22)),
-              Text(
-                partnerName == null ? 'AI Gợi ý' : 'AI gợi ý cho $partnerName',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: BondyColors.textPrimary,
+            const SizedBox(height: 20),
+            // Header
+            Row(
+              children: [
+                const Text('✨ ', style: TextStyle(fontSize: 22)),
+                Text(
+                  partnerName == null ? 'AI Gợi ý' : 'AI gợi ý cho $partnerName',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: BondyColors.textPrimary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: onDismiss,
-                icon: const Icon(Icons.close, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                color: BondyColors.textSecondary,
-              ),
+                const Spacer(),
+                IconButton(
+                  onPressed: onDismiss,
+                  icon: const Icon(Icons.close, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  color: BondyColors.textSecondary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Intent selector
+            if (viewModel.suggestions.isEmpty && !viewModel.isLoading) ...[
+              _buildIntentSelector(context, viewModel),
+            ] else ...[
+              _buildContent(context, viewModel),
             ],
-          ),
-          const SizedBox(height: 20),
-          // Intent selector
-          if (viewModel.suggestions.isEmpty && !viewModel.isLoading) ...[
-            _buildIntentSelector(context, viewModel),
-          ] else ...[
-            _buildContent(context, viewModel),
           ],
-        ],
+        ),
       ),
+
     );
   }
 

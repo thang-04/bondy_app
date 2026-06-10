@@ -75,86 +75,89 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
         top: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Bộ lọc khám phá',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bộ lọc khám phá',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text('Độ tuổi: $_minAge – $_maxAge', style: _labelStyle()),
-          RangeSlider(
-            values: RangeValues(_minAge.toDouble(), _maxAge.toDouble()),
-            min: 18,
-            max: 60,
-            divisions: 42,
-            activeColor: BondyColors.primary,
-            onChanged: (v) => setState(() {
-              _minAge = v.start.round();
-              _maxAge = v.end.round();
-            }),
-          ),
-          Text(
-            'Khoảng cách tối đa: ${_maxDistance.round()} km',
-            style: _labelStyle(),
-          ),
-          Slider(
-            value: _maxDistance,
-            min: 5,
-            max: 200,
-            divisions: 39,
-            activeColor: BondyColors.primary,
-            onChanged: (v) => setState(() => _maxDistance = v),
-          ),
-          Text('Vibe / Phong cách', style: _labelStyle()),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _allVibes.map((vibe) {
-              final selected = _selectedVibes.contains(vibe.$1);
-              return FilterChip(
-                label: Text(vibe.$2),
-                selected: selected,
-                selectedColor: BondyColors.primary.withValues(alpha: 0.15),
-                checkmarkColor: BondyColors.primary,
-                labelStyle: TextStyle(
-                  color: selected ? BondyColors.primary : BondyColors.textSecondary,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                onSelected: (val) {
-                  setState(() {
-                    if (val) {
-                      _selectedVibes.add(vibe.$1);
-                    } else {
-                      _selectedVibes.remove(vibe.$1);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Áp dụng'),
+            const SizedBox(height: 20),
+            Text('Độ tuổi: $_minAge – $_maxAge', style: _labelStyle()),
+            RangeSlider(
+              values: RangeValues(_minAge.toDouble(), _maxAge.toDouble()),
+              min: 18,
+              max: 60,
+              divisions: 42,
+              activeColor: BondyColors.primary,
+              onChanged: (v) => setState(() {
+                _minAge = v.start.round();
+                _maxAge = v.end.round();
+              }),
             ),
-          ),
-        ],
+            Text(
+              'Khoảng cách tối đa: ${_maxDistance.round()} km',
+              style: _labelStyle(),
+            ),
+            Slider(
+              value: _maxDistance,
+              min: 5,
+              max: 200,
+              divisions: 39,
+              activeColor: BondyColors.primary,
+              onChanged: (v) => setState(() => _maxDistance = v),
+            ),
+            Text('Vibe / Phong cách', style: _labelStyle()),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _allVibes.map((vibe) {
+                final selected = _selectedVibes.contains(vibe.$1);
+                return FilterChip(
+                  label: Text(vibe.$2),
+                  selected: selected,
+                  selectedColor: BondyColors.primary.withValues(alpha: 0.15),
+                  checkmarkColor: BondyColors.primary,
+                  labelStyle: TextStyle(
+                    color: selected ? BondyColors.primary : BondyColors.textSecondary,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  onSelected: (val) {
+                    setState(() {
+                      if (val) {
+                        _selectedVibes.add(vibe.$1);
+                      } else {
+                        _selectedVibes.remove(vibe.$1);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Áp dụng'),
+              ),
+            ),
+          ],
+        ),
       ),
+
     );
   }
 
