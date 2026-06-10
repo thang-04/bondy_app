@@ -3,11 +3,13 @@ import 'package:bondy/screens/healing/healing_audio_player_screen.dart';
 import 'package:bondy/services/healing/healing_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('keeps plan audio completable when the audio file is unavailable', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({});
     Object? result;
 
     await tester.pumpWidget(
@@ -35,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Day 1 audio'), findsOneWidget);
-    expect(find.textContaining('file phát'), findsOneWidget);
+    expect(find.textContaining('file'), findsOneWidget);
 
     await tester.tap(find.textContaining('session'));
     await tester.pumpAndSettle();

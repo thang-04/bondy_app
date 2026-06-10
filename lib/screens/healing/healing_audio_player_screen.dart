@@ -410,6 +410,17 @@ class _HealingAudioPlayerScreenState extends State<HealingAudioPlayerScreen> {
                       color: HealingStitchColors.textSoft,
                     ),
                   ),
+                  if (_playbackErrorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _playbackErrorMessage!,
+                      style: healingText(
+                        size: 13,
+                        color: HealingStitchColors.pink,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 28),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(999),
