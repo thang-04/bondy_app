@@ -76,11 +76,11 @@ class GoogleSignInService {
 
   static GoogleSignIn _createGoogleSignIn() {
     return GoogleSignIn(
-      scopes: ['email', 'profile'],
+      scopes: ['email', 'profile', 'openid'],
       clientId: kIsWeb
           ? _serverClientId
           : (defaultTargetPlatform == TargetPlatform.iOS ? _iosClientId : null),
-      serverClientId: kIsWeb ? null : _serverClientId,
+      serverClientId: _serverClientId,
     );
   }
 
