@@ -27,11 +27,7 @@ class SwipeResult {
   final String? matchId;
   final String? conversationId;
 
-  const SwipeResult({
-    required this.matched,
-    this.matchId,
-    this.conversationId,
-  });
+  const SwipeResult({required this.matched, this.matchId, this.conversationId});
 }
 
 class DiscoverFetchResult {
@@ -42,25 +38,40 @@ class DiscoverFetchResult {
 }
 
 class DiscoverService {
+  static const int defaultDiscoverLimit = 50;
+
   final ApiClient _apiClient;
 
-  DiscoverService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  DiscoverService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
-  Future<DiscoverFetchResult> fetchProfilesFull({Map<String, dynamic>? filters}) async {
+  Future<DiscoverFetchResult> fetchProfilesFull({
+    Map<String, dynamic>? filters,
+    int limit = defaultDiscoverLimit,
+  }) async {
+    final queryParams = <String, dynamic>{
+      if (filters != null) ...filters,
+      'limit': limit,
+    };
     final response = await _apiClient.get(
       '/discover/profiles',
       authenticated: true,
-      queryParams: filters,
+      queryParams: queryParams,
     );
     final data = (response['data'] as List<dynamic>?) ?? [];
-    final profiles = data.map((item) => DiscoverProfile.fromJson(item as Map<String, dynamic>)).toList();
+    final profiles = data
+        .map((item) => DiscoverProfile.fromJson(item as Map<String, dynamic>))
+        .toList();
     final meta = response['meta'] as Map<String, dynamic>?;
     final healingGate = meta?['healingGate'] as Map<String, dynamic>?;
     return DiscoverFetchResult(profiles: profiles, healingGate: healingGate);
   }
 
-  Future<List<DiscoverProfile>> fetchProfiles({Map<String, dynamic>? filters}) async {
-    final result = await fetchProfilesFull(filters: filters);
+  Future<List<DiscoverProfile>> fetchProfiles({
+    Map<String, dynamic>? filters,
+    int limit = defaultDiscoverLimit,
+  }) async {
+    final result = await fetchProfilesFull(filters: filters, limit: limit);
     return result.profiles;
   }
 
@@ -72,10 +83,7 @@ class DiscoverService {
       final response = await _apiClient.post(
         '/swipes',
         authenticated: true,
-        body: {
-          'targetUserId': targetUserId,
-          'action': action,
-        },
+        body: {'targetUserId': targetUserId, 'action': action},
       );
       final data = response['data'] as Map<String, dynamic>? ?? {};
       return SwipeResult(
@@ -130,10 +138,7 @@ class DiscoverService {
   }
 
   Future<LikeQuotaInfo> fetchLikeQuota() async {
-    final response = await _apiClient.get(
-      '/swipes/quota',
-      authenticated: true,
-    );
+    final response = await _apiClient.get('/swipes/quota', authenticated: true);
     return LikeQuotaInfo.fromJson(
       (response['data'] as Map<String, dynamic>?) ?? {},
     );
@@ -158,4 +163,3 @@ class DiscoverService {
     return data['rewoundTargetUserId']?.toString();
   }
 }
-

@@ -83,9 +83,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       if (gate != null && gate['needsCheckin'] == true && mounted) {
         setState(() => _healingGateNeeded = true);
       }
-      
+
       final sortedProfiles = List<DiscoverProfile>.from(fetch.profiles);
-      sortedProfiles.sort((a, b) => b.matchPercentage.compareTo(a.matchPercentage));
+      sortedProfiles.sort(
+        (a, b) => b.matchPercentage.compareTo(a.matchPercentage),
+      );
       if (mounted) {
         setState(() {
           _suggestedProfiles = sortedProfiles;
@@ -103,10 +105,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Future<void> _refresh() async {
-    await Future.wait([
-      _homeViewModel.refreshAuthenticated(),
-      _bootstrap(),
-    ]);
+    await Future.wait([_homeViewModel.refreshAuthenticated(), _bootstrap()]);
   }
 
   Future<void> _showCheckinDialog() async {
@@ -148,7 +147,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: _HomeTopBar(
-                  avatarUrl: _profile?.image ??
+                  avatarUrl:
+                      _profile?.image ??
                       (_profile?.photos.isNotEmpty == true
                           ? _profile!.photos.first
                           : null),
@@ -170,17 +170,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                 ),
               SliverToBoxAdapter(
-                child: _SuggestedProfilesSection(profiles: _suggestedProfiles),
+                child: _SuggestedProfilesSection(
+                  profiles: _suggestedProfiles,
+                  onOpenProfile: _openSuggestedProfileDetail,
+                ),
               ),
               SliverToBoxAdapter(
                 child: _FeaturedJourneyCard(
-                  onStart: () => Navigator.of(context).pushNamed('/healing/daily'),
+                  onStart: () =>
+                      Navigator.of(context).pushNamed('/healing/daily'),
                 ),
               ),
               SliverToBoxAdapter(
                 child: _QuickDiscoveryBento(
-                  onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
-                  onHealingTap: widget.onNavigateToHealing ??
+                  onMatchTap: () =>
+                      Navigator.of(context).pushNamed('/discover'),
+                  onHealingTap:
+                      widget.onNavigateToHealing ??
                       () => Navigator.of(context).pushNamed('/home/healing'),
                   onRelationshipTap: () =>
                       Navigator.of(context).pushNamed('/relationship/home'),
@@ -201,6 +207,24 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     if (displayName == null || displayName.trim().isEmpty) return null;
     final parts = displayName.trim().split(RegExp(r'\s+'));
     return parts.last; // Vietnamese name convention — last token = given name
+  }
+
+  Future<void> _openSuggestedProfileDetail(DiscoverProfile profile) async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed('/profile-detail', arguments: profile);
+    if (!mounted) return;
+    if (_isProcessedSwipeResult(result)) {
+      setState(() {
+        _suggestedProfiles = _suggestedProfiles
+            .where((candidate) => candidate.id != profile.id)
+            .toList();
+      });
+    }
+  }
+
+  bool _isProcessedSwipeResult(Object? result) {
+    return result == 'LIKE' || result == 'PASS' || result == 'SUPER_LIKE';
   }
 }
 
@@ -228,28 +252,28 @@ class _Palette {
   );
 
   static List<BoxShadow> get softShadow => [
-        BoxShadow(
-          color: const Color(0xFF5D4E46).withValues(alpha: 0.08),
-          blurRadius: 30,
-          offset: const Offset(0, 10),
-        ),
-      ];
+    BoxShadow(
+      color: const Color(0xFF5D4E46).withValues(alpha: 0.08),
+      blurRadius: 30,
+      offset: const Offset(0, 10),
+    ),
+  ];
 
   static List<BoxShadow> get headerShadow => [
-        BoxShadow(
-          color: const Color(0xFFFFB28E).withValues(alpha: 0.15),
-          blurRadius: 30,
-          offset: const Offset(0, 8),
-        ),
-      ];
+    BoxShadow(
+      color: const Color(0xFFFFB28E).withValues(alpha: 0.15),
+      blurRadius: 30,
+      offset: const Offset(0, 8),
+    ),
+  ];
 
   static List<BoxShadow> get glow => [
-        BoxShadow(
-          color: const Color(0xFFFF7E5F).withValues(alpha: 0.25),
-          blurRadius: 25,
-          offset: const Offset(0, 8),
-        ),
-      ];
+    BoxShadow(
+      color: const Color(0xFFFF7E5F).withValues(alpha: 0.25),
+      blurRadius: 25,
+      offset: const Offset(0, 8),
+    ),
+  ];
 }
 
 TextStyle _font({
@@ -290,11 +314,7 @@ class _HomeTopBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const BondyLogoMini(size: 90),
-            ],
-          ),
+          Row(children: [const BondyLogoMini(size: 90)]),
           GestureDetector(
             onTap: onAvatarTap,
             child: Container(
@@ -309,8 +329,7 @@ class _HomeTopBar extends StatelessWidget {
                   ? Image.network(
                       avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          _avatarFallback(displayName),
+                      errorBuilder: (_, _, _) => _avatarFallback(displayName),
                     )
                   : _avatarFallback(displayName),
             ),
@@ -329,7 +348,11 @@ class _HomeTopBar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initial,
-        style: _font(size: 16, weight: FontWeight.w800, color: _Palette.primary),
+        style: _font(
+          size: 16,
+          weight: FontWeight.w800,
+          color: _Palette.primary,
+        ),
       ),
     );
   }
@@ -347,10 +370,12 @@ class _Greeting extends StatelessWidget {
     final greeting = hour < 12
         ? 'Chào buổi sáng'
         : hour < 18
-            ? 'Chào buổi chiều'
-            : 'Chào buổi tối';
+        ? 'Chào buổi chiều'
+        : 'Chào buổi tối';
 
-    final displayName = name?.trim().isNotEmpty == true ? ', ${name!.trim()}' : '';
+    final displayName = name?.trim().isNotEmpty == true
+        ? ', ${name!.trim()}'
+        : '';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
@@ -370,11 +395,7 @@ class _Greeting extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Hôm nay bạn cảm thấy thế nào?',
-            style: _font(
-              size: 14,
-              color: _Palette.onSurfaceMuted,
-              height: 1.5,
-            ),
+            style: _font(size: 14, color: _Palette.onSurfaceMuted, height: 1.5),
           ),
         ],
       ),
@@ -421,31 +442,43 @@ class _HealingGateBanner extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.spa_outlined,
-                      color: _Palette.primary, size: 22),
+                  child: const Icon(
+                    Icons.spa_outlined,
+                    color: _Palette.primary,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hôm nay bạn cảm thấy như thế nào?',
-                          style: _font(
-                              size: 14,
-                              weight: FontWeight.w700,
-                              color: _Palette.onSurface)),
+                      Text(
+                        'Hôm nay bạn cảm thấy như thế nào?',
+                        style: _font(
+                          size: 14,
+                          weight: FontWeight.w700,
+                          color: _Palette.onSurface,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text('Dành 2 phút trước khi kết nối người mới',
-                          style: _font(
-                              size: 11,
-                              color: _Palette.onSurfaceMuted,
-                              height: 1.4)),
+                      Text(
+                        'Dành 2 phút trước khi kết nối người mới',
+                        style: _font(
+                          size: 11,
+                          color: _Palette.onSurfaceMuted,
+                          height: 1.4,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      size: 18, color: _Palette.onSurfaceMuted),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: _Palette.onSurfaceMuted,
+                  ),
                   onPressed: onDismiss,
                   tooltip: 'Để sau',
                 ),
@@ -523,8 +556,9 @@ class _FeaturedJourneyCard extends StatelessWidget {
                                 end: Alignment.bottomRight,
                                 colors: [
                                   const Color(0xFFFFD9C0),
-                                  const Color(0xFFFFB28E)
-                                      .withValues(alpha: 0.8),
+                                  const Color(
+                                    0xFFFFB28E,
+                                  ).withValues(alpha: 0.8),
                                 ],
                               ),
                             ),
@@ -541,7 +575,9 @@ class _FeaturedJourneyCard extends StatelessWidget {
                             left: 16,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(20),
@@ -571,11 +607,14 @@ class _FeaturedJourneyCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Đề xuất dành cho bạn',
-                              style: _font(
-                                  size: 20,
-                                  weight: FontWeight.w700,
-                                  color: _Palette.onSurface)),
+                          Text(
+                            'Đề xuất dành cho bạn',
+                            style: _font(
+                              size: 20,
+                              weight: FontWeight.w700,
+                              color: _Palette.onSurface,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Bắt đầu hành trình thấu hiểu bản thân và kết nối sâu sắc hơn với những người xung quanh.',
@@ -651,17 +690,23 @@ class _QuickDiscoveryBento extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('Khám phá nhanh',
-                  style: _font(
-                      size: 18,
-                      weight: FontWeight.w700,
-                      color: _Palette.onSurface)),
-              Text('XEM TẤT CẢ',
-                  style: _font(
-                      size: 11,
-                      weight: FontWeight.w700,
-                      color: _Palette.primary,
-                      letterSpacing: 2)),
+              Text(
+                'Khám phá nhanh',
+                style: _font(
+                  size: 18,
+                  weight: FontWeight.w700,
+                  color: _Palette.onSurface,
+                ),
+              ),
+              Text(
+                'XEM TẤT CẢ',
+                style: _font(
+                  size: 11,
+                  weight: FontWeight.w700,
+                  color: _Palette.primary,
+                  letterSpacing: 2,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -731,7 +776,8 @@ class _BentoCard extends StatelessWidget {
             color: _Palette.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: _Palette.outlineVariant.withValues(alpha: 0.3)),
+              color: _Palette.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -752,15 +798,19 @@ class _BentoCard extends StatelessWidget {
                 child: Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(height: 12),
-              Text(title,
-                  style: _font(
-                      size: 14,
-                      weight: FontWeight.w700,
-                      color: _Palette.onSurface)),
+              Text(
+                title,
+                style: _font(
+                  size: 14,
+                  weight: FontWeight.w700,
+                  color: _Palette.onSurface,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle,
-                  style:
-                      _font(size: 11, color: _Palette.onSurfaceMuted)),
+              Text(
+                subtitle,
+                style: _font(size: 11, color: _Palette.onSurfaceMuted),
+              ),
             ],
           ),
         ),
@@ -798,7 +848,8 @@ class _BentoRowCard extends StatelessWidget {
             color: _Palette.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: _Palette.outlineVariant.withValues(alpha: 0.3)),
+              color: _Palette.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
@@ -822,20 +873,26 @@ class _BentoRowCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: _font(
-                            size: 14,
-                            weight: FontWeight.w700,
-                            color: _Palette.onSurface)),
+                    Text(
+                      title,
+                      style: _font(
+                        size: 14,
+                        weight: FontWeight.w700,
+                        color: _Palette.onSurface,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(subtitle,
-                        style:
-                            _font(size: 11, color: _Palette.onSurfaceMuted)),
+                    Text(
+                      subtitle,
+                      style: _font(size: 11, color: _Palette.onSurfaceMuted),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: _Palette.onSurfaceMuted.withValues(alpha: 0.4)),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: _Palette.onSurfaceMuted.withValues(alpha: 0.4),
+              ),
             ],
           ),
         ),
@@ -866,8 +923,10 @@ class _ServerDrivenSection extends StatelessWidget {
               child: SizedBox(
                 width: 22,
                 height: 22,
-                child:
-                    CircularProgressIndicator(strokeWidth: 2, color: _Palette.primary),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _Palette.primary,
+                ),
               ),
             ),
           );
@@ -891,16 +950,21 @@ class _ServerDrivenSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Gợi ý hôm nay',
-                  style: _font(
-                      size: 18,
-                      weight: FontWeight.w700,
-                      color: _Palette.onSurface)),
+              Text(
+                'Gợi ý hôm nay',
+                style: _font(
+                  size: 18,
+                  weight: FontWeight.w700,
+                  color: _Palette.onSurface,
+                ),
+              ),
               const SizedBox(height: 12),
-              ...widgets.map((w) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ServerWidgetTile(widget: w),
-                  )),
+              ...widgets.map(
+                (w) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ServerWidgetTile(widget: w),
+                ),
+              ),
             ],
           ),
         );
@@ -922,11 +986,12 @@ class _ServerWidgetTile extends StatelessWidget {
     final accent = _accentForType(widget.widgetType);
     final title = (widget.data['title'] ?? widget.data['headline'] ?? '')
         .toString();
-    final subtitle = (widget.data['subtitle'] ??
-            widget.data['description'] ??
-            widget.data['body'] ??
-            '')
-        .toString();
+    final subtitle =
+        (widget.data['subtitle'] ??
+                widget.data['description'] ??
+                widget.data['body'] ??
+                '')
+            .toString();
 
     if (title.isEmpty && subtitle.isEmpty) {
       return const SizedBox.shrink();
@@ -944,7 +1009,8 @@ class _ServerWidgetTile extends StatelessWidget {
             color: _Palette.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: _Palette.outlineVariant.withValues(alpha: 0.3)),
+              color: _Palette.outlineVariant.withValues(alpha: 0.3),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -970,30 +1036,38 @@ class _ServerWidgetTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (title.isNotEmpty)
-                      Text(title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: _font(
-                              size: 14,
-                              weight: FontWeight.w700,
-                              color: _Palette.onSurface)),
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _font(
+                          size: 14,
+                          weight: FontWeight.w700,
+                          color: _Palette.onSurface,
+                        ),
+                      ),
                     if (subtitle.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: _font(
-                                size: 12,
-                                color: _Palette.onSurfaceMuted,
-                                height: 1.4)),
+                        child: Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: _font(
+                            size: 12,
+                            color: _Palette.onSurfaceMuted,
+                            height: 1.4,
+                          ),
+                        ),
                       ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: _Palette.onSurfaceMuted.withValues(alpha: 0.4)),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: _Palette.onSurfaceMuted.withValues(alpha: 0.4),
+              ),
             ],
           ),
         ),
@@ -1086,7 +1160,8 @@ class _AskBondyFab extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                  color: _Palette.outlineVariant.withValues(alpha: 0.5)),
+                color: _Palette.outlineVariant.withValues(alpha: 0.5),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFFFFB28E).withValues(alpha: 0.3),
@@ -1098,14 +1173,20 @@ class _AskBondyFab extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.chat_bubble_rounded,
-                    color: _Palette.primary, size: 20),
+                const Icon(
+                  Icons.chat_bubble_rounded,
+                  color: _Palette.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                Text('Hỏi Bondy',
-                    style: _font(
-                        size: 14,
-                        weight: FontWeight.w700,
-                        color: _Palette.onSurface)),
+                Text(
+                  'Hỏi Bondy',
+                  style: _font(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: _Palette.onSurface,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1117,8 +1198,12 @@ class _AskBondyFab extends StatelessWidget {
 
 class _SuggestedProfilesSection extends StatelessWidget {
   final List<DiscoverProfile> profiles;
+  final ValueChanged<DiscoverProfile> onOpenProfile;
 
-  const _SuggestedProfilesSection({required this.profiles});
+  const _SuggestedProfilesSection({
+    required this.profiles,
+    required this.onOpenProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1161,12 +1246,7 @@ class _SuggestedProfilesSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final profile = profiles[index];
                 return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      '/profile-detail',
-                      arguments: profile,
-                    );
-                  },
+                  onTap: () => onOpenProfile(profile),
                   child: Container(
                     width: 130,
                     margin: const EdgeInsets.only(right: 14),
@@ -1250,10 +1330,7 @@ class _SuggestedProfilesSection extends StatelessWidget {
                                 '${profile.name}, ${profile.age}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: _font(
-                                  size: 12,
-                                  weight: FontWeight.bold,
-                                ),
+                                style: _font(size: 12, weight: FontWeight.bold),
                               ),
                               const SizedBox(height: 2),
                               Text(

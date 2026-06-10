@@ -59,6 +59,15 @@ class DiscoverViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeProfileById(String profileId) {
+    final nextProfiles = profiles
+        .where((profile) => profile.id != profileId)
+        .toList();
+    if (nextProfiles.length == profiles.length) return;
+    profiles = nextProfiles;
+    notifyListeners();
+  }
+
   Future<void> loadProfiles({DiscoverFilters? filters}) async {
     isLoading = true;
     errorMessage = null;
@@ -79,7 +88,8 @@ class DiscoverViewModel extends ChangeNotifier {
         _profileIncompleteNextAction = status is Map<String, dynamic>
             ? status['nextAction'] as String?
             : null;
-        errorMessage = e.data?['profileCompletionStatus']?['missingFields'] != null
+        errorMessage =
+            e.data?['profileCompletionStatus']?['missingFields'] != null
             ? 'Vui lòng hoàn thành hồ sơ để tiếp tục.'
             : 'Vui lòng hoàn thành hồ sơ (ảnh, vị trí) để tiếp tục.';
       } else {

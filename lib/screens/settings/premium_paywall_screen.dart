@@ -19,24 +19,16 @@ class PaywallFeature {
 const List<PaywallFeature> _paywallFeatures = [
   PaywallFeature(
     title: 'Lượt thích mỗi ngày',
-    tierStatus: {
-      'FREE': 'limited',
-      'PLUS': 'unlocked',
-      'PREMIUM': 'unlocked',
-    },
+    tierStatus: {'FREE': 'limited', 'PLUS': 'unlocked', 'PREMIUM': 'unlocked'},
     tierSubtitle: {
-      'FREE': 'Tối đa 100 lượt thích/ngày',
+      'FREE': 'Tối đa 50 lượt thích/ngày',
       'PLUS': 'Không giới hạn lượt thích',
       'PREMIUM': 'Không giới hạn lượt thích',
     },
   ),
   PaywallFeature(
     title: 'Gợi ý hội thoại từ AI',
-    tierStatus: {
-      'FREE': 'limited',
-      'PLUS': 'limited',
-      'PREMIUM': 'unlocked',
-    },
+    tierStatus: {'FREE': 'limited', 'PLUS': 'limited', 'PREMIUM': 'unlocked'},
     tierSubtitle: {
       'FREE': 'Tối đa 5 gợi ý/ngày',
       'PLUS': 'Tối đa 50 gợi ý/ngày',
@@ -45,11 +37,7 @@ const List<PaywallFeature> _paywallFeatures = [
   ),
   PaywallFeature(
     title: 'Kho nội dung chữa lành',
-    tierStatus: {
-      'FREE': 'limited',
-      'PLUS': 'limited',
-      'PREMIUM': 'unlocked',
-    },
+    tierStatus: {'FREE': 'limited', 'PLUS': 'limited', 'PREMIUM': 'unlocked'},
     tierSubtitle: {
       'FREE': 'Chỉ nghe nội dung miễn phí',
       'PLUS': 'Nghe nội dung miễn phí & nổi bật',
@@ -58,11 +46,7 @@ const List<PaywallFeature> _paywallFeatures = [
   ),
   PaywallFeature(
     title: 'Báo cáo cảm xúc cặp đôi',
-    tierStatus: {
-      'FREE': 'locked',
-      'PLUS': 'locked',
-      'PREMIUM': 'unlocked',
-    },
+    tierStatus: {'FREE': 'locked', 'PLUS': 'locked', 'PREMIUM': 'unlocked'},
     tierSubtitle: {
       'FREE': 'Chưa mở khóa',
       'PLUS': 'Chưa mở khóa',
@@ -105,11 +89,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
       Navigator.pop(context);
     } else {
       if (viewModel.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(viewModel.errorMessage!),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(viewModel.errorMessage!)));
       }
     }
   }
@@ -163,14 +145,18 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                           currentTier != null
                               ? 'Gói hiện tại: $currentTier'
                               : 'Thấu hiểu tri kỷ, gắn kết bền lâu.',
-                          style: healingText(color: HealingStitchColors.textMuted),
+                          style: healingText(
+                            color: HealingStitchColors.textMuted,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: HealingStitchColors.coral.withValues(alpha: 0.12),
+                            color: HealingStitchColors.coral.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -184,7 +170,10 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ..._paywallFeatures.map((feature) => _buildDynamicFeatureRow(feature, _selectedTier)),
+                        ..._paywallFeatures.map(
+                          (feature) =>
+                              _buildDynamicFeatureRow(feature, _selectedTier),
+                        ),
                         const SizedBox(height: 24),
                         _planTile('PLUS', '159.000đ / tháng'),
                         const SizedBox(height: 10),
@@ -302,10 +291,14 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: selected ? HealingStitchColors.paleCoral : HealingStitchColors.surface,
+          color: selected
+              ? HealingStitchColors.paleCoral
+              : HealingStitchColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? HealingStitchColors.coral : HealingStitchColors.border,
+            color: selected
+                ? HealingStitchColors.coral
+                : HealingStitchColors.border,
             width: selected ? 2 : 1,
           ),
         ),
@@ -315,21 +308,34 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tier, style: healingText(size: 16, weight: FontWeight.w800)),
-                  Text(price, style: healingText(color: HealingStitchColors.textMuted)),
+                  Text(
+                    tier,
+                    style: healingText(size: 16, weight: FontWeight.w800),
+                  ),
+                  Text(
+                    price,
+                    style: healingText(color: HealingStitchColors.textMuted),
+                  ),
                 ],
               ),
             ),
             if (tag != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: HealingStitchColors.coral.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   tag,
-                  style: healingText(size: 11, weight: FontWeight.w700, color: HealingStitchColors.coral),
+                  style: healingText(
+                    size: 11,
+                    weight: FontWeight.w700,
+                    color: HealingStitchColors.coral,
+                  ),
                 ),
               ),
           ],

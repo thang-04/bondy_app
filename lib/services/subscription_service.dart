@@ -19,7 +19,7 @@ class SubscriptionInfo {
     final features = json['features'] as Map<String, dynamic>? ?? {};
     return SubscriptionInfo(
       tier: json['tier']?.toString() ?? 'FREE',
-      dailyLikeLimit: (json['dailyLikeLimit'] as num?)?.toInt() ?? 100,
+      dailyLikeLimit: (json['dailyLikeLimit'] as num?)?.toInt() ?? 50,
       unlimitedLikes: features['unlimitedLikes'] == true,
       premiumHealing: features['premiumHealing'] == true,
       mockBilling: json['mockBilling'] == true,
@@ -30,10 +30,14 @@ class SubscriptionInfo {
 class SubscriptionService {
   final ApiClient _apiClient;
 
-  SubscriptionService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  SubscriptionService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   Future<SubscriptionInfo> getMySubscription() async {
-    final response = await _apiClient.get('/subscription/me', authenticated: true);
+    final response = await _apiClient.get(
+      '/subscription/me',
+      authenticated: true,
+    );
     return SubscriptionInfo.fromJson(
       (response['data'] as Map<String, dynamic>?) ?? {},
     );

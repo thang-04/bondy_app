@@ -2,12 +2,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/bondy_exceptions.dart' show QuotaExceededException;
 import '../../models/discover/discover_profile_model.dart';
 import '../../services/api_client.dart';
 import '../../services/discover_service.dart';
 import '../../theme/app_theme.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 import 'widgets/report_bottom_sheet.dart';
@@ -47,6 +49,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       if (!mounted) return;
       final navigator = Navigator.of(context);
       if (result.matched && result.matchId != null) {
+        await context.read<ChatViewModel>().fetchChats();
+        if (!mounted) return;
         navigator.pop(action);
         if (result.conversationId != null) {
           await navigator.pushNamed(
@@ -116,8 +120,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: _isSubmitting 
-            ? null 
+        onPressed: _isSubmitting
+            ? null
             : () {
                 HapticFeedback.lightImpact();
                 _swipe('LIKE');
@@ -193,9 +197,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                 ),
               ),
             ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildHero(profile),
-            ),
+            flexibleSpace: FlexibleSpaceBar(background: _buildHero(profile)),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -307,7 +309,8 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        if (profile.tags.isEmpty && _buildDeepMatchTags(profile).isEmpty)
+                        if (profile.tags.isEmpty &&
+                            _buildDeepMatchTags(profile).isEmpty)
                           Text(
                             'Chưa có sở thích.',
                             style: GoogleFonts.plusJakartaSans(
@@ -341,14 +344,17 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildHero(DiscoverProfile profile) {
-    final photos = profile.photos.isNotEmpty 
-        ? profile.photos 
+    final photos = profile.photos.isNotEmpty
+        ? profile.photos
         : (profile.imageUrl.isNotEmpty ? [profile.imageUrl] : <String>[]);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final imageChild = (photos.isNotEmpty && _currentPhotoIndex < photos.length && photos[_currentPhotoIndex].startsWith('http'))
+        final imageChild =
+            (photos.isNotEmpty &&
+                _currentPhotoIndex < photos.length &&
+                photos[_currentPhotoIndex].startsWith('http'))
             ? Image.network(
                 photos[_currentPhotoIndex],
                 fit: BoxFit.cover,
@@ -454,7 +460,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
@@ -516,7 +525,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildIcebreaker(DiscoverProfile profile) {
-    final icebreakerText = profile.prompts.isNotEmpty 
+    final icebreakerText = profile.prompts.isNotEmpty
         ? '"${profile.prompts.first.prompt}: ${profile.prompts.first.answer}"'
         : '"Hãy thử hỏi ${profile.name} về những hoạt động cuối tuần yêu thích của cô ấy nhé."';
 
@@ -525,10 +534,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB), // Amber pastel
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFFEF3C7),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFFEF3C7), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,11 +577,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   }
 
   Widget _buildPhotoGallery(DiscoverProfile profile) {
-    final photos = profile.photos.isNotEmpty 
-        ? profile.photos 
+    final photos = profile.photos.isNotEmpty
+        ? profile.photos
         : (profile.imageUrl.isNotEmpty ? [profile.imageUrl] : <String>[]);
     if (photos.length <= 1) return const SizedBox.shrink();
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -784,7 +790,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       {'bg': const Color(0xFFFFF7ED), 'fg': const Color(0xFF9A3412)}, // Orange
       {'bg': const Color(0xFFF5F3FF), 'fg': const Color(0xFF5B21B6)}, // Purple
     ];
-    
+
     final colorPair = colors[label.hashCode % colors.length];
 
     return Container(
@@ -803,6 +809,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       ),
     );
   }
+
   // Static translations
   static const Map<String, String> _zodiacNames = {
     'aries': 'Bạch Dương',
@@ -859,21 +866,48 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       final signLower = dm.zodiacSign!.toLowerCase();
       final name = _zodiacNames[signLower] ?? dm.zodiacSign;
       final symbol = _zodiacSymbols[signLower] ?? '';
-      list.add(_buildSpecialTag('$symbol Cung $name', const Color(0xFFFDF2F8), const Color(0xFFDB2777)));
+      list.add(
+        _buildSpecialTag(
+          '$symbol Cung $name',
+          const Color(0xFFFDF2F8),
+          const Color(0xFFDB2777),
+        ),
+      );
     }
 
     if (dm.lifePathNumber != null) {
-      list.add(_buildSpecialTag('🔢 Số chủ đạo ${dm.lifePathNumber}', const Color(0xFFF5F3FF), const Color(0xFF7C3AED)));
+      list.add(
+        _buildSpecialTag(
+          '🔢 Số chủ đạo ${dm.lifePathNumber}',
+          const Color(0xFFF5F3FF),
+          const Color(0xFF7C3AED),
+        ),
+      );
     }
 
     if (dm.desiredPartnerType != null) {
-      final partnerName = _partnerTypeLabels[dm.desiredPartnerType] ?? dm.desiredPartnerType;
-      list.add(_buildSpecialTag('🎯 Tìm: $partnerName', const Color(0xFFECFDF5), const Color(0xFF059669)));
+      final partnerName =
+          _partnerTypeLabels[dm.desiredPartnerType] ?? dm.desiredPartnerType;
+      list.add(
+        _buildSpecialTag(
+          '🎯 Tìm: $partnerName',
+          const Color(0xFFECFDF5),
+          const Color(0xFF059669),
+        ),
+      );
     }
 
     if (dm.freeTimeSlots.isNotEmpty) {
-      final times = dm.freeTimeSlots.map((t) => _freeTimeLabels[t] ?? t).join(', ');
-      list.add(_buildSpecialTag('⏰ Rảnh: $times', const Color(0xFFFFF7ED), const Color(0xFFEA580C)));
+      final times = dm.freeTimeSlots
+          .map((t) => _freeTimeLabels[t] ?? t)
+          .join(', ');
+      list.add(
+        _buildSpecialTag(
+          '⏰ Rảnh: $times',
+          const Color(0xFFFFF7ED),
+          const Color(0xFFEA580C),
+        ),
+      );
     }
 
     return list;
@@ -885,7 +919,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: fg.withOpacity(0.15), width: 1),
+        border: Border.all(color: fg.withValues(alpha: 0.15), width: 1),
       ),
       child: Text(
         label,
@@ -911,7 +945,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
-          padding: const EdgeInsets.only(top: 14, left: 24, right: 24, bottom: 32),
+          padding: const EdgeInsets.only(
+            top: 14,
+            left: 24,
+            right: 24,
+            bottom: 32,
+          ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1023,7 +1062,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                     height: 8,
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                                        colors: [
+                                          Color(0xFFEC4899),
+                                          Color(0xFF8B5CF6),
+                                        ],
                                       ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),

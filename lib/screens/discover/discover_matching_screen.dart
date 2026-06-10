@@ -15,6 +15,7 @@ import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
 
 String discoverSwipeActionForDirection(AxisDirection direction) {
@@ -120,6 +121,8 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
 
     _viewModel.removeProfileAt(previousIndex);
     if (matched && _viewModel.lastMatchId != null) {
+      await context.read<ChatViewModel>().fetchChats();
+      if (!mounted) return;
       _showNewMatchDialog(
         _viewModel.lastMatchId!,
         _viewModel.lastConversationId,
@@ -127,6 +130,21 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
       );
       _viewModel.clearLastMatch();
     }
+  }
+
+  Future<void> _openProfileDetail(DiscoverProfile profile) async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed('/profile-detail', arguments: profile);
+    if (!mounted) return;
+    if (_isProcessedSwipeResult(result)) {
+      _viewModel.removeProfileById(profile.id);
+      await _viewModel.loadQuota();
+    }
+  }
+
+  bool _isProcessedSwipeResult(Object? result) {
+    return result == 'LIKE' || result == 'PASS' || result == 'SUPER_LIKE';
   }
 
   void _showSwipeFeedback(String action) {
@@ -267,7 +285,8 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   @override
   Widget build(BuildContext context) {
     final subViewModel = context.watch<SubscriptionViewModel>();
-    final hasUnlimitedLikes = subViewModel.currentSubscription?.unlimitedLikes == true;
+    final hasUnlimitedLikes =
+        subViewModel.currentSubscription?.unlimitedLikes == true;
 
     return Scaffold(
       backgroundColor: BondyColors.background,
@@ -397,6 +416,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                           cardBuilder: (BuildContext context, int index) {
                             return DiscoverMatchingCard(
                               profile: profiles[index],
+                              onOpenDetail: _openProfileDetail,
                             );
                           },
                         ),

@@ -46,6 +46,7 @@ void main() {
     );
     await tester.pump();
 
+    await tester.ensureVisible(find.byKey(const Key('login_submit_button')));
     await tester.tap(find.byKey(const Key('login_submit_button')));
     await tester.pumpAndSettle();
 

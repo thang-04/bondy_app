@@ -582,9 +582,7 @@ class _CommunityTabState extends State<_CommunityTab> {
                       ..._viewModel.profiles.map(
                         (profile) => CommunityProfileCard(
                           profile: profile,
-                          onTap: () => Navigator.of(
-                            context,
-                          ).pushNamed('/profile-detail', arguments: profile),
+                          onTap: () => _openProfileDetail(profile),
                           onConnect: () => _handleConnect(profile),
                           onSkip: () => _handleSkip(profile),
                         ),
@@ -597,6 +595,20 @@ class _CommunityTabState extends State<_CommunityTab> {
         );
       },
     );
+  }
+
+  Future<void> _openProfileDetail(DiscoverProfile profile) async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed('/profile-detail', arguments: profile);
+    if (!mounted) return;
+    if (_isProcessedSwipeResult(result)) {
+      await _viewModel.loadFeed();
+    }
+  }
+
+  bool _isProcessedSwipeResult(Object? result) {
+    return result == 'LIKE' || result == 'PASS' || result == 'SUPER_LIKE';
   }
 
   Future<void> _handleConnect(DiscoverProfile profile) async {

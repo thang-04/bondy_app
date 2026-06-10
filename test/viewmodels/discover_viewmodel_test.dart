@@ -20,6 +20,7 @@ class FakeDiscoverService extends DiscoverService {
   @override
   Future<DiscoverFetchResult> fetchProfilesFull({
     Map<String, dynamic>? filters,
+    int limit = DiscoverService.defaultDiscoverLimit,
   }) async {
     if (error != null) throw error!;
     return DiscoverFetchResult(profiles: profiles);
@@ -71,6 +72,40 @@ void main() {
 
     expect(viewModel.profiles, isEmpty);
     expect(viewModel.isEmpty, true);
+  });
+
+  test('removes a profile by id after a detail swipe result', () async {
+    final viewModel = DiscoverViewModel(
+      service: FakeDiscoverService(
+        profiles: const [
+          DiscoverProfile(
+            id: 'candidate-1',
+            name: 'Linh',
+            age: 24,
+            distance: 'Ho Chi Minh',
+            bio: 'Xin chao',
+            tags: ['Music'],
+            matchPercentage: 80,
+            imageUrl: '',
+          ),
+          DiscoverProfile(
+            id: 'candidate-2',
+            name: 'Mai',
+            age: 25,
+            distance: 'Ha Noi',
+            bio: 'Chao ban',
+            tags: ['Books'],
+            matchPercentage: 76,
+            imageUrl: '',
+          ),
+        ],
+      ),
+    );
+
+    await viewModel.loadProfiles();
+    viewModel.removeProfileById('candidate-1');
+
+    expect(viewModel.profiles.map((p) => p.id), ['candidate-2']);
   });
 
   test('records swipe success and errors', () async {

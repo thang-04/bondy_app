@@ -160,9 +160,7 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
             ),
           ),
           OutlinedButton(
-            onPressed: () => Navigator.of(
-              context,
-            ).pushNamed('/profile-detail', arguments: profile),
+            onPressed: () => _openProfileDetail(profile),
             style: OutlinedButton.styleFrom(
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -172,6 +170,20 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openProfileDetail(DiscoverProfile profile) async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed('/profile-detail', arguments: profile);
+    if (!mounted) return;
+    if (_isProcessedSwipeResult(result)) {
+      _viewModel.removeProfileById(profile.id);
+    }
+  }
+
+  bool _isProcessedSwipeResult(Object? result) {
+    return result == 'LIKE' || result == 'PASS' || result == 'SUPER_LIKE';
   }
 
   Widget _buildStateMessage({

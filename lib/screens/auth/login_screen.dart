@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,6 +9,7 @@ import '../../widgets/bondy_button.dart';
 import '../../widgets/bondy_logo.dart';
 import '../../widgets/common/bondy_feedback.dart';
 import '../../widgets/common/bondy_widgets.dart';
+import 'google_sign_in_web_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +21,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  AuthViewModel? _authViewModel;
 
   @override
   void initState() {
@@ -26,7 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
     // Lắng nghe ViewModel để show popup khi cần liên kết account Google
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<AuthViewModel>().addListener(_onAuthChanged);
+        final auth = context.read<AuthViewModel>();
+        _authViewModel = auth;
+        auth.addListener(_onAuthChanged);
+        auth.startGoogleWebSignInListener(context);
       }
     });
   }
@@ -43,16 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/google_logo.png',
-              width: 22,
-              height: 22,
-            ),
+            Image.asset('assets/images/google_logo.png', width: 22, height: 22),
             const SizedBox(width: 10),
             Text(
               'Liên kết tài khoản',
@@ -85,16 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
             onPressed: () {
               Navigator.of(ctx).pop();
-              context
-                  .read<AuthViewModel>()
-                  .confirmLinkGoogleAccount(context);
+              context.read<AuthViewModel>().confirmLinkGoogleAccount(context);
             },
             child: Text(
               'Liên kết Google',
@@ -111,8 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    if (mounted) {
-      context.read<AuthViewModel>().removeListener(_onAuthChanged);
+    final auth = _authViewModel;
+    if (auth != null) {
+      auth.stopGoogleWebSignInListener();
+      auth.removeListener(_onAuthChanged);
     }
     _emailController.dispose();
     _passwordController.dispose();
@@ -169,7 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -188,9 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Đăng nhập',
@@ -232,8 +230,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pushNamed('/forgot-password'),
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).pushNamed('/forgot-password'),
                             child: Text(
                               'Quên mật khẩu?',
                               style: GoogleFonts.plusJakartaSans(
@@ -248,15 +247,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 24),
                         BondyButton(
                           key: const Key('login_submit_button'),
-                          text: auth.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập',
+                          text: auth.isLoading
+                              ? 'Đang đăng nhập...'
+                              : 'Đăng nhập',
                           isLoading: auth.isLoading,
                           borderRadius: 30,
                           onPressed: auth.isValid && !auth.isLoading
-                              ? () => context.read<AuthViewModel>().loginAndNavigate(
-                                  context,
-                                  _emailController.text,
-                                  _passwordController.text,
-                                )
+                              ? () => context
+                                    .read<AuthViewModel>()
+                                    .loginAndNavigate(
+                                      context,
+                                      _emailController.text,
+                                      _passwordController.text,
+                                    )
                               : () {},
                         ),
                         const SizedBox(height: 20),
@@ -264,12 +267,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         const _OrDivider(),
                         const SizedBox(height: 20),
                         // ─── Nút Google Sign-In ───
-                        _GoogleSignInButton(
-                          isLoading: auth.isLoading,
-                          onPressed: () => context
-                              .read<AuthViewModel>()
-                              .loginWithGoogleAndNavigate(context),
-                        ),
+                        if (kIsWeb)
+                          _GoogleSignInWebButton(isLoading: auth.isLoading)
+                        else
+                          _GoogleSignInButton(
+                            isLoading: auth.isLoading,
+                            onPressed: () => context
+                                .read<AuthViewModel>()
+                                .loginWithGoogleAndNavigate(context),
+                          ),
                         const SizedBox(height: 48),
                       ],
                     ),
@@ -347,7 +353,7 @@ class _AuthFieldState extends State<_AuthField> {
                   color: BondyColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : [bondySoftShadow(0.02)],
       ),
@@ -377,7 +383,9 @@ class _AuthFieldState extends State<_AuthField> {
                       _obscureText
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+                      color: _isFocused
+                          ? BondyColors.primary
+                          : BondyColors.textHint,
                       size: 22,
                     ),
                     onPressed: () {
@@ -397,7 +405,10 @@ class _AuthFieldState extends State<_AuthField> {
             horizontal: 20,
             vertical: 18,
           ),
-          hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
+          hintStyle: GoogleFonts.manrope(
+            color: BondyColors.textHint,
+            fontSize: 15,
+          ),
         ),
         style: GoogleFonts.manrope(
           fontSize: 16,
@@ -445,10 +456,7 @@ class _GoogleSignInButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
 
-  const _GoogleSignInButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
+  const _GoogleSignInButton({required this.isLoading, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -486,6 +494,24 @@ class _GoogleSignInButton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GoogleSignInWebButton extends StatelessWidget {
+  final bool isLoading;
+
+  const _GoogleSignInWebButton({required this.isLoading});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: isLoading,
+      child: AnimatedOpacity(
+        opacity: isLoading ? 0.6 : 1,
+        duration: const Duration(milliseconds: 200),
+        child: buildGoogleSignInWebButton(),
       ),
     );
   }

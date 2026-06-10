@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/bondy_error_mapper.dart';
 import '../../services/auth_service.dart';
@@ -8,9 +12,14 @@ class AuthViewModel extends ChangeNotifier {
   static const int minimumAge = 18;
 
   final AuthService _authService;
+  final GoogleSignInService _googleSignInService;
+  StreamSubscription<GoogleSignInAccount?>? _googleWebSubscription;
 
-  AuthViewModel({AuthService? authService})
-    : _authService = authService ?? AuthService();
+  AuthViewModel({
+    AuthService? authService,
+    GoogleSignInService? googleSignInService,
+  }) : _authService = authService ?? AuthService(),
+       _googleSignInService = googleSignInService ?? GoogleSignInService();
 
   bool isValid = false;
   bool isLoading = false;
@@ -22,8 +31,7 @@ class AuthViewModel extends ChangeNotifier {
   // Token tạm để xử lý flow liên kết tài khoản Google
   String? _pendingGoogleIdToken;
 
-  static final RegExp _emailRegex =
-      RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
+  static final RegExp _emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
 
   /// F-05: registration requires a slightly stronger password — at least 8
   /// characters with both a letter and a digit. Login keeps the 6-char floor
@@ -393,18 +401,57 @@ class AuthViewModel extends ChangeNotifier {
   /// Getter để UI biết có đang chờ user xác nhận liên kết account không
   bool get hasPendingGoogleLink => _pendingGoogleIdToken != null;
 
+  void startGoogleWebSignInListener(BuildContext context) {
+    if (!kIsWeb || _googleWebSubscription != null) return;
+
+    _googleWebSubscription = _googleSignInService.onCurrentUserChanged.listen(
+      (account) {
+        if (account == null || !context.mounted) return;
+        unawaited(loginWithGoogleAccountAndNavigate(context, account));
+      },
+      onError: (Object error) {
+        debugPrint('[GOOGLE-AUTH] web account stream error: $error');
+      },
+    );
+
+    unawaited(
+      _googleSignInService
+          .signInSilently()
+          .then<void>((account) {
+            if (account == null || !context.mounted) return;
+            unawaited(loginWithGoogleAccountAndNavigate(context, account));
+          })
+          .catchError((Object error) {
+            debugPrint('[GOOGLE-AUTH] web signInSilently failed: $error');
+          }),
+    );
+  }
+
+  void stopGoogleWebSignInListener() {
+    _googleWebSubscription?.cancel();
+    _googleWebSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    stopGoogleWebSignInListener();
+    super.dispose();
+  }
+
   /// Đăng nhập bằng Google — xử lý 3 case:
   /// 1. Đăng nhập thành công (đã có account Google)
   /// 2. Tạo user mới → đi qua onboarding
   /// 3. Email đã có password → [hasPendingGoogleLink] = true → UI hiện popup
   Future<void> loginWithGoogleAndNavigate(BuildContext context) async {
+    if (isLoading) return;
+
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
       // 1. Lấy idToken từ Google
-      final idToken = await googleSignInService.getIdToken();
+      final idToken = await _googleSignInService.getIdToken();
       if (idToken == null) {
         // User bấm huỷ → không làm gì
         return;
@@ -412,7 +459,7 @@ class AuthViewModel extends ChangeNotifier {
 
       try {
         // 2. Gửi lên backend
-        final result = await googleSignInService.loginWithGoogle(idToken);
+        final result = await _googleSignInService.loginWithGoogle(idToken);
 
         // 3. Lưu tokens vào secure storage
         await _authService.saveTokens(
@@ -442,6 +489,48 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Handles accounts returned by the official Google web button.
+  Future<void> loginWithGoogleAccountAndNavigate(
+    BuildContext context,
+    GoogleSignInAccount account,
+  ) async {
+    if (isLoading) return;
+
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      final idToken = await _googleSignInService.getIdTokenForAccount(account);
+      try {
+        final result = await _googleSignInService.loginWithGoogle(idToken);
+
+        await _authService.saveTokens(
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          userId: result.userId,
+        );
+
+        if (!context.mounted) return;
+        await _navigateAfterAuth(context);
+      } on AccountExistsException catch (e) {
+        _pendingGoogleIdToken = idToken;
+        errorMessage = e.message;
+        notifyListeners();
+      }
+    } catch (error) {
+      errorMessage = BondyErrorMapper.message(error);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage ?? 'Đăng nhập Google thất bại')),
+        );
+      }
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Được gọi sau khi user bấm "Liên kết" trong popup xác nhận
   Future<void> confirmLinkGoogleAccount(BuildContext context) async {
     final idToken = _pendingGoogleIdToken;
@@ -453,7 +542,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await googleSignInService.confirmLinkAccount(idToken);
+      final result = await _googleSignInService.confirmLinkAccount(idToken);
       await _authService.saveTokens(
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,

@@ -7,8 +7,13 @@ import 'report_bottom_sheet.dart';
 
 class DiscoverMatchingCard extends StatefulWidget {
   final DiscoverProfile profile;
+  final Future<void> Function(DiscoverProfile profile)? onOpenDetail;
 
-  const DiscoverMatchingCard({super.key, required this.profile});
+  const DiscoverMatchingCard({
+    super.key,
+    required this.profile,
+    this.onOpenDetail,
+  });
 
   @override
   State<DiscoverMatchingCard> createState() => _DiscoverMatchingCardState();
@@ -19,9 +24,11 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
 
   @override
   Widget build(BuildContext context) {
-    final photos = widget.profile.photos.isNotEmpty 
-        ? widget.profile.photos 
-        : (widget.profile.imageUrl.isNotEmpty ? [widget.profile.imageUrl] : <String>[]);
+    final photos = widget.profile.photos.isNotEmpty
+        ? widget.profile.photos
+        : (widget.profile.imageUrl.isNotEmpty
+              ? [widget.profile.imageUrl]
+              : <String>[]);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -29,13 +36,13 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
         final cardHeight = constraints.maxHeight;
 
         return GestureDetector(
-          onTapUp: (details) {
+          onTapUp: (details) async {
             final x = details.localPosition.dx;
             final y = details.localPosition.dy;
 
             // If tapped in the bottom info section, open detail
             if (y > cardHeight * 0.6) {
-              Navigator.of(context).pushNamed('/profile-detail', arguments: widget.profile);
+              await _openDetail();
               return;
             }
 
@@ -55,12 +62,14 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
               }
             } else {
               // Middle tap opens detail
-              Navigator.of(context).pushNamed('/profile-detail', arguments: widget.profile);
+              await _openDetail();
             }
           },
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E), // Dark background for the card inside
+              color: const Color(
+                0xFF1E1E1E,
+              ), // Dark background for the card inside
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -151,8 +160,9 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) =>
-                                    ReportBottomSheet(targetUserId: widget.profile.id),
+                                builder: (_) => ReportBottomSheet(
+                                  targetUserId: widget.profile.id,
+                                ),
                               );
                             },
                             icon: const Icon(
@@ -188,10 +198,14 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
                         ],
                       ),
 
-                      if (widget.profile.datingGoal != null && widget.profile.datingGoal!.isNotEmpty) ...[
+                      if (widget.profile.datingGoal != null &&
+                          widget.profile.datingGoal!.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
@@ -232,8 +246,7 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
                           ...widget.profile.tags
                               .take(3)
                               .map((tag) => _buildTag(tag)),
-                          if (widget.profile.tags.length > 3)
-                            _buildTag('...'),
+                          if (widget.profile.tags.length > 3) _buildTag('...'),
                         ],
                       ),
 
@@ -288,6 +301,17 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
         );
       },
     );
+  }
+
+  Future<void> _openDetail() async {
+    final callback = widget.onOpenDetail;
+    if (callback != null) {
+      await callback(widget.profile);
+      return;
+    }
+    await Navigator.of(
+      context,
+    ).pushNamed('/profile-detail', arguments: widget.profile);
   }
 
   Widget _buildImageOrPlaceholder(List<String> photos) {

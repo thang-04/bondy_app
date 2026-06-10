@@ -1,4 +1,5 @@
 import 'package:bondy/services/auth_service.dart';
+import 'package:bondy/services/google_sign_in_service.dart';
 import 'package:bondy/viewmodels/auth/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -148,6 +149,46 @@ void main() {
     expect(find.text('home'), findsOneWidget);
     expect(find.text('otp'), findsNothing);
   });
+
+  testWidgets('google login saves backend tokens and navigates after auth', (
+    tester,
+  ) async {
+    final authService = _FakeAuthService();
+    final googleService = _FakeGoogleSignInService();
+    final viewModel = AuthViewModel(
+      authService: authService,
+      googleSignInService: googleService,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/': (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => viewModel.loginWithGoogleAndNavigate(context),
+              child: const Text('google login'),
+            ),
+          ),
+          '/home': (context) => const Scaffold(body: Text('home')),
+          '/profile-setup': (context) =>
+              const Scaffold(body: Text('profile setup')),
+          '/verify-email': (context) =>
+              const Scaffold(body: Text('verify email')),
+        },
+      ),
+    );
+
+    await tester.tap(find.text('google login'));
+    await tester.pumpAndSettle();
+
+    expect(googleService.getIdTokenCalls, 1);
+    expect(googleService.loginWithGoogleCalls, 1);
+    expect(googleService.lastIdToken, 'google-id-token');
+    expect(authService.savedAccessToken, 'google-access-token');
+    expect(authService.savedRefreshToken, 'google-refresh-token');
+    expect(authService.savedUserId, 'google-user-id');
+    expect(find.text('home'), findsOneWidget);
+  });
 }
 
 class _ContextHarness extends StatelessWidget {
@@ -193,6 +234,9 @@ class _FakeAuthService extends AuthService {
   int loginCalls = 0;
   String? lastEmail;
   String? lastPassword;
+  String? savedAccessToken;
+  String? savedRefreshToken;
+  String? savedUserId;
 
   @override
   Future<SendOtpResult> sendOtp(String email) async {
@@ -237,5 +281,46 @@ class _FakeAuthService extends AuthService {
         'birthDate': '2000-01-01',
       },
     };
+  }
+
+  @override
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+    required String userId,
+  }) async {
+    savedAccessToken = accessToken;
+    savedRefreshToken = refreshToken;
+    savedUserId = userId;
+  }
+}
+
+class _FakeGoogleSignInService extends GoogleSignInService {
+  _FakeGoogleSignInService()
+    : super(baseUrlOverride: 'https://api.example.com/api');
+
+  int getIdTokenCalls = 0;
+  int loginWithGoogleCalls = 0;
+  String? lastIdToken;
+
+  @override
+  Future<String?> getIdToken() async {
+    getIdTokenCalls++;
+    return 'google-id-token';
+  }
+
+  @override
+  Future<GoogleAuthResult> loginWithGoogle(String idToken) async {
+    loginWithGoogleCalls++;
+    lastIdToken = idToken;
+    return const GoogleAuthResult(
+      accessToken: 'google-access-token',
+      refreshToken: 'google-refresh-token',
+      userId: 'google-user-id',
+      email: 'google@example.com',
+      name: 'Google User',
+      image: null,
+      isNewUser: false,
+    );
   }
 }

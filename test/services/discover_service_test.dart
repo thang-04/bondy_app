@@ -34,7 +34,7 @@ void main() {
         expect(request.method, 'GET');
         expect(
           request.url.toString(),
-          'https://api.example.com/api/discover/profiles',
+          'https://api.example.com/api/discover/profiles?limit=50',
         );
         expect(request.headers['authorization'], 'Bearer access-token');
         return http.Response(
