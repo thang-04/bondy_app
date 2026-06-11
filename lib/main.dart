@@ -121,18 +121,26 @@ Future<void> main() async {
     // .env not bundled — will use fallback URLs
   }
 
+  bool analyticsEnabled = false;
+  String sentryDsn = '';
+  String appEnv = 'production';
+
+  if (dotenv.isInitialized) {
+    analyticsEnabled = dotenv.env['ANALYTICS_ENABLED'] == 'true';
+    sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
+    appEnv = dotenv.env['APP_ENV'] ?? 'production';
+  }
+
   // Analytics — enable when ANALYTICS_ENABLED=true in .env
-  final analyticsEnabled = dotenv.env['ANALYTICS_ENABLED'] == 'true';
   analytics.configure(enabled: analyticsEnabled);
   analytics.appOpen();
 
   // Crash reporting via Sentry — reads SENTRY_DSN from .env
-  final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
   if (sentryDsn.isNotEmpty) {
     await SentryFlutter.init((options) {
       options.dsn = sentryDsn;
       options.tracesSampleRate = 0.2;
-      options.environment = dotenv.env['APP_ENV'] ?? 'production';
+      options.environment = appEnv;
     }, appRunner: () => runApp(const BondyApp()));
   } else {
     // Sentry not configured — run normally.
