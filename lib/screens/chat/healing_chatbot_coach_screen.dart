@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+
+import '../../services/ai_service.dart';
+import '../../services/api_client.dart';
 import '../../services/safety_guardrails_service.dart';
-import '../../widgets/chat/date_suggestions_widget.dart';
-import '../../core/ai_prompts_config.dart';
+import '../../theme/app_theme.dart';
+import '../../viewmodels/ai/ai_quota_viewmodel.dart';
+import '../healing/healing_stitch_style.dart';
 
 class HealingChatbotCoachScreen extends StatefulWidget {
-  const HealingChatbotCoachScreen({super.key});
+  final AiService? aiService;
+
+  const HealingChatbotCoachScreen({super.key, this.aiService});
 
   @override
   State<HealingChatbotCoachScreen> createState() =>
@@ -14,39 +20,48 @@ class HealingChatbotCoachScreen extends StatefulWidget {
 }
 
 class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
+  late final AiService _aiService = widget.aiService ?? AiService(ApiClient());
   final _controller = TextEditingController();
+  final _scrollController = ScrollController();
   final _safetyService = SafetyGuardrailsService();
+  final String _sessionId = 'healing-${DateTime.now().millisecondsSinceEpoch}';
+
   final List<_BotMessage> _messages = [
     _BotMessage(
-      'Chào bạn! Mình là Bondy 🌿\nMình ở đây để lắng nghe và đồng hành cùng bạn trên hành trình chữa lành.',
+      'Chào bạn, mình là Bondy. Mình ở đây để lắng nghe và đồng hành cùng bạn trong hôm nay.',
       false,
     ),
     _BotMessage(
-      'Hôm nay bạn cảm thấy thế nào? Hãy chia sẻ với mình nhé.',
+      'Bạn có thể kể ngắn gọn điều đang làm mình nặng lòng, hoặc chọn một gợi ý bên dưới.',
       false,
     ),
   ];
 
-  bool _showOverlay = false;
-  String? _pendingMessage;
+  bool _isSending = false;
   bool _showSafetyWarning = false;
   bool _didReadArguments = false;
+  String? _pendingMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AiQuotaViewModel>().loadQuota();
+    });
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didReadArguments) return;
     _didReadArguments = true;
-    _readRouteArguments();
-  }
-
-  void _readRouteArguments() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is Map<String, dynamic> && args.containsKey('initialMessage')) {
-        final initMsg = args['initialMessage'] as String;
+      if (args is Map<String, dynamic> && args['initialMessage'] is String) {
+        final initialMessage = args['initialMessage'] as String;
         args.remove('initialMessage');
-        _proceedWithMessage(initMsg);
+        _proceedWithMessage(initialMessage);
       }
     });
   }
@@ -54,62 +69,81 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final quotaViewModel = context.watch<AiQuotaViewModel>();
+    final quota = quotaViewModel.quotaFor(AiChatMode.healing);
+
     return Scaffold(
+      backgroundColor: HealingStitchColors.warmBackground,
       appBar: AppBar(
+        backgroundColor: HealingStitchColors.surface,
+        elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
+        titleSpacing: 0,
         title: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                ),
-                borderRadius: BorderRadius.circular(8),
+                gradient: HealingStitchColors.warmGradient,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Text(
-                  'B',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
+              child: const Icon(
+                Icons.self_improvement,
+                color: Colors.white,
+                size: 20,
               ),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bondy Coach',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: BondyColors.textPrimary,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bondy chữa lành',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: BondyColors.textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  'AI Chữa lành',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    color: BondyColors.primary,
+                  Text(
+                    'AI lắng nghe mỗi ngày',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: BondyColors.primary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: _QuotaBadge(
+                quota: quota,
+                loading: quotaViewModel.isLoading,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -117,237 +151,267 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
             children: [
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
-                    return _buildBubble(msg);
-                  },
+                  itemBuilder: (context, index) =>
+                      _buildBubble(_messages[index]),
                 ),
               ),
-              // Quick topics
-              SizedBox(
-                height: 44,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: [
-                    _buildTopic('💔 Chia tay'),
-                    _buildTopic('😰 Lo lắng'),
-                    _buildTopic('😔 Cô đơn'),
-                    _buildTopic('🌱 Phát triển'),
-                  ],
-                ),
-              ),
+              _buildPromptRail(quota),
               const SizedBox(height: 8),
-              // Input
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    top: BorderSide(
-                      color: BondyColors.divider.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          minLines: 1,
-                          maxLines: 5,
-                          keyboardType: TextInputType.multiline,
-                          decoration: InputDecoration(
-                            hintText: 'Chia sẻ với Bondy...',
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              color: BondyColors.textHint,
-                            ),
-                            filled: true,
-                            fillColor: BondyColors.background,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _sendMessage,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: BondyColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildComposer(quota),
             ],
           ),
-          // Ask Bondy overlay
-          if (_showOverlay) _buildAskBondyOverlay(),
-          // Safety warning overlay
           if (_showSafetyWarning) _buildSafetyWarningOverlay(),
         ],
       ),
     );
   }
 
-  void _sendMessage() {
-    if (_controller.text.isNotEmpty) {
-      final message = _controller.text;
+  Widget _buildPromptRail(AiModeQuota? quota) {
+    final disabled = _isSending || (quota != null && quota.remaining <= 0);
+    final prompts = [
+      'Mình đang thấy lo lắng',
+      'Mình vừa trải qua chuyện buồn',
+      'Giúp mình bình tĩnh lại',
+      'Mình muốn viết nhật ký cảm xúc',
+    ];
 
-      // Check for safety risk
-      final safetyCheck = _safetyService.check(message);
-
-      if (safetyCheck.shouldWarn) {
-        // Show warning but allow override
-        setState(() {
-          _pendingMessage = message;
-          _showSafetyWarning = true;
-        });
-      } else {
-        // Proceed normally
-        _proceedWithMessage(message);
-      }
-    }
-  }
-
-  void _proceedWithMessage(String message) {
-    setState(() {
-      _messages.add(_BotMessage(message, true));
-      _controller.clear();
-    });
-
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          if (message.contains('mệt mỏi')) {
-            _messages.add(_BotMessage(
-              'Mình nghe đây. Cảm giác mệt mỏi là một tín hiệu từ cơ thể bảo bạn cần nghỉ ngơi. Hãy cho bản thân một khoảng lặng nhé. 🌿',
-              false,
-            ));
-          } else if (message.contains('mở đầu')) {
-            _messages.add(_BotMessage(
-              'Để mở đầu câu chuyện tự nhiên, bạn có thể gửi một câu hỏi nhẹ nhàng như: "Cuối tuần của bạn thường diễn ra như thế nào?" hoặc khen một bức ảnh đáng yêu của họ nhé! ✨',
-              false,
-            ));
-          } else if (message.contains('mục tiêu')) {
-            _messages.add(_BotMessage(
-              'Trong tình yêu, việc xác định rõ mong muốn của bản thân là rất tốt. Bạn muốn tìm kiếm một mối quan hệ lâu dài, hay đơn giản là một người bạn đồng hành thấu hiểu? 🌸',
-              false,
-            ));
-          } else {
-            _messages.add(_BotMessage(
-              'Cuối tuần sắp đến rồi, hai bạn hãy thử dành thời gian chất lượng bên nhau nhé! Dưới đây là một vài địa điểm hẹn hò cực kỳ phù hợp được đề xuất riêng cho hai bạn: 🗺️',
-              false,
-            ));
-            _messages.add(_BotMessage(
-              '',
-              false,
-              messageType: 'DATE_SUGGESTION',
-            ));
-          }
-        });
-      }
-    });
-  }
-
-  Widget _buildBubble(_BotMessage msg) {
-    if (msg.messageType == 'DATE_SUGGESTION') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                ),
-                borderRadius: BorderRadius.circular(8),
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: prompts.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final prompt = prompts[index];
+          return ActionChip(
+            avatar: const Icon(
+              Icons.spa_outlined,
+              size: 16,
+              color: BondyColors.primary,
+            ),
+            label: Text(
+              prompt,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
-              child: Center(
-                child: Text(
-                  'B',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+            ),
+            backgroundColor: Colors.white,
+            side: BorderSide(
+              color: BondyColors.primary.withValues(alpha: 0.18),
+            ),
+            onPressed: disabled
+                ? null
+                : () {
+                    _controller.text = prompt;
+                    _controller.selection = TextSelection.collapsed(
+                      offset: prompt.length,
+                    );
+                  },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildComposer(AiModeQuota? quota) {
+    final exhausted = quota != null && quota.remaining <= 0;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: BondyColors.divider.withValues(alpha: 0.5)),
+        ),
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('healing_chat_input'),
+                controller: _controller,
+                enabled: !_isSending,
+                minLines: 1,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(
+                  hintText: exhausted
+                      ? 'Bạn đã hết lượt AI chữa lành hôm nay'
+                      : 'Chia sẻ với Bondy...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  filled: true,
+                  fillColor: BondyColors.background,
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: DateSuggestionsWidget(
-                places: AIPromptsConfig.mockDateSuggestions,
-                onShare: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã chia sẻ địa điểm: $name')),
-                  );
-                },
-                onSave: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã lưu địa điểm: $name')),
-                  );
-                },
-                onMap: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đang mở bản đồ cho: $name')),
-                  );
-                },
-              ),
+            IconButton.filled(
+              key: const Key('healing_chat_send'),
+              onPressed: _isSending ? null : _sendMessage,
+              icon: _isSending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send),
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    final message = _controller.text.trim();
+    if (message.isEmpty) return;
+
+    final quotaViewModel = context.read<AiQuotaViewModel>();
+    final quota = quotaViewModel.quotaFor(AiChatMode.healing);
+    if (quota != null && quota.remaining <= 0) {
+      _showQuotaUpgradeDialog(quota: quota);
+      return;
     }
 
+    final safetyCheck = _safetyService.check(message);
+    if (safetyCheck.shouldWarn) {
+      setState(() {
+        _pendingMessage = message;
+        _showSafetyWarning = true;
+      });
+      return;
+    }
+
+    _proceedWithMessage(message);
+  }
+
+  Future<void> _proceedWithMessage(String message) async {
+    final quotaViewModel = context.read<AiQuotaViewModel>();
+    final currentQuota = quotaViewModel.quotaFor(AiChatMode.healing);
+    if (currentQuota != null && currentQuota.remaining <= 0) {
+      _showQuotaUpgradeDialog(quota: currentQuota);
+      return;
+    }
+
+    final assistantMessage = _BotMessage('', false, streaming: true);
+    setState(() {
+      _isSending = true;
+      _messages.add(_BotMessage(message, true));
+      _messages.add(assistantMessage);
+      _controller.clear();
+    });
+    _scrollToBottom();
+
+    try {
+      await for (final event in _aiService.streamChat(
+        AiStreamChatRequest(
+          message: message,
+          mode: AiChatMode.healing,
+          sessionId: _sessionId,
+        ),
+      )) {
+        if (!mounted) return;
+        if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          final chunk = event.chunk!;
+          setState(() {
+            if (chunk.startsWith('__STRIPPED__')) {
+              assistantMessage.text = chunk.substring('__STRIPPED__'.length);
+            } else {
+              assistantMessage.text += chunk;
+            }
+          });
+          _scrollToBottom();
+        } else if (event.type == AiStreamEventType.metadata) {
+          final quota = event.metadata?.quota;
+          if (quota != null) {
+            quotaViewModel.applyQuota(quota);
+          }
+        } else if (event.type == AiStreamEventType.error) {
+          setState(() {
+            assistantMessage.text =
+                event.error ?? 'Mình xin lỗi, có lỗi xảy ra. Bạn thử lại nhé.';
+          });
+        }
+      }
+
+      if (assistantMessage.text.trim().isEmpty) {
+        setState(() {
+          assistantMessage.text =
+              'Mình đang ở đây với bạn. Bạn có thể nói thêm một chút nữa không?';
+        });
+      }
+    } on ApiClientException catch (error) {
+      if (!mounted) return;
+      if (error.code == 'AI_DAILY_QUOTA_EXCEEDED' && error.data != null) {
+        final exceeded = AiQuotaExceededData.fromJson(error.data!);
+        final quota = exceeded.quota;
+        if (quota != null) quotaViewModel.applyQuota(quota);
+        setState(() {
+          _messages.remove(assistantMessage);
+        });
+        _showQuotaUpgradeDialog(quota: quota, modal: exceeded.upgradeModal);
+      } else {
+        setState(() {
+          assistantMessage.text = error.message;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        assistantMessage.text =
+            'Mình xin lỗi, hiện chưa kết nối được AI. Bạn thử lại sau nhé.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          assistantMessage.streaming = false;
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildBubble(_BotMessage message) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            msg.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!msg.isUser) ...[
+          if (!message.isUser) ...[
             Container(
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                ),
-                borderRadius: BorderRadius.circular(8),
+                gradient: HealingStitchColors.warmGradient,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(
-                child: Text(
-                  'B',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
+              child: const Icon(
+                Icons.self_improvement,
+                color: Colors.white,
+                size: 16,
               ),
             ),
             const SizedBox(width: 8),
@@ -355,62 +419,47 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
           Flexible(
             child: Container(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.72,
+                maxWidth: MediaQuery.of(context).size.width * 0.74,
               ),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: msg.isUser
-                    ? const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                      )
-                    : null,
-                color: msg.isUser ? null : const Color(0xFFFFF1EE),
+                gradient: message.isUser ? BondyColors.primaryGradient : null,
+                color: message.isUser ? null : const Color(0xFFFFF1EE),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(msg.isUser ? 16 : 4),
-                  bottomRight: Radius.circular(msg.isUser ? 4 : 16),
+                  bottomLeft: Radius.circular(message.isUser ? 16 : 4),
+                  bottomRight: Radius.circular(message.isUser ? 4 : 16),
                 ),
               ),
-              child: Text(
-                msg.text,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color:
-                      msg.isUser ? Colors.white : BondyColors.textPrimary,
-                  height: 1.35,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      message.text,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: message.isUser
+                            ? Colors.white
+                            : BondyColors.textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  if (message.streaming && message.text.isEmpty) ...[
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTopic(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _messages.add(_BotMessage(label, true));
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: BondyColors.divider),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(fontSize: 13),
-          ),
-        ),
       ),
     );
   }
@@ -422,54 +471,46 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
         color: BondyColors.overlay,
         child: Center(
           child: Container(
-            margin: const EdgeInsets.all(32),
-            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: BondyColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: BondyColors.primary,
-                    size: 32,
-                  ),
+                const Icon(
+                  Icons.favorite_outline,
+                  color: BondyColors.primary,
+                  size: 40,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 Text(
                   'Mình thấy bạn đang trải qua giai đoạn khó khăn',
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
-                  'Mình không phải chuyên gia tâm lý, nhưng mình ở đây để lắng nghe bạn. Nếu bạn cần hỗ trợ chuyên môn, hãy cân nhắc tìm kiếm người giúp đỡ phù hợp.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: BondyColors.textSecondary,
-                    height: 1.5,
-                  ),
+                  'Bondy không thay thế chuyên gia tâm lý. Nếu bạn thấy không an toàn, hãy liên hệ người thân hoặc dịch vụ hỗ trợ khẩn cấp.',
                   textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: BondyColors.textSecondary,
+                    height: 1.45,
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => setState(() => _showSafetyWarning = false),
+                        onPressed: () =>
+                            setState(() => _showSafetyWarning = false),
                         child: const Text('Quay lại'),
                       ),
                     ),
@@ -477,13 +518,14 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          setState(() => _showSafetyWarning = false);
-                          if (_pendingMessage != null) {
-                            _proceedWithMessage(_pendingMessage!);
+                          final message = _pendingMessage;
+                          setState(() {
+                            _showSafetyWarning = false;
                             _pendingMessage = null;
-                          }
+                          });
+                          if (message != null) _proceedWithMessage(message);
                         },
-                        child: const Text('Gửi tin nhắn'),
+                        child: const Text('Gửi'),
                       ),
                     ),
                   ],
@@ -496,66 +538,85 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     );
   }
 
-  Widget _buildAskBondyOverlay() {
-    return GestureDetector(
-      onTap: () => setState(() => _showOverlay = false),
-      child: Container(
-        color: BondyColors.overlay,
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(32),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: BondyColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'B',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Hỏi Bondy bất cứ điều gì',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bondy luôn sẵn sàng lắng nghe\nvà đồng hành cùng bạn.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: BondyColors.textSecondary,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => setState(() => _showOverlay = false),
-                  child: const Text('Bắt đầu trò chuyện'),
-                ),
-              ],
-            ),
+  Future<void> _showQuotaUpgradeDialog({
+    AiModeQuota? quota,
+    AiQuotaUpgradeModal? modal,
+  }) async {
+    final title = modal?.title ?? 'Bạn đã hết lượt AI hôm nay';
+    final message =
+        modal?.message ??
+        'AI chữa lành sẽ được làm mới vào ngày mai. Nâng cấp subscription để có thêm lượt mỗi ngày.';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title),
+        content: Text(
+          quota == null
+              ? message
+              : '$message\n\nHiện tại: ${quota.remaining}/${quota.limit} lượt.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(modal?.secondaryCtaLabel ?? 'Để sau'),
           ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await Navigator.of(context).pushNamed('/settings/premium');
+              if (mounted) {
+                await context.read<AiQuotaViewModel>().loadQuota();
+              }
+            },
+            child: Text(modal?.ctaLabel ?? 'Xem gói subscription'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+}
+
+class _QuotaBadge extends StatelessWidget {
+  final AiModeQuota? quota;
+  final bool loading;
+
+  const _QuotaBadge({required this.quota, required this.loading});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = quota == null
+        ? (loading ? 'Đang tải lượt' : 'Còn --/-- lượt')
+        : 'Còn ${quota!.remaining}/${quota!.limit} lượt';
+    final exhausted = quota != null && quota!.remaining <= 0;
+
+    return Container(
+      key: const Key('healing_quota_badge'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: exhausted
+            ? BondyColors.primary.withValues(alpha: 0.12)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: BondyColors.primary.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: exhausted ? BondyColors.primaryDark : BondyColors.textPrimary,
         ),
       ),
     );
@@ -563,9 +624,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
 }
 
 class _BotMessage {
-  final String text;
+  String text;
   final bool isUser;
-  final String messageType;
+  bool streaming;
 
-  _BotMessage(this.text, this.isUser, {this.messageType = 'TEXT'});
+  _BotMessage(this.text, this.isUser, {this.streaming = false});
 }

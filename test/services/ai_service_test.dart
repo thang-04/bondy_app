@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:bondy/services/ai_service.dart';
 import 'package:bondy/services/api_client.dart';
+import 'package:bondy/services/auth_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 class _RecordingApiClient extends ApiClient {
   String? path;
@@ -44,7 +46,116 @@ class _PendingApiClient extends ApiClient {
   }
 }
 
+class _QuotaApiClient extends ApiClient {
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    bool authenticated = false,
+    Map<String, dynamic>? queryParams,
+  }) async {
+    return {
+      'success': true,
+      'data': {
+        'tier': 'FREE',
+        'resetsAt': '2026-06-13T17:00:00.000Z',
+        'quotas': {
+          'healing': {
+            'mode': 'healing',
+            'feature': 'daily_ai_healing',
+            'label': 'AI chua lanh',
+            'tier': 'FREE',
+            'limit': 3,
+            'used': 1,
+            'remaining': 2,
+            'resetsAt': '2026-06-13T17:00:00.000Z',
+          },
+          'coach': {
+            'mode': 'coach',
+            'feature': 'daily_ai_coach',
+            'label': 'Goi y tro chuyen',
+            'tier': 'FREE',
+            'limit': 3,
+            'used': 0,
+            'remaining': 3,
+            'resetsAt': '2026-06-13T17:00:00.000Z',
+          },
+        },
+        'dailyLimitsByTier': {
+          'FREE': {'healing': 3, 'coach': 3},
+          'PLUS': {'healing': 20, 'coach': 20},
+          'PREMIUM': {'healing': 50, 'coach': 50},
+          'ELITE': {'healing': 100, 'coach': 100},
+        },
+      },
+    };
+  }
+}
+
+class _TokenAuthService extends AuthService {
+  @override
+  Future<String> requireAccessToken() async => 'access-token';
+}
+
+class _StreamingClient extends http.BaseClient {
+  http.Request? request;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    this.request = request as http.Request;
+    final stream = Stream<List<int>>.fromIterable([
+      'event: chunk\ndata: "Xin chao "\n\n'.codeUnits,
+      'event: chunk\ndata: "ban"\n\n'.codeUnits,
+      'event: metadata\ndata: {"mode":"healing","quota":{"mode":"healing","feature":"daily_ai_healing","label":"AI chua lanh","tier":"FREE","limit":3,"used":2,"remaining":1,"resetsAt":"2026-06-13T17:00:00.000Z"}}\n\n'
+          .codeUnits,
+    ]);
+    return http.StreamedResponse(
+      stream,
+      200,
+      headers: {'content-type': 'text/event-stream'},
+    );
+  }
+}
+
 void main() {
+  test('parses daily AI quota summary by mode and tier', () async {
+    final service = AiService(_QuotaApiClient());
+
+    final summary = await service.getQuota();
+
+    expect(summary.tier, 'FREE');
+    expect(summary.quotaFor(AiChatMode.healing)?.remaining, 2);
+    expect(summary.quotaFor(AiChatMode.coach)?.limit, 3);
+    expect(summary.limitForTier('ELITE', AiChatMode.healing), 100);
+    expect(summary.limitForTier('PLUS', AiChatMode.coach), 20);
+  });
+
+  test('streams healing chat chunks and metadata quota', () async {
+    final httpClient = _StreamingClient();
+    final service = AiService(
+      ApiClient(baseUrlOverride: 'https://api.example.com/api'),
+      authService: _TokenAuthService(),
+      httpClient: httpClient,
+    );
+
+    final events = await service
+        .streamChat(
+          AiStreamChatRequest(
+            message: 'Hom nay minh buon',
+            mode: AiChatMode.healing,
+            sessionId: 'healing-session-1',
+          ),
+        )
+        .toList();
+
+    expect(httpClient.request?.url.path, '/api/ai/chat');
+    expect(httpClient.request?.body, contains('"mode":"healing"'));
+    expect(
+      events.where((event) => event.type == AiStreamEventType.chunk),
+      hasLength(2),
+    );
+    expect(events.last.metadata?.quota?.remaining, 1);
+  });
+
   test('coach chat request sends the explicit match contract', () {
     final request = AiChatRequest(
       chatId: 'chat-1',

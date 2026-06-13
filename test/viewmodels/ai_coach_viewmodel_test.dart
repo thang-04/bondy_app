@@ -38,7 +38,20 @@ AiChatResponse _successResponse({
       'response': '1. Chào Linh',
       'mode': 'coach',
       'suggestions': ['Chào Linh'],
-      'meta': {'tokensUsed': 10, 'latencyMs': 20},
+      'meta': {
+        'tokensUsed': 10,
+        'latencyMs': 20,
+        'quota': {
+          'mode': 'coach',
+          'feature': 'daily_ai_coach',
+          'label': 'Goi y tro chuyen',
+          'tier': 'FREE',
+          'limit': 3,
+          'used': 1,
+          'remaining': 2,
+          'resetsAt': '2026-06-13T17:00:00.000Z',
+        },
+      },
     },
   });
 }
@@ -61,6 +74,7 @@ void main() {
       expect(service.lastRequest?.intent, 'continue');
       expect(service.lastRequest?.tone, 'casual');
       expect(service.lastRequest?.count, 3);
+      expect(viewModel.quota?.remaining, 2);
       expect(viewModel.suggestions, ['Chào Linh']);
       expect(viewModel.errorMessage, isNull);
     },

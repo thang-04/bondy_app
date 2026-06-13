@@ -59,6 +59,7 @@ class InlineAiSuggestionPanel extends StatelessWidget {
   }
 
   Widget _buildHeader() {
+    final quota = viewModel.quota;
     return Row(
       children: [
         Container(
@@ -106,6 +107,34 @@ class InlineAiSuggestionPanel extends StatelessWidget {
                   color: BondyColors.textSecondary,
                 ),
               ),
+              if (quota != null) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: quota.remaining <= 0
+                        ? BondyColors.primary.withValues(alpha: 0.12)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: BondyColors.primary.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Text(
+                    'Còn ${quota.remaining}/${quota.limit} lượt',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: quota.remaining <= 0
+                          ? BondyColors.primaryDark
+                          : BondyColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

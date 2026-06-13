@@ -86,6 +86,9 @@ class AiCoachViewModel extends ChangeNotifier {
   bool isLimitReached = false;
   String? limitType;
   int? remaining;
+  AiModeQuota? quota;
+  AiQuotaExceededData? quotaExceededData;
+  AiQuotaUpgradeModal? upgradeModal;
 
   // For bottom sheet
   bool showBottomSheet = false;
@@ -99,6 +102,12 @@ class AiCoachViewModel extends ChangeNotifier {
 
   void selectTone(String tone) {
     selectedTone = tone;
+    notifyListeners();
+  }
+
+  void setQuota(AiModeQuota? value) {
+    quota = value;
+    remaining = value?.remaining;
     notifyListeners();
   }
 
@@ -134,6 +143,17 @@ class AiCoachViewModel extends ChangeNotifier {
         errorMessage = null;
       } else {
         errorMessage = response.error ?? 'Có lỗi xảy ra';
+      }
+    } on ApiClientException catch (e) {
+      if (e.code == 'AI_DAILY_QUOTA_EXCEEDED' && e.data != null) {
+        quotaExceededData = AiQuotaExceededData.fromJson(e.data!);
+        quota = quotaExceededData?.quota ?? quota;
+        upgradeModal = quotaExceededData?.upgradeModal;
+        remaining = quota?.remaining;
+        isLimitReached = true;
+        errorMessage = null;
+      } else {
+        errorMessage = BondyErrorMapper.message(e);
       }
     } catch (e) {
       errorMessage = BondyErrorMapper.message(e);
@@ -209,6 +229,8 @@ class AiCoachViewModel extends ChangeNotifier {
           return;
         }
 
+        quota = data.meta.quota ?? quota;
+        remaining = quota?.remaining;
         final metaSuggestions = response.data!.meta.suggestions;
         suggestions = metaSuggestions.isNotEmpty
             ? metaSuggestions
@@ -234,6 +256,19 @@ class AiCoachViewModel extends ChangeNotifier {
       if (requestVersion == _requestVersion) {
         errorMessage =
             'AI cần nhiều thời gian hơn dự kiến. Vui lòng nhấn Thử lại.';
+      }
+    } on ApiClientException catch (e) {
+      if (requestVersion == _requestVersion) {
+        if (e.code == 'AI_DAILY_QUOTA_EXCEEDED' && e.data != null) {
+          quotaExceededData = AiQuotaExceededData.fromJson(e.data!);
+          quota = quotaExceededData?.quota ?? quota;
+          upgradeModal = quotaExceededData?.upgradeModal;
+          remaining = quota?.remaining;
+          isLimitReached = true;
+          errorMessage = null;
+        } else {
+          errorMessage = BondyErrorMapper.message(e);
+        }
       }
     } catch (e) {
       if (requestVersion == _requestVersion) {
@@ -293,6 +328,9 @@ class AiCoachViewModel extends ChangeNotifier {
     isLimitReached = false;
     limitType = null;
     remaining = null;
+    quota = null;
+    quotaExceededData = null;
+    upgradeModal = null;
     showBottomSheet = false;
     notifyListeners();
   }

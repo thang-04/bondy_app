@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../healing/healing_stitch_style.dart';
+import '../../services/ai_service.dart';
+import '../../viewmodels/ai/ai_quota_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
 
 class PaywallFeature {
@@ -71,6 +73,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     // Ensure we have latest subscription data when entering the paywall screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SubscriptionViewModel>().loadSubscription();
+      try {
+        context.read<AiQuotaViewModel>().loadQuota();
+      } catch (_) {}
     });
   }
 
@@ -99,6 +104,10 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<SubscriptionViewModel>();
+    AiQuotaViewModel? aiQuotaViewModel;
+    try {
+      aiQuotaViewModel = context.watch<AiQuotaViewModel>();
+    } catch (_) {}
     final currentTier = viewModel.currentSubscription?.tier;
     final loading = viewModel.isLoading;
 
@@ -170,6 +179,8 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        _buildAiQuotaComparison(aiQuotaViewModel?.summary),
+                        const SizedBox(height: 24),
                         ..._paywallFeatures.map(
                           (feature) =>
                               _buildDynamicFeatureRow(feature, _selectedTier),
@@ -178,6 +189,8 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                         _planTile('PLUS', '159.000đ / tháng'),
                         const SizedBox(height: 10),
                         _planTile('PREMIUM', '999.000đ / năm', tag: 'Phổ biến'),
+                        const SizedBox(height: 10),
+                        _planTile('ELITE', '1.999.000đ / năm'),
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
@@ -215,9 +228,81 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     );
   }
 
+  Widget _buildAiQuotaComparison(AiQuotaSummary? summary) {
+    final limits = summary?.dailyLimitsByTier.isNotEmpty == true
+        ? summary!.dailyLimitsByTier
+        : const {
+            'FREE': {'healing': 3, 'coach': 3},
+            'PLUS': {'healing': 20, 'coach': 20},
+            'PREMIUM': {'healing': 50, 'coach': 50},
+            'ELITE': {'healing': 100, 'coach': 100},
+          };
+    const tiers = ['FREE', 'PLUS', 'PREMIUM', 'ELITE'];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: HealingStitchColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: HealingStitchColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quota AI mỗi ngày',
+            style: healingText(size: 16, weight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          for (final tier in tiers)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 76,
+                    child: Text(
+                      tier,
+                      style: healingText(size: 12, weight: FontWeight.w900),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Chữa lành ${limits[tier]?['healing'] ?? 0} lượt',
+                      style: healingText(
+                        size: 12,
+                        color: HealingStitchColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Gợi ý ${limits[tier]?['coach'] ?? 0} lượt',
+                      textAlign: TextAlign.right,
+                      style: healingText(
+                        size: 12,
+                        color: HealingStitchColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDynamicFeatureRow(PaywallFeature feature, String selectedTier) {
-    final status = feature.tierStatus[selectedTier] ?? 'locked';
-    final subtitle = feature.tierSubtitle[selectedTier] ?? '';
+    final status =
+        feature.tierStatus[selectedTier] ??
+        feature.tierStatus['PREMIUM'] ??
+        'locked';
+    final subtitle =
+        feature.tierSubtitle[selectedTier] ??
+        feature.tierSubtitle['PREMIUM'] ??
+        '';
 
     IconData icon;
     Color iconColor;

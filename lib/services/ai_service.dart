@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import 'api_client.dart';
+import 'auth_service.dart';
 
 class AiSuggestRequest {
   final String conversationId;
@@ -123,6 +129,263 @@ enum AiChatMode {
         return AiChatMode.defaultMode;
     }
   }
+
+  String get apiValue {
+    switch (this) {
+      case AiChatMode.healing:
+        return 'healing';
+      case AiChatMode.coach:
+        return 'coach';
+      case AiChatMode.defaultMode:
+        return 'default';
+    }
+  }
+}
+
+class AiModeQuota {
+  final AiChatMode mode;
+  final String feature;
+  final String label;
+  final String tier;
+  final int limit;
+  final int used;
+  final int remaining;
+  final String? resetsAt;
+
+  const AiModeQuota({
+    required this.mode,
+    required this.feature,
+    required this.label,
+    required this.tier,
+    required this.limit,
+    required this.used,
+    required this.remaining,
+    this.resetsAt,
+  });
+
+  factory AiModeQuota.fromJson(Map<String, dynamic> json) {
+    return AiModeQuota(
+      mode: AiChatMode.fromJson(json['mode']),
+      feature: json['feature']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      tier: json['tier']?.toString() ?? 'FREE',
+      limit: (json['limit'] as num?)?.toInt() ?? 0,
+      used: (json['used'] as num?)?.toInt() ?? 0,
+      remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+      resetsAt: json['resetsAt']?.toString(),
+    );
+  }
+
+  AiModeQuota copyWith({int? used, int? remaining}) {
+    return AiModeQuota(
+      mode: mode,
+      feature: feature,
+      label: label,
+      tier: tier,
+      limit: limit,
+      used: used ?? this.used,
+      remaining: remaining ?? this.remaining,
+      resetsAt: resetsAt,
+    );
+  }
+}
+
+class AiQuotaUpgradeModal {
+  final String title;
+  final String message;
+  final String ctaLabel;
+  final String secondaryCtaLabel;
+  final String targetScreen;
+  final String recommendedTier;
+  final List<String> benefits;
+
+  const AiQuotaUpgradeModal({
+    required this.title,
+    required this.message,
+    required this.ctaLabel,
+    required this.secondaryCtaLabel,
+    required this.targetScreen,
+    required this.recommendedTier,
+    required this.benefits,
+  });
+
+  factory AiQuotaUpgradeModal.fromJson(Map<String, dynamic> json) {
+    return AiQuotaUpgradeModal(
+      title: json['title']?.toString() ?? 'Bạn đã hết lượt AI hôm nay',
+      message:
+          json['message']?.toString() ??
+          'Nâng cấp subscription để có thêm lượt AI mỗi ngày.',
+      ctaLabel: json['ctaLabel']?.toString() ?? 'Xem gói subscription',
+      secondaryCtaLabel: json['secondaryCtaLabel']?.toString() ?? 'Để sau',
+      targetScreen: json['targetScreen']?.toString() ?? 'SubscriptionScreen',
+      recommendedTier: json['recommendedTier']?.toString() ?? 'PLUS',
+      benefits: (json['benefits'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+    );
+  }
+}
+
+class AiQuotaExceededData {
+  final AiChatMode mode;
+  final String tier;
+  final AiModeQuota? quota;
+  final Map<String, Map<String, int>> dailyLimitsByTier;
+  final AiQuotaUpgradeModal? upgradeModal;
+
+  const AiQuotaExceededData({
+    required this.mode,
+    required this.tier,
+    required this.quota,
+    required this.dailyLimitsByTier,
+    required this.upgradeModal,
+  });
+
+  factory AiQuotaExceededData.fromJson(Map<String, dynamic> json) {
+    final quotaJson = json['quota'];
+    final modalJson = json['upgradeModal'];
+    return AiQuotaExceededData(
+      mode: AiChatMode.fromJson(json['mode']),
+      tier: json['tier']?.toString() ?? 'FREE',
+      quota: quotaJson is Map
+          ? AiModeQuota.fromJson(quotaJson.cast<String, dynamic>())
+          : null,
+      dailyLimitsByTier: _parseDailyLimits(json['dailyLimitsByTier']),
+      upgradeModal: modalJson is Map
+          ? AiQuotaUpgradeModal.fromJson(modalJson.cast<String, dynamic>())
+          : null,
+    );
+  }
+}
+
+class AiQuotaSummary {
+  final String tier;
+  final String? resetsAt;
+  final Map<AiChatMode, AiModeQuota> quotas;
+  final Map<String, Map<String, int>> dailyLimitsByTier;
+
+  const AiQuotaSummary({
+    required this.tier,
+    required this.resetsAt,
+    required this.quotas,
+    required this.dailyLimitsByTier,
+  });
+
+  factory AiQuotaSummary.fromJson(Map<String, dynamic> json) {
+    final rawQuotas = (json['quotas'] as Map?)?.cast<String, dynamic>() ?? {};
+    final quotas = <AiChatMode, AiModeQuota>{};
+    for (final entry in rawQuotas.entries) {
+      final value = entry.value;
+      if (value is Map) {
+        final quota = AiModeQuota.fromJson(value.cast<String, dynamic>());
+        quotas[quota.mode] = quota;
+      }
+    }
+
+    return AiQuotaSummary(
+      tier: json['tier']?.toString() ?? 'FREE',
+      resetsAt: json['resetsAt']?.toString(),
+      quotas: quotas,
+      dailyLimitsByTier: _parseDailyLimits(json['dailyLimitsByTier']),
+    );
+  }
+
+  AiModeQuota? quotaFor(AiChatMode mode) => quotas[mode];
+
+  int? limitForTier(String tier, AiChatMode mode) {
+    return dailyLimitsByTier[tier]?[mode.apiValue];
+  }
+
+  AiQuotaSummary copyWithQuota(AiModeQuota quota) {
+    return AiQuotaSummary(
+      tier: quota.tier.isNotEmpty ? quota.tier : tier,
+      resetsAt: quota.resetsAt ?? resetsAt,
+      quotas: {...quotas, quota.mode: quota},
+      dailyLimitsByTier: dailyLimitsByTier,
+    );
+  }
+}
+
+Map<String, Map<String, int>> _parseDailyLimits(Object? value) {
+  final raw = value is Map ? value.cast<String, dynamic>() : const {};
+  return raw.map((tier, limits) {
+    final rawLimits = limits is Map ? limits.cast<String, dynamic>() : const {};
+    return MapEntry(
+      tier,
+      rawLimits.map(
+        (mode, limit) => MapEntry(mode, (limit as num?)?.toInt() ?? 0),
+      ),
+    );
+  });
+}
+
+class AiStreamChatRequest {
+  final String message;
+  final AiChatMode mode;
+  final String? sessionId;
+
+  const AiStreamChatRequest({
+    required this.message,
+    this.mode = AiChatMode.defaultMode,
+    this.sessionId,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'message': message,
+    'mode': mode.apiValue,
+    if (sessionId != null && sessionId!.isNotEmpty) 'sessionId': sessionId,
+  };
+}
+
+enum AiStreamEventType { chunk, metadata, error }
+
+class AiChatStreamMetadata {
+  final AiChatMode mode;
+  final String? sessionId;
+  final AiModeQuota? quota;
+  final Map<String, dynamic> raw;
+
+  const AiChatStreamMetadata({
+    required this.mode,
+    this.sessionId,
+    this.quota,
+    required this.raw,
+  });
+
+  factory AiChatStreamMetadata.fromJson(Map<String, dynamic> json) {
+    final quotaJson = json['quota'];
+    return AiChatStreamMetadata(
+      mode: AiChatMode.fromJson(json['mode']),
+      sessionId: json['sessionId']?.toString(),
+      quota: quotaJson is Map
+          ? AiModeQuota.fromJson(quotaJson.cast<String, dynamic>())
+          : null,
+      raw: json,
+    );
+  }
+}
+
+class AiChatStreamEvent {
+  final AiStreamEventType type;
+  final String? chunk;
+  final String? error;
+  final AiChatStreamMetadata? metadata;
+
+  const AiChatStreamEvent._({
+    required this.type,
+    this.chunk,
+    this.error,
+    this.metadata,
+  });
+
+  factory AiChatStreamEvent.chunk(String chunk) =>
+      AiChatStreamEvent._(type: AiStreamEventType.chunk, chunk: chunk);
+
+  factory AiChatStreamEvent.error(String error) =>
+      AiChatStreamEvent._(type: AiStreamEventType.error, error: error);
+
+  factory AiChatStreamEvent.metadata(AiChatStreamMetadata metadata) =>
+      AiChatStreamEvent._(type: AiStreamEventType.metadata, metadata: metadata);
 }
 
 class AiChatMeta {
@@ -130,6 +393,7 @@ class AiChatMeta {
   final int latencyMs;
   final bool failed;
   final List<String> suggestions;
+  final AiModeQuota? quota;
   final Map<String, dynamic> raw;
 
   AiChatMeta({
@@ -137,11 +401,13 @@ class AiChatMeta {
     required this.latencyMs,
     required this.failed,
     required this.suggestions,
+    this.quota,
     required this.raw,
   });
 
   factory AiChatMeta.fromJson(Map<String, dynamic> json) {
     final rawSuggestions = json['suggestions'];
+    final quotaJson = json['quota'];
     return AiChatMeta(
       tokensUsed: json['tokensUsed'] as int? ?? 0,
       latencyMs: json['latencyMs'] as int? ?? 0,
@@ -149,6 +415,9 @@ class AiChatMeta {
       suggestions: rawSuggestions is List
           ? rawSuggestions.map((item) => item.toString()).toList()
           : const [],
+      quota: quotaJson is Map
+          ? AiModeQuota.fromJson(quotaJson.cast<String, dynamic>())
+          : null,
       raw: json,
     );
   }
@@ -244,12 +513,24 @@ class AiChatResponse {
 
 class AiService {
   final ApiClient _apiClient;
+  final AuthService _authService;
+  final http.Client _httpClient;
   final Duration coachTimeout;
 
   AiService(
     this._apiClient, {
+    AuthService? authService,
+    http.Client? httpClient,
     this.coachTimeout = const Duration(seconds: 120),
-  });
+  }) : _authService = authService ?? AuthService(),
+       _httpClient = httpClient ?? http.Client();
+
+  Future<AiQuotaSummary> getQuota() async {
+    final response = await _apiClient.get('/ai/quota', authenticated: true);
+    return AiQuotaSummary.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
 
   Future<AiSuggestResponse> suggest(AiSuggestRequest request) async {
     final response = await _apiClient
@@ -271,5 +552,120 @@ class AiService {
         )
         .timeout(coachTimeout);
     return AiChatResponse.fromJson(response);
+  }
+
+  Stream<AiChatStreamEvent> streamChat(AiStreamChatRequest request) async* {
+    final response = await _sendStreamRequest(request);
+    yield* _parseSse(response.stream);
+  }
+
+  Future<http.StreamedResponse> _sendStreamRequest(
+    AiStreamChatRequest chatRequest,
+  ) async {
+    final token = await _authService.requireAccessToken();
+    var response = await _httpClient.send(
+      _buildStreamRequest(chatRequest, token),
+    );
+
+    if (response.statusCode == 401) {
+      try {
+        final refreshed = await _authService.refreshAccessToken();
+        response = await _httpClient.send(
+          _buildStreamRequest(chatRequest, refreshed.accessToken),
+        );
+      } catch (_) {
+        await _authService.clearSession();
+        throw const ApiClientException(
+          'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
+          statusCode: 401,
+          code: 'UNAUTHORIZED',
+        );
+      }
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final bodyText = await response.stream.bytesToString();
+      Map<String, dynamic> body = {};
+      try {
+        body = jsonDecode(bodyText) as Map<String, dynamic>;
+      } catch (_) {}
+      throw ApiClientException(
+        body['error']?.toString() ?? 'Đã xảy ra lỗi. Vui lòng thử lại.',
+        statusCode: response.statusCode,
+        code: body['code']?.toString(),
+        data: body['data'] is Map<String, dynamic>
+            ? body['data'] as Map<String, dynamic>
+            : null,
+      );
+    }
+
+    return response;
+  }
+
+  http.Request _buildStreamRequest(
+    AiStreamChatRequest chatRequest,
+    String token,
+  ) {
+    return http.Request('POST', Uri.parse('${_apiClient.baseUrl}/ai/chat'))
+      ..headers.addAll({
+        'content-type': 'application/json',
+        'accept': 'text/event-stream',
+        'authorization': 'Bearer $token',
+      })
+      ..body = jsonEncode(chatRequest.toJson());
+  }
+
+  Stream<AiChatStreamEvent> _parseSse(Stream<List<int>> stream) async* {
+    String? eventType;
+    final dataLines = <String>[];
+
+    await for (final line
+        in stream.transform(utf8.decoder).transform(const LineSplitter())) {
+      if (line.trim().isEmpty) {
+        final event = _decodeSseEvent(eventType, dataLines.join('\n'));
+        if (event != null) yield event;
+        eventType = null;
+        dataLines.clear();
+        continue;
+      }
+
+      if (line.startsWith('event:')) {
+        eventType = line.substring('event:'.length).trim();
+      } else if (line.startsWith('data:')) {
+        dataLines.add(line.substring('data:'.length).trimLeft());
+      }
+    }
+
+    if (eventType != null || dataLines.isNotEmpty) {
+      final event = _decodeSseEvent(eventType, dataLines.join('\n'));
+      if (event != null) yield event;
+    }
+  }
+
+  AiChatStreamEvent? _decodeSseEvent(String? eventType, String dataText) {
+    if (eventType == null || dataText.isEmpty) return null;
+
+    Object? decoded;
+    try {
+      decoded = jsonDecode(dataText);
+    } catch (_) {
+      decoded = dataText;
+    }
+
+    switch (eventType) {
+      case 'chunk':
+        return AiChatStreamEvent.chunk(decoded?.toString() ?? '');
+      case 'metadata':
+        if (decoded is Map) {
+          return AiChatStreamEvent.metadata(
+            AiChatStreamMetadata.fromJson(decoded.cast<String, dynamic>()),
+          );
+        }
+        return null;
+      case 'error':
+        return AiChatStreamEvent.error(decoded?.toString() ?? '');
+      default:
+        return null;
+    }
   }
 }

@@ -7,12 +7,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/api_client.dart';
+import '../../services/ai_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/block_service.dart';
 import '../../services/chat_service.dart';
 import '../../services/chat_realtime_service.dart';
 import '../../services/match_service.dart';
 import '../../viewmodels/ai/ai_coach_viewmodel.dart';
+import '../../viewmodels/ai/ai_quota_viewmodel.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
 import '../../widgets/chat/voice_message_bubble.dart';
@@ -1554,7 +1556,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       return;
     }
 
+    final quotaViewModel = context.read<AiQuotaViewModel>();
+    await quotaViewModel.loadQuota();
+    if (!mounted) return;
+    final coachQuota = quotaViewModel.quotaFor(AiChatMode.coach);
+    _aiCoachViewModel.setQuota(coachQuota);
+    if (coachQuota != null && coachQuota.remaining <= 0) {
+      await _showAiQuotaUpgradeDialog(
+        quota: coachQuota,
+        modal: _aiCoachViewModel.upgradeModal,
+      );
+      return;
+    }
+
     _aiCoachViewModel.reset();
+    _aiCoachViewModel.setQuota(coachQuota);
     _aiCoachViewModel.selectIntent(AiIntent.continueChat);
     setState(() {
       _showAiPanel = true;
@@ -1579,11 +1595,31 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (intent != null) {
       _aiCoachViewModel.selectIntent(intent);
     }
+    final quotaViewModel = context.read<AiQuotaViewModel>();
+    final currentQuota = quotaViewModel.quotaFor(AiChatMode.coach);
+    _aiCoachViewModel.setQuota(currentQuota);
+    if (currentQuota != null && currentQuota.remaining <= 0) {
+      await _showAiQuotaUpgradeDialog(
+        quota: currentQuota,
+        modal: _aiCoachViewModel.upgradeModal,
+      );
+      return;
+    }
     await _aiCoachViewModel.getPersonalizedSuggestions(
       chatId: chatId,
       matchId: matchId,
       expectedPartnerId: partnerId,
     );
+    final updatedQuota = _aiCoachViewModel.quota;
+    if (updatedQuota != null) {
+      quotaViewModel.applyQuota(updatedQuota);
+    }
+    if (_aiCoachViewModel.isLimitReached) {
+      await _showAiQuotaUpgradeDialog(
+        quota: _aiCoachViewModel.quota,
+        modal: _aiCoachViewModel.upgradeModal,
+      );
+    }
   }
 
   Future<void> _applyAiSuggestion(String suggestion) async {
@@ -1624,6 +1660,45 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _messageFocusNode.requestFocus();
       }
     });
+  }
+
+  Future<void> _showAiQuotaUpgradeDialog({
+    AiModeQuota? quota,
+    AiQuotaUpgradeModal? modal,
+  }) async {
+    final title = modal?.title ?? 'Bạn đã hết lượt AI hôm nay';
+    final message =
+        modal?.message ??
+        'Gợi ý trò chuyện sẽ được làm mới vào ngày mai. Nâng cấp subscription để có thêm lượt mỗi ngày.';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title),
+        content: Text(
+          quota == null
+              ? message
+              : '$message\n\nHiện tại: ${quota.remaining}/${quota.limit} lượt.',
+          style: GoogleFonts.plusJakartaSans(height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(modal?.secondaryCtaLabel ?? 'Để sau'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await Navigator.of(context).pushNamed('/settings/premium');
+              if (mounted) {
+                await context.read<AiQuotaViewModel>().loadQuota();
+              }
+            },
+            child: Text(modal?.ctaLabel ?? 'Xem gói subscription'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -1742,6 +1817,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildInputBar() {
+    final coachQuota = context.watch<AiQuotaViewModel>().quotaFor(
+      AiChatMode.coach,
+    );
+    final aiSuggestionLabel = coachQuota == null
+        ? 'AI gợi ý nhắn tin'
+        : 'AI gợi ý (${coachQuota.remaining}/${coachQuota.limit})';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       decoration: BoxDecoration(
@@ -1770,7 +1852,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           color: BondyColors.primary,
                         ),
                         label: Text(
-                          'AI gợi ý nhắn tin',
+                          aiSuggestionLabel,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,

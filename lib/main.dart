@@ -8,6 +8,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'theme/app_theme.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/chat/chat_viewmodel.dart';
+import 'viewmodels/ai/ai_quota_viewmodel.dart';
 import 'viewmodels/relationship/relationship_viewmodel.dart';
 import 'viewmodels/survey/survey_viewmodel.dart';
 import 'viewmodels/subscription/subscription_viewmodel.dart';
@@ -162,6 +163,7 @@ class BondyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => SurveyViewModel()),
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        ChangeNotifierProvider(create: (_) => AiQuotaViewModel()..loadQuota()),
         ChangeNotifierProvider(create: (_) => RelationshipViewModel()),
         ChangeNotifierProvider(
           create: (_) => SubscriptionViewModel()..loadSubscription(),

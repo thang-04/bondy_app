@@ -28,6 +28,16 @@ void main() {
     tester,
   ) async {
     final viewModel = AiCoachViewModel()
+      ..quota = AiModeQuota.fromJson({
+        'mode': 'coach',
+        'feature': 'daily_ai_coach',
+        'label': 'Goi y tro chuyen',
+        'tier': 'FREE',
+        'limit': 3,
+        'used': 1,
+        'remaining': 2,
+        'resetsAt': '2026-06-13T17:00:00.000Z',
+      })
       ..suggestions = [
         'Cuối tuần này bạn có quán cafe nào muốn thử không?',
         'Nếu chọn một chiều thật chill, bạn sẽ làm gì?',
@@ -50,6 +60,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('inline_ai_suggestion_panel')), findsOneWidget);
+    expect(find.text('Còn 2/3 lượt'), findsOneWidget);
     expect(find.text('AI gợi ý cho Linh'), findsOneWidget);
     expect(
       find.text('Cuối tuần này bạn có quán cafe nào muốn thử không?'),
