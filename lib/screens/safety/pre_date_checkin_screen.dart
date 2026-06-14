@@ -39,9 +39,9 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
         expectedReturnAt: _expectedReturn,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã tạo check-in an toàn')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã tạo check-in an toàn')));
       Navigator.of(context).pop(true);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -87,7 +87,10 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_outlined, color: BondyColors.primary),
+                    const Icon(
+                      Icons.shield_outlined,
+                      color: BondyColors.primary,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -144,7 +147,9 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: BondyColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -152,8 +157,11 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.schedule,
-                          color: BondyColors.primary, size: 20),
+                      const Icon(
+                        Icons.schedule,
+                        color: BondyColors.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         _formatDateTime(_expectedReturn),
@@ -163,8 +171,10 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.chevron_right,
-                          color: BondyColors.textSecondary),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: BondyColors.textSecondary,
+                      ),
                     ],
                   ),
                 ),
@@ -173,7 +183,10 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                 const SizedBox(height: 16),
                 Text(
                   _error!,
-                  style: const TextStyle(color: BondyColors.error, fontSize: 13),
+                  style: const TextStyle(
+                    color: BondyColors.error,
+                    fontSize: 13,
+                  ),
                 ),
               ],
               const SizedBox(height: 32),
@@ -185,14 +198,17 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
                     backgroundColor: BondyColors.primary,
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: _saving
                       ? const SizedBox(
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text(
                           'Bật check-in an toàn',
@@ -218,16 +234,18 @@ class _PreDateCheckinScreenState extends State<PreDateCheckinScreen> {
 }
 
 Future<DateTime?> showDateTimePicker(
-    BuildContext context, DateTime initial) async {
+  BuildContext context,
+  DateTime initial,
+) async {
   final date = await showDatePicker(
     context: context,
     initialDate: initial,
     firstDate: DateTime.now(),
     lastDate: DateTime.now().add(const Duration(days: 7)),
     builder: (ctx, child) => Theme(
-      data: Theme.of(ctx).copyWith(
-        colorScheme: ColorScheme.light(primary: BondyColors.primary),
-      ),
+      data: Theme.of(
+        ctx,
+      ).copyWith(colorScheme: ColorScheme.light(primary: BondyColors.primary)),
       child: child!,
     ),
   );

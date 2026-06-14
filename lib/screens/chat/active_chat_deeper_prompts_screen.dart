@@ -14,7 +14,10 @@ class _ActiveChatDeeperPromptsScreenState
     extends State<ActiveChatDeeperPromptsScreen> {
   final _controller = TextEditingController();
   final List<_DeeperMessage> _messages = [
-    _DeeperMessage('Mình muốn hiểu bạn hơn. Bạn sẵn sàng cho một vài câu hỏi sâu hơn không? 💚', false),
+    _DeeperMessage(
+      'Mình muốn hiểu bạn hơn. Bạn sẵn sàng cho một vài câu hỏi sâu hơn không? 💚',
+      false,
+    ),
     _DeeperMessage('Sẵn sàng!', true),
   ];
 
@@ -70,8 +73,11 @@ class _ActiveChatDeeperPromptsScreenState
             ),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome,
-                    color: BondyColors.primary, size: 20),
+                const Icon(
+                  Icons.auto_awesome,
+                  color: BondyColors.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -153,8 +159,9 @@ class _ActiveChatDeeperPromptsScreenState
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            msg.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: msg.isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           Flexible(
             child: Container(

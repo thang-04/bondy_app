@@ -127,7 +127,10 @@ class AuthService {
 
     // Dynamic secure proxy resolution when running in a web browser
     if (kIsWeb) {
-      final portPart = (Uri.base.port != 80 && Uri.base.port != 443 && Uri.base.port != 0) ? ':${Uri.base.port}' : '';
+      final portPart =
+          (Uri.base.port != 80 && Uri.base.port != 443 && Uri.base.port != 0)
+          ? ':${Uri.base.port}'
+          : '';
       return '${Uri.base.scheme}://${Uri.base.host}$portPart/api-proxy';
     }
 

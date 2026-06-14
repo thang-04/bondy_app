@@ -4,10 +4,7 @@ class BlockResult {
   final String blockId;
   final String blockedAt;
 
-  const BlockResult({
-    required this.blockId,
-    required this.blockedAt,
-  });
+  const BlockResult({required this.blockId, required this.blockedAt});
 
   factory BlockResult.fromJson(Map<String, dynamic> json) {
     return BlockResult(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bondy/models/discover/discover_profile_model.dart';
 import 'package:bondy/services/api_client.dart';
 import 'package:bondy/services/auth_service.dart';
 import 'package:bondy/services/discover_service.dart';
@@ -122,5 +123,96 @@ void main() {
     expect(result.matched, true);
     expect(result.matchId, 'match-123');
     expect(result.conversationId, 'chat-456');
+  });
+
+  test('parses instant match preview users from swipe response', () async {
+    final apiClient = await authenticatedClient(
+      MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': {
+              'matched': true,
+              'matchId': 'match-123',
+              'conversationId': 'chat-456',
+              'matchPreview': {
+                'matchId': 'match-123',
+                'conversationId': 'chat-456',
+                'users': {
+                  'current': {
+                    'id': 'me',
+                    'name': 'An',
+                    'photo': 'https://example.com/me.jpg',
+                  },
+                  'other': {
+                    'id': 'candidate-id',
+                    'name': 'Linh',
+                    'photo': 'https://example.com/linh.jpg',
+                  },
+                },
+              },
+            },
+          }),
+          200,
+        );
+      }),
+    );
+    final service = DiscoverService(apiClient: apiClient);
+
+    final result = await service.swipe(
+      targetUserId: 'candidate-id',
+      action: 'LIKE',
+    );
+
+    expect(result.matchPreview?.current.photo, 'https://example.com/me.jpg');
+    expect(result.matchPreview?.other.name, 'Linh');
+    expect(result.matchPreview?.other.photo, 'https://example.com/linh.jpg');
+  });
+
+  test('saves canonical discover gender filters', () async {
+    final apiClient = await authenticatedClient(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(
+          request.url.toString(),
+          'https://api.example.com/api/discover/filters',
+        );
+        expect(request.headers['authorization'], 'Bearer access-token');
+        expect(jsonDecode(request.body), {
+          'minAge': 24,
+          'maxAge': 36,
+          'distanceKm': 25,
+          'genders': ['FEMALE'],
+          'goals': ['LONG_TERM'],
+          'minCompatibility': 70,
+        });
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': {
+              'ageMin': 24,
+              'ageMax': 36,
+              'distanceKm': 25,
+              'genders': ['FEMALE'],
+              'goals': ['LONG_TERM'],
+              'minCompatibility': 70,
+            },
+          }),
+          200,
+        );
+      }),
+    );
+    final service = DiscoverService(apiClient: apiClient);
+
+    await service.saveFilters(
+      const DiscoverFilters(
+        minAge: 24,
+        maxAge: 36,
+        maxDistance: 25,
+        genders: ['FEMALE'],
+        goals: ['LONG_TERM'],
+        minCompatibility: 70,
+      ),
+    );
   });
 }

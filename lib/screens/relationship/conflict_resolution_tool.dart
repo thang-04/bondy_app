@@ -90,7 +90,10 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
   Future<void> _submitReport() async {
     final chatId = _chatId;
     if (chatId == null) {
-      BondyFeedback.showError(context, 'Không tìm thấy phòng chat của hai bạn để gửi thông tin.');
+      BondyFeedback.showError(
+        context,
+        'Không tìm thấy phòng chat của hai bạn để gửi thông tin.',
+      );
       return;
     }
 
@@ -102,7 +105,8 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
 
     setState(() => _submitting = true);
 
-    final messageContent = '💔 [Báo cáo mâu thuẫn]\n'
+    final messageContent =
+        '💔 [Báo cáo mâu thuẫn]\n'
         '• Vấn đề: $_selectedCategory\n'
         '• Mức độ nghiêm trọng: ${_severity.toInt()}/10 (${_getSeverityLabel(_severity)})\n'
         '• Chi tiết: $detail';
@@ -113,11 +117,18 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
         _sent = true;
       });
       if (mounted) {
-        BondyFeedback.showSuccess(context, 'Đã gửi thông tin mâu thuẫn vào chat.');
+        BondyFeedback.showSuccess(
+          context,
+          'Đã gửi thông tin mâu thuẫn vào chat.',
+        );
       }
     } catch (e) {
       if (mounted) {
-        BondyFeedback.showError(context, e, fallback: 'Không gửi được thông tin.');
+        BondyFeedback.showError(
+          context,
+          e,
+          fallback: 'Không gửi được thông tin.',
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -156,7 +167,11 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFF8C61), Color(0xFFFF6B95), Color(0xFF9F6BFF)],
+                  colors: [
+                    Color(0xFFFF8C61),
+                    Color(0xFFFF6B95),
+                    Color(0xFF9F6BFF),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -210,12 +225,16 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12, bottom: 8),
                       child: GestureDetector(
-                        onTap: () => setState(() => _selectedCategory = cat['name'] as String?),
+                        onTap: () => setState(
+                          () => _selectedCategory = cat['name'] as String?,
+                        ),
                         child: Container(
                           width: 88,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFFFF2F2) : Colors.white,
+                            color: isSelected
+                                ? const Color(0xFFFFF2F2)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
@@ -225,7 +244,9 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isSelected ? 0.04 : 0.01),
+                                color: Colors.black.withValues(
+                                  alpha: isSelected ? 0.04 : 0.01,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -246,7 +267,9 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                                 cat['name'] as String,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   color: isSelected
                                       ? const Color(0xFFFF6B95)
                                       : HealingStitchColors.textMain,
@@ -315,9 +338,13 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                         activeTrackColor: const Color(0xFFFF6B95),
                         inactiveTrackColor: Colors.grey.shade100,
                         thumbColor: Colors.white,
-                        overlayColor: const Color(0xFFFF6B95).withValues(alpha: 0.1),
+                        overlayColor: const Color(
+                          0xFFFF6B95,
+                        ).withValues(alpha: 0.1),
                         trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 12,
+                        ),
                       ),
                       child: Slider(
                         value: _severity,
@@ -365,7 +392,8 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                 maxLines: 4,
                 style: GoogleFonts.plusJakartaSans(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Hãy kể lại ngắn gọn chuyện gì đã xảy ra... (Mình cảm thấy thế nào?)',
+                  hintText:
+                      'Hãy kể lại ngắn gọn chuyện gì đã xảy ra... (Mình cảm thấy thế nào?)',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     color: Colors.grey.shade400,
                     fontSize: 13,
@@ -405,7 +433,9 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                       ? []
                       : [
                           BoxShadow(
-                            color: const Color(0xFFFF6B95).withValues(alpha: 0.2),
+                            color: const Color(
+                              0xFFFF6B95,
+                            ).withValues(alpha: 0.2),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -424,7 +454,9 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _submitting ? 'Đang gửi...' : 'Gửi thông tin cho đối phương',
+                        _submitting
+                            ? 'Đang gửi...'
+                            : 'Gửi thông tin cho đối phương',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -493,7 +525,8 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
               // Card 1
               _buildSootheCard(
                 title: 'Hành động hạ nhiệt',
-                description: 'Dành 15 phút không gian riêng cho mỗi người để bình tĩnh lại.',
+                description:
+                    'Dành 15 phút không gian riêng cho mỗi người để bình tĩnh lại.',
                 icon: Icons.self_improvement,
                 iconColor: Colors.blue.shade600,
                 bgColor: const Color(0xFFF0F7FF),
@@ -505,7 +538,8 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
               _buildSootheCardWithImage(
                 title: 'Ý tưởng buổi hẹn làm lành',
                 description: 'Cùng nhau nấu một bữa tối đơn giản tại nhà.',
-                imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCe9_8xPNChB0ziiGL1SV3AjErGmre_Nr-WFLdCKDpx_QSLUVfuRbTDdbNjrJdwNEUVmJyTmMDn_iIU21d-ECoHw9q9l0NRvsjZ0PXSeK7TImcUvjjHkCsH_2KR6A42GhMgJgzPB0jH8GWAslS6U8IP3XRxtNPSpe_i6Ua2UxjdVZRfwEt4kI3wHQOO9yHdyz9vafk1srcIcxRz5BGjHLqGRYHXnIqq1TT0QJemZVii5fNKsVPyYNPMCJrpTcqD9Ow8Vgsta1AM-oV1',
+                imageUrl:
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuCe9_8xPNChB0ziiGL1SV3AjErGmre_Nr-WFLdCKDpx_QSLUVfuRbTDdbNjrJdwNEUVmJyTmMDn_iIU21d-ECoHw9q9l0NRvsjZ0PXSeK7TImcUvjjHkCsH_2KR6A42GhMgJgzPB0jH8GWAslS6U8IP3XRxtNPSpe_i6Ua2UxjdVZRfwEt4kI3wHQOO9yHdyz9vafk1srcIcxRz5BGjHLqGRYHXnIqq1TT0QJemZVii5fNKsVPyYNPMCJrpTcqD9Ow8Vgsta1AM-oV1',
                 onTap: () {},
               ),
 
@@ -590,7 +624,10 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
         boxShadow: [healingSoftShadow(0.03)],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         leading: Container(
           width: 56,
           height: 56,
@@ -649,13 +686,14 @@ class _ConflictResolutionToolState extends State<ConflictResolutionTool> {
         boxShadow: [healingSoftShadow(0.03)],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         leading: Container(
           width: 56,
           height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
           child: Image.network(
             imageUrl,

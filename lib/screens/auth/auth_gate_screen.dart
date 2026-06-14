@@ -14,7 +14,8 @@ class AuthGateScreen extends StatefulWidget {
   State<AuthGateScreen> createState() => _AuthGateScreenState();
 }
 
-class _AuthGateScreenState extends State<AuthGateScreen> with SingleTickerProviderStateMixin {
+class _AuthGateScreenState extends State<AuthGateScreen>
+    with SingleTickerProviderStateMixin {
   late final AuthService _authService;
   late final AnimationController _animationController;
   late final Animation<double> _scaleAnimation;

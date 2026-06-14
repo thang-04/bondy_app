@@ -13,9 +13,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: BannerWidget(data: data),
-          ),
+          home: Scaffold(body: BannerWidget(data: data)),
         ),
       );
 
@@ -28,9 +26,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: BannerWidget(data: data),
-          ),
+          home: Scaffold(body: BannerWidget(data: data)),
         ),
       );
 

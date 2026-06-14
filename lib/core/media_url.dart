@@ -18,15 +18,15 @@ String? rewriteMediaUrl(String? url) {
 
   // Nếu là relative path (bắt đầu bằng '/uploads', '/api/uploads', v.v.)
   // hoặc không phải URL tuyệt đối nhưng cũng không phải data/asset
-  if (!trimmed.startsWith('http://') && 
-      !trimmed.startsWith('https://') && 
-      !trimmed.startsWith('data:') && 
+  if (!trimmed.startsWith('http://') &&
+      !trimmed.startsWith('https://') &&
+      !trimmed.startsWith('data:') &&
       !trimmed.startsWith('asset')) {
     var path = trimmed;
     if (!path.startsWith('/')) {
       path = '/$path';
     }
-    
+
     try {
       final baseUrl = AuthService.resolveBaseUrl();
 
@@ -38,7 +38,9 @@ String? rewriteMediaUrl(String? url) {
       if (kIsWeb) {
         final cleanBase = baseUrl.replaceAll(RegExp(r'/+$'), '');
         final fullUrl = '$cleanBase$path';
-        debugPrint('[IMG-DBG] relative path rewritten (web): $trimmed -> $fullUrl');
+        debugPrint(
+          '[IMG-DBG] relative path rewritten (web): $trimmed -> $fullUrl',
+        );
         return fullUrl;
       }
 
@@ -49,7 +51,7 @@ String? rewriteMediaUrl(String? url) {
         host: apiBase.host,
         port: apiBase.hasPort ? apiBase.port : null,
       ).toString().replaceAll(RegExp(r'/+$'), '');
-      
+
       final fullUrl = '$origin$path';
       debugPrint('[IMG-DBG] relative path rewritten: $trimmed -> $fullUrl');
       return fullUrl;
@@ -76,7 +78,10 @@ String? rewriteMediaUrl(String? url) {
   if (kIsWeb) {
     final hostLower = parsed.host.toLowerCase();
     if (hostLower == '103.149.86.25') {
-      final baseUrl = AuthService.resolveBaseUrl().replaceAll(RegExp(r'/+$'), '');
+      final baseUrl = AuthService.resolveBaseUrl().replaceAll(
+        RegExp(r'/+$'),
+        '',
+      );
       // Server path: /api/uploads/... → strip /api → /uploads/...
       // vì baseUrl đã chứa /api-proxy (map tới /api trên backend)
       var serverPath = parsed.path;
@@ -98,7 +103,8 @@ String? rewriteMediaUrl(String? url) {
   // nguyên để không break ảnh đã host trên CDN/cloud.
   const devHosts = {'localhost', '127.0.0.1', '10.0.2.2'};
   final hostLower = parsed.host.toLowerCase();
-  final isLanIp = hostLower.startsWith('192.168.') ||
+  final isLanIp =
+      hostLower.startsWith('192.168.') ||
       hostLower.startsWith('10.') ||
       hostLower.startsWith('172.');
   if (!devHosts.contains(hostLower) && !isLanIp) return trimmed;
@@ -118,7 +124,7 @@ String? rewriteMediaUrl(String? url) {
         port: apiBase.hasPort ? apiBase.port : null,
       )
       .toString();
-      
+
   debugPrint('[IMG-DBG] dev host rewritten: $trimmed -> $rewritten');
   return rewritten;
 }

@@ -85,7 +85,9 @@ class WelcomeScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: BondyColors.primary.withValues(alpha: 0.25),
+                              color: BondyColors.primary.withValues(
+                                alpha: 0.25,
+                              ),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -114,7 +116,10 @@ class WelcomeScreen extends StatelessWidget {
                       onPressed: () =>
                           Navigator.of(context).pushNamed('/login'),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: BondyColors.primary, width: 1.5),
+                        side: const BorderSide(
+                          color: BondyColors.primary,
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

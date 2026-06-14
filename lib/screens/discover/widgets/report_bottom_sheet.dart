@@ -8,10 +8,7 @@ import '../../../theme/app_theme.dart';
 class ReportBottomSheet extends StatefulWidget {
   final String targetUserId;
 
-  const ReportBottomSheet({
-    super.key,
-    required this.targetUserId,
-  });
+  const ReportBottomSheet({super.key, required this.targetUserId});
 
   @override
   State<ReportBottomSheet> createState() => _ReportBottomSheetState();
@@ -117,10 +114,14 @@ class _ReportBottomSheetState extends State<ReportBottomSheet> {
             ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _selectedReason != null && !_isLoading ? _submit : null,
+              onPressed: _selectedReason != null && !_isLoading
+                  ? _submit
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: BondyColors.primary,
-                disabledBackgroundColor: BondyColors.primary.withValues(alpha: 0.3),
+                disabledBackgroundColor: BondyColors.primary.withValues(
+                  alpha: 0.3,
+                ),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -166,7 +167,8 @@ class _ReportBottomSheetState extends State<ReportBottomSheet> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: () => setState(() => _selectedReason = reason['value'] as ReportReason),
+        onTap: () =>
+            setState(() => _selectedReason = reason['value'] as ReportReason),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

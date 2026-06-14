@@ -12,7 +12,9 @@ class SurveyIntroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Matches background-light
+      backgroundColor: Theme.of(
+        context,
+      ).scaffoldBackgroundColor, // Matches background-light
       body: Stack(
         children: [
           // Background Blob 1
@@ -24,13 +26,15 @@ class SurveyIntroScreen extends StatelessWidget {
               height: 256,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE79688).withValues(alpha: 0.2), // accent/20
+                color: const Color(
+                  0xFFE79688,
+                ).withValues(alpha: 0.2), // accent/20
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFFE79688).withValues(alpha: 0.2),
                     blurRadius: 50,
                     spreadRadius: 20,
-                  )
+                  ),
                 ],
               ),
             ),
@@ -44,18 +48,20 @@ class SurveyIntroScreen extends StatelessWidget {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: BondyColors.secondary.withValues(alpha: 0.1), // secondary/10
+                color: BondyColors.secondary.withValues(
+                  alpha: 0.1,
+                ), // secondary/10
                 boxShadow: [
                   BoxShadow(
                     color: BondyColors.secondary.withValues(alpha: 0.1),
                     blurRadius: 50,
                     spreadRadius: 20,
-                  )
+                  ),
                 ],
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Column(
               children: [
@@ -68,7 +74,10 @@ class SurveyIntroScreen extends StatelessWidget {
                             minHeight: constraints.maxHeight,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 24,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -84,12 +93,18 @@ class SurveyIntroScreen extends StatelessWidget {
                                       height: 1.2,
                                     ),
                                     children: const [
-                                      TextSpan(text: 'Bondy muốn hiểu bạn đang ở '),
+                                      TextSpan(
+                                        text: 'Bondy muốn hiểu bạn đang ở ',
+                                      ),
                                       TextSpan(
                                         text: 'giai đoạn nào',
-                                        style: TextStyle(color: BondyColors.primary),
+                                        style: TextStyle(
+                                          color: BondyColors.primary,
+                                        ),
                                       ),
-                                      TextSpan(text: '\ntrong chuyện tình cảm.'),
+                                      TextSpan(
+                                        text: '\ntrong chuyện tình cảm.',
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -109,11 +124,32 @@ class SurveyIntroScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.primary, shape: BoxShape.circle)),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: BondyColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                     const SizedBox(width: 8),
-                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: BondyColors.divider,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                     const SizedBox(width: 8),
-                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: BondyColors.divider, shape: BoxShape.circle)),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: BondyColors.divider,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -133,8 +169,12 @@ class SurveyIntroScreen extends StatelessWidget {
                       end: Alignment.topCenter,
                       colors: [
                         Theme.of(context).scaffoldBackgroundColor,
-                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.9),
-                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.0),
+                        Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withValues(alpha: 0.9),
+                        Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withValues(alpha: 0.0),
                       ],
                       stops: const [0.0, 0.6, 1.0],
                     ),
@@ -148,7 +188,9 @@ class SurveyIntroScreen extends StatelessWidget {
                           final viewModel = context.read<SurveyViewModel>();
                           final navigator = Navigator.of(context);
                           final messenger = ScaffoldMessenger.of(context);
-                          await viewModel.loadSurveyWithCompletionCheck('onboarding');
+                          await viewModel.loadSurveyWithCompletionCheck(
+                            'onboarding',
+                          );
 
                           if (viewModel.isAlreadyCompleted) {
                             // Đã hoàn thành survey, chuyển thẳng đến Home

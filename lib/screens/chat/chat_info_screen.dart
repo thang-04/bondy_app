@@ -226,10 +226,7 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/relationship/established',
         (route) => false,
-        arguments: {
-          'name': _displayName,
-          'photo': _photo,
-        },
+        arguments: {'name': _displayName, 'photo': _photo},
       );
     } catch (e) {
       if (!mounted) return;
@@ -826,19 +823,24 @@ class _ChatInfoScreenState extends State<ChatInfoScreen> {
       content =
           'Tài khoản của bạn hiện đang trong một mối quan hệ hoạt động.\n\nMỗi tài khoản chỉ có thể kết nối với một đối phương duy nhất. Để kết nối với người này, bạn cần kết thúc mối quan hệ hiện tại trước.';
       emoji = '🔗';
-    } else if (message.contains('Đối phương đã có một mối quan hệ đang hoạt động')) {
+    } else if (message.contains(
+      'Đối phương đã có một mối quan hệ đang hoạt động',
+    )) {
       title = 'Đối phương đã có kết nối';
       content =
           'Người này hiện đang trong một mối quan hệ hoạt động khác.\n\nHọ cần kết thúc mối quan hệ hiện tại của họ trước khi có thể nhận lời mời mới từ bạn.';
       emoji = '👥';
-    } else if (message.contains('Bạn đang có một lời mời khác đang chờ phản hồi')) {
+    } else if (message.contains(
+      'Bạn đang có một lời mời khác đang chờ phản hồi',
+    )) {
       title = 'Đang có lời mời chờ';
       content =
           'Bạn đang có một lời mời kết nối khác đang chờ phản hồi. Bạn cần hủy lời mời đó trước khi có thể gửi lời mời mới.';
       emoji = '⏳';
     } else if (message.contains('Đã có lời mời đang chờ cho kết nối này')) {
       title = 'Lời mời đã gửi';
-      content = 'Một lời mời kết nối đã được gửi cho người này và đang chờ xác nhận.';
+      content =
+          'Một lời mời kết nối đã được gửi cho người này và đang chờ xác nhận.';
       emoji = '💌';
     } else if (message.contains('Hai bạn đã xác nhận mối quan hệ rồi')) {
       title = 'Đã kết nối';

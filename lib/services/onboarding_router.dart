@@ -16,6 +16,8 @@ class OnboardingRouter {
         return '/survey/intro';
       case 'COMPLETE_PROFILE':
         return '/profile-setup';
+      case 'SET_MATCH_PREFERENCES':
+        return '/match-preferences/setup';
       case 'READY':
         return '/home';
       default:

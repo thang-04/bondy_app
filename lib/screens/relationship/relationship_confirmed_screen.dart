@@ -58,7 +58,11 @@ class RelationshipConfirmedScreen extends StatelessWidget {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false),
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/home',
+                  (route) => false,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: BondyColors.primary,
                   foregroundColor: Colors.white,

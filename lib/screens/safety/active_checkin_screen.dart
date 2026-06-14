@@ -32,9 +32,9 @@ class _ActiveCheckinBannerState extends State<ActiveCheckinBanner> {
     await _service.confirmCheckin(c.id);
     await _load();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã xác nhận an toàn')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã xác nhận an toàn')));
     }
   }
 
@@ -61,10 +61,7 @@ class _ActiveCheckinBannerState extends State<ActiveCheckinBanner> {
               children: [
                 const Text(
                   'Check-in an toàn đang bật',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 ),
                 if (checkin.expectedReturnAt != null)
                   Text(

@@ -59,7 +59,9 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
     final featured = courses.isNotEmpty ? courses.first : null;
     final categories = <String>{
       'Tất cả',
-      ...widget.courses.map((item) => _titleCase(item.category)).where((item) => item.isNotEmpty),
+      ...widget.courses
+          .map((item) => _titleCase(item.category))
+          .where((item) => item.isNotEmpty),
     }.toList();
 
     return ListView(
@@ -95,9 +97,15 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm chủ đề, kỹ năng...',
                 hintStyle: healingText(color: HealingStitchColors.textMuted),
-                prefixIcon: const Icon(Icons.search, color: HealingStitchColors.textMuted),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: HealingStitchColors.textMuted,
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
               ),
             ),
           ),
@@ -153,7 +161,11 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
                 onTap: _scrollToJourney,
                 child: Text(
                   'Xem tất cả',
-                  style: healingText(size: 14, weight: FontWeight.w700, color: HealingStitchColors.pink),
+                  style: healingText(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: HealingStitchColors.pink,
+                  ),
                 ),
               ),
             ],
@@ -178,12 +190,18 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
                       }
                     });
                     final prefs = await SharedPreferences.getInstance();
-                    await prefs.setStringList(_savedKey, _savedCourseIds.toList());
+                    await prefs.setStringList(
+                      _savedKey,
+                      _savedCourseIds.toList(),
+                    );
                   },
                 ),
                 if (i != courses.length - 1) const SizedBox(height: 12),
               ],
-              if (courses.isEmpty) const _EmptyState(message: 'Không có khoá học phù hợp với bộ lọc.'),
+              if (courses.isEmpty)
+                const _EmptyState(
+                  message: 'Không có khoá học phù hợp với bộ lọc.',
+                ),
             ],
           ),
         ),
@@ -199,11 +217,14 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
         SizedBox(
           height: 290,
           child: courses.isEmpty
-              ? const Center(child: _EmptyState(message: 'Chưa có khoá học phổ biến.'))
+              ? const Center(
+                  child: _EmptyState(message: 'Chưa có khoá học phổ biến.'),
+                )
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  itemBuilder: (context, index) => _PopularCourseCard(course: courses[index]),
+                  itemBuilder: (context, index) =>
+                      _PopularCourseCard(course: courses[index]),
                   separatorBuilder: (_, _) => const SizedBox(width: 16),
                   itemCount: courses.length,
                 ),
@@ -215,11 +236,15 @@ class _ContentHubCoursesTabState extends State<ContentHubCoursesTab> {
   List<HealingContentPreview> _filteredCourses() {
     final query = _searchController.text.trim().toLowerCase();
     return widget.courses.where((item) {
-      final matchesCategory = _selectedCategory == 'Tất cả' ||
+      final matchesCategory =
+          _selectedCategory == 'Tất cả' ||
           _titleCase(item.category) == _selectedCategory;
-      final haystack = [item.title, item.summary, item.category, ...item.tags]
-          .join(' ')
-          .toLowerCase();
+      final haystack = [
+        item.title,
+        item.summary,
+        item.category,
+        ...item.tags,
+      ].join(' ').toLowerCase();
       final matchesQuery = query.isEmpty || haystack.contains(query);
       final matchesSaved = !_savedOnly || _savedCourseIds.contains(item.id);
       return matchesCategory && matchesQuery && matchesSaved;
@@ -264,7 +289,11 @@ class _FeaturedCourseCard extends StatelessWidget {
               Positioned(
                 top: 12,
                 left: 12,
-                child: _Badge(label: course.accessLevel == 'PREMIUM' ? 'Premium' : 'Nổi bật'),
+                child: _Badge(
+                  label: course.accessLevel == 'PREMIUM'
+                      ? 'Premium'
+                      : 'Nổi bật',
+                ),
               ),
               Positioned(
                 bottom: 12,
@@ -275,14 +304,21 @@ class _FeaturedCourseCard extends StatelessWidget {
                   children: [
                     Text(
                       course.title,
-                      style: healingText(size: 20, weight: FontWeight.w900, color: Colors.white),
+                      style: healingText(
+                        size: 20,
+                        weight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       course.summary,
-                      style: healingText(size: 13, color: Colors.white.withValues(alpha: 0.8)),
+                      style: healingText(
+                        size: 13,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -290,7 +326,10 @@ class _FeaturedCourseCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           gradient: HealingStitchColors.warmGradient,
                           borderRadius: BorderRadius.circular(999),
@@ -298,11 +337,19 @@ class _FeaturedCourseCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                            const Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Tiếp tục',
-                              style: healingText(size: 12, weight: FontWeight.w800, color: Colors.white),
+                              style: healingText(
+                                size: 12,
+                                weight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
                             ),
                           ],
                         ),
@@ -311,7 +358,6 @@ class _FeaturedCourseCard extends StatelessWidget {
                   ],
                 ),
               ),
-
             ],
           ),
         ),
@@ -325,7 +371,11 @@ class _CategoryPill extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _CategoryPill({required this.label, required this.isSelected, required this.onTap});
+  const _CategoryPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +385,9 @@ class _CategoryPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? HealingStitchColors.paleCoral : HealingStitchColors.contentBackground,
+          color: isSelected
+              ? HealingStitchColors.paleCoral
+              : HealingStitchColors.contentBackground,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
@@ -343,7 +395,9 @@ class _CategoryPill extends StatelessWidget {
           style: healingText(
             size: 14,
             weight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? HealingStitchColors.pink : HealingStitchColors.textMain,
+            color: isSelected
+                ? HealingStitchColors.pink
+                : HealingStitchColors.textMain,
           ),
         ),
       ),
@@ -384,7 +438,10 @@ class _EnrolledCourseItem extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(HealingStitchAssets.compactHero, fit: BoxFit.cover),
+                    Image.asset(
+                      HealingStitchAssets.compactHero,
+                      fit: BoxFit.cover,
+                    ),
                     Container(
                       color: Colors.black.withValues(alpha: 0.2),
                       child: const Icon(Icons.play_arrow, color: Colors.white),
@@ -407,7 +464,10 @@ class _EnrolledCourseItem extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _courseMeta(course),
-                    style: healingText(size: 12, color: HealingStitchColors.textMuted),
+                    style: healingText(
+                      size: 12,
+                      color: HealingStitchColors.textMuted,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -415,15 +475,22 @@ class _EnrolledCourseItem extends StatelessWidget {
                       Expanded(
                         child: LinearProgressIndicator(
                           value: progress,
-                          backgroundColor: HealingStitchColors.contentBackground,
-                          valueColor: const AlwaysStoppedAnimation<Color>(HealingStitchColors.orange),
+                          backgroundColor:
+                              HealingStitchColors.contentBackground,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            HealingStitchColors.orange,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${(progress * 100).toInt()}%',
-                        style: healingText(size: 10, weight: FontWeight.w800, color: HealingStitchColors.orange),
+                        style: healingText(
+                          size: 10,
+                          weight: FontWeight.w800,
+                          color: HealingStitchColors.orange,
+                        ),
                       ),
                     ],
                   ),
@@ -464,7 +531,10 @@ class _PopularCourseCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(HealingStitchAssets.rekindling, fit: BoxFit.cover),
+                    Image.asset(
+                      HealingStitchAssets.rekindling,
+                      fit: BoxFit.cover,
+                    ),
                     Positioned(
                       bottom: 8,
                       right: 8,
@@ -483,7 +553,11 @@ class _PopularCourseCard extends StatelessWidget {
               ),
               child: Text(
                 _titleCase(course.category).toUpperCase(),
-                style: healingText(size: 10, weight: FontWeight.w900, color: HealingStitchColors.pink),
+                style: healingText(
+                  size: 10,
+                  weight: FontWeight.w900,
+                  color: HealingStitchColors.pink,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -496,11 +570,26 @@ class _PopularCourseCard extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                const Icon(Icons.view_module, size: 14, color: HealingStitchColors.textMuted),
+                const Icon(
+                  Icons.view_module,
+                  size: 14,
+                  color: HealingStitchColors.textMuted,
+                ),
                 const SizedBox(width: 4),
-                Text(_courseMeta(course), style: healingText(size: 12, weight: FontWeight.w600, color: HealingStitchColors.textMuted)),
+                Text(
+                  _courseMeta(course),
+                  style: healingText(
+                    size: 12,
+                    weight: FontWeight.w600,
+                    color: HealingStitchColors.textMuted,
+                  ),
+                ),
                 const Spacer(),
-                const Icon(Icons.arrow_forward, size: 14, color: HealingStitchColors.orange),
+                const Icon(
+                  Icons.arrow_forward,
+                  size: 14,
+                  color: HealingStitchColors.orange,
+                ),
               ],
             ),
           ],
@@ -525,7 +614,11 @@ class _Badge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: healingText(size: 12, weight: FontWeight.w800, color: Colors.white),
+        style: healingText(
+          size: 12,
+          weight: FontWeight.w800,
+          color: Colors.white,
+        ),
       ),
     );
   }

@@ -22,11 +22,24 @@ void main() {
     test('loadMatchStatus sets CONFIRMED status when both confirmed', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":true,"data":{"matchId":"match-123","status":"CONFIRMED","chatId":"chat-456"}}', 200);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            '{"success":true,"data":{"matchId":"match-123","status":"CONFIRMED","chatId":"chat-456"}}',
+            200,
+          );
+        }),
+      );
+      final viewModel = MatchConfirmationViewModel(
+        matchId: 'match-123',
+        apiClient: apiClient,
+      );
 
       await viewModel.loadMatchStatus();
 
@@ -38,11 +51,24 @@ void main() {
     test('loadMatchStatus sets EXPIRED status when match expired', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":true,"data":{"matchId":"match-123","status":"EXPIRED"}}', 200);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            '{"success":true,"data":{"matchId":"match-123","status":"EXPIRED"}}',
+            200,
+          );
+        }),
+      );
+      final viewModel = MatchConfirmationViewModel(
+        matchId: 'match-123',
+        apiClient: apiClient,
+      );
 
       await viewModel.loadMatchStatus();
 
@@ -53,11 +79,24 @@ void main() {
     test('loadMatchStatus sets PENDING status with expiresAt', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":true,"data":{"matchId":"match-123","status":"PENDING","expiresAt":"2026-05-19T10:00:00Z"}}', 200);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            '{"success":true,"data":{"matchId":"match-123","status":"PENDING","expiresAt":"2026-05-19T10:00:00Z"}}',
+            200,
+          );
+        }),
+      );
+      final viewModel = MatchConfirmationViewModel(
+        matchId: 'match-123',
+        apiClient: apiClient,
+      );
 
       await viewModel.loadMatchStatus();
 
@@ -69,11 +108,24 @@ void main() {
     test('confirmMatch updates status to CONFIRMED when successful', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":true,"data":{"matchId":"match-123","status":"CONFIRMED","chatId":"chat-456"}}', 200);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            '{"success":true,"data":{"matchId":"match-123","status":"CONFIRMED","chatId":"chat-456"}}',
+            200,
+          );
+        }),
+      );
+      final viewModel = MatchConfirmationViewModel(
+        matchId: 'match-123',
+        apiClient: apiClient,
+      );
 
       await viewModel.confirmMatch();
 
@@ -82,20 +134,36 @@ void main() {
       viewModel.dispose();
     });
 
-    test('confirmMatch stays PENDING when other user has not confirmed', () async {
-      final storage = FlutterSecureStorage();
-      await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":true,"data":{"matchId":"match-123","status":"PENDING"}}', 200);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+    test(
+      'confirmMatch stays PENDING when other user has not confirmed',
+      () async {
+        final storage = FlutterSecureStorage();
+        await storage.write(key: 'accessToken', value: 'access-token');
+        final authService = AuthService(
+          baseUrlOverride: 'https://api.example.com/api',
+          storage: storage,
+        );
+        final apiClient = ApiClient(
+          baseUrlOverride: 'https://api.example.com/api',
+          authService: authService,
+          client: MockClient((request) async {
+            return http.Response(
+              '{"success":true,"data":{"matchId":"match-123","status":"PENDING"}}',
+              200,
+            );
+          }),
+        );
+        final viewModel = MatchConfirmationViewModel(
+          matchId: 'match-123',
+          apiClient: apiClient,
+        );
 
-      await viewModel.confirmMatch();
+        await viewModel.confirmMatch();
 
-      expect(viewModel.status, MatchConfirmationStatus.pending);
-      viewModel.dispose();
-    });
+        expect(viewModel.status, MatchConfirmationStatus.pending);
+        viewModel.dispose();
+      },
+    );
 
     test('remainingTime is Duration.zero when expiresAt is null', () {
       final viewModel = MatchConfirmationViewModel(matchId: 'match-123');
@@ -113,7 +181,6 @@ void main() {
     });
 
     test('dispose cancels timer', () {
-
       // Timer should be cancelled, verify by checking remainingTime doesn't update
       // This is implicit - if dispose worked, no exception will be thrown
       expect(true, true);
@@ -122,11 +189,21 @@ void main() {
     test('loadMatchStatus sets errorMessage on failure', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response('{"success":false,"error":"Server error"}', 500);
-      }));
-      final viewModel = MatchConfirmationViewModel(matchId: 'match-123', apiClient: apiClient);
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response('{"success":false,"error":"Server error"}', 500);
+        }),
+      );
+      final viewModel = MatchConfirmationViewModel(
+        matchId: 'match-123',
+        apiClient: apiClient,
+      );
 
       await viewModel.loadMatchStatus();
 

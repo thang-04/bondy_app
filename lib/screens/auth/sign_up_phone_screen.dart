@@ -66,7 +66,10 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -85,9 +88,7 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Email\ncủa bạn là gì?',
@@ -128,10 +129,12 @@ class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
                           borderRadius: 30,
                           onPressed: auth.isValid && !auth.isLoading
                               ? () {
-                                  context.read<AuthViewModel>().sendOtpAndNavigate(
-                                    context,
-                                    _phoneController.text,
-                                  );
+                                  context
+                                      .read<AuthViewModel>()
+                                      .sendOtpAndNavigate(
+                                        context,
+                                        _phoneController.text,
+                                      );
                                 }
                               : () {},
                         ),
@@ -208,7 +211,7 @@ class _SignUpEmailFieldState extends State<_SignUpEmailField> {
                   color: BondyColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : [bondySoftShadow(0.02)],
       ),
@@ -238,7 +241,10 @@ class _SignUpEmailFieldState extends State<_SignUpEmailField> {
             horizontal: 20,
             vertical: 18,
           ),
-          hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
+          hintStyle: GoogleFonts.manrope(
+            color: BondyColors.textHint,
+            fontSize: 15,
+          ),
         ),
         style: GoogleFonts.manrope(
           fontSize: 16,

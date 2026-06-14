@@ -50,7 +50,9 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _finishLocationLoad('Vui lòng bật dịch vụ định vị hoặc tìm địa chỉ thủ công.');
+        _finishLocationLoad(
+          'Vui lòng bật dịch vụ định vị hoặc tìm địa chỉ thủ công.',
+        );
         return;
       }
 
@@ -60,12 +62,16 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
       }
 
       if (permission == LocationPermission.denied) {
-        _finishLocationLoad('Quyền truy cập vị trí bị từ chối. Bạn vẫn có thể tìm địa chỉ thủ công.');
+        _finishLocationLoad(
+          'Quyền truy cập vị trí bị từ chối. Bạn vẫn có thể tìm địa chỉ thủ công.',
+        );
         return;
       }
 
       if (permission == LocationPermission.deniedForever) {
-        _finishLocationLoad('Quyền vị trí bị từ chối vĩnh viễn. Hãy mở cài đặt hoặc tìm địa chỉ thủ công.');
+        _finishLocationLoad(
+          'Quyền vị trí bị từ chối vĩnh viễn. Hãy mở cài đặt hoặc tìm địa chỉ thủ công.',
+        );
         return;
       }
 
@@ -81,10 +87,14 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
       });
       _mapController.move(target, 16);
     } on TimeoutException {
-      _finishLocationLoad('Không lấy được GPS kịp thời. Hãy thử lại hoặc tìm địa chỉ thủ công.');
+      _finishLocationLoad(
+        'Không lấy được GPS kịp thời. Hãy thử lại hoặc tìm địa chỉ thủ công.',
+      );
     } catch (e) {
       debugPrint('Determine location error: $e');
-      _finishLocationLoad('Không thể lấy vị trí hiện tại. Hãy tìm địa chỉ thủ công.');
+      _finishLocationLoad(
+        'Không thể lấy vị trí hiện tại. Hãy tìm địa chỉ thủ công.',
+      );
     }
   }
 
@@ -94,7 +104,9 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
       _isLoading = false;
       _statusMessage = message;
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _searchLocation(String address) async {
@@ -128,7 +140,9 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

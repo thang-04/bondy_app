@@ -22,9 +22,9 @@ class BondyBottomNavBar extends StatelessWidget {
   });
 
   // Bảng màu
-  static const _primary  = Color(0xFFFF6B6B);
-  static const _onMuted  = Color(0xFF5D4E46);
-  static const _outline  = Color(0xFFFFD9C0);
+  static const _primary = Color(0xFFFF6B6B);
+  static const _onMuted = Color(0xFF5D4E46);
+  static const _outline = Color(0xFFFFD9C0);
   static const _gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -44,7 +44,8 @@ class BondyBottomNavBar extends StatelessWidget {
   static const double _fabElevation = 35.0;
 
   /// reservedHeight để các màn hình tính padding bottom
-  static const double reservedHeightWithoutSafeArea = _barHeight + _fabElevation;
+  static const double reservedHeightWithoutSafeArea =
+      _barHeight + _fabElevation;
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +295,7 @@ class _NavItem extends StatelessWidget {
 // Painter: viền trên phẳng 2 bên, cong VỒM LÊN theo hình tròn FAB ở giữa
 // ──────────────────────────────────────────────────────────────────────────────
 class _NotchedNavPainter extends CustomPainter {
-  final double notchRadius;  // bán kính vùng cong quanh FAB
+  final double notchRadius; // bán kính vùng cong quanh FAB
   final double cornerRadius; // bán kính góc 2 bên nav bar
 
   const _NotchedNavPainter({
@@ -307,7 +308,7 @@ class _NotchedNavPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     final cx = w / 2; // tâm X của FAB
-    final r  = cornerRadius;
+    final r = cornerRadius;
     final nr = notchRadius;
 
     // Shadow
@@ -333,7 +334,8 @@ class _NotchedNavPainter extends CustomPainter {
     // Điểm bắt đầu vòm cong: cách tâm FAB một khoảng nr theo mỗi bên
     // Khoảng cách ngang từ tâm FAB tới điểm tiếp xúc của đường thẳng + vòm
     final archHalfWidth = nr + 8.0;
-    final archTop = -(nr * 0.55); // đỉnh vòm nhô lên bao nhiêu pixel phía trên nav bar
+    final archTop =
+        -(nr * 0.55); // đỉnh vòm nhô lên bao nhiêu pixel phía trên nav bar
 
     final path = Path();
 
@@ -350,14 +352,20 @@ class _NotchedNavPainter extends CustomPainter {
     // Vòm cong lên (cubic Bezier mượt mà)
     // Đi từ cx-archHalfWidth lên đỉnh vòm (cx, archTop) rồi xuống cx+archHalfWidth
     path.cubicTo(
-      cx - archHalfWidth * 0.55, 0,     // control point 1
-      cx - nr * 0.6,              archTop, // control point 2 (gần đỉnh trái)
-      cx,                         archTop, // đỉnh vòm
+      cx - archHalfWidth * 0.55,
+      0, // control point 1
+      cx - nr * 0.6,
+      archTop, // control point 2 (gần đỉnh trái)
+      cx,
+      archTop, // đỉnh vòm
     );
     path.cubicTo(
-      cx + nr * 0.6,              archTop, // control point 1 (gần đỉnh phải)
-      cx + archHalfWidth * 0.55,  0,     // control point 2
-      cx + archHalfWidth,         0,     // điểm kết thúc vòm phải
+      cx + nr * 0.6,
+      archTop, // control point 1 (gần đỉnh phải)
+      cx + archHalfWidth * 0.55,
+      0, // control point 2
+      cx + archHalfWidth,
+      0, // điểm kết thúc vòm phải
     );
 
     // Đường thẳng trên → góc trên phải (bo tròn)
@@ -377,14 +385,20 @@ class _NotchedNavPainter extends CustomPainter {
     strokePath.moveTo(r, 0);
     strokePath.lineTo(cx - archHalfWidth, 0);
     strokePath.cubicTo(
-      cx - archHalfWidth * 0.55, 0,
-      cx - nr * 0.6,              archTop,
-      cx,                         archTop,
+      cx - archHalfWidth * 0.55,
+      0,
+      cx - nr * 0.6,
+      archTop,
+      cx,
+      archTop,
     );
     strokePath.cubicTo(
-      cx + nr * 0.6,              archTop,
-      cx + archHalfWidth * 0.55,  0,
-      cx + archHalfWidth,         0,
+      cx + nr * 0.6,
+      archTop,
+      cx + archHalfWidth * 0.55,
+      0,
+      cx + archHalfWidth,
+      0,
     );
     strokePath.lineTo(w - r, 0);
 

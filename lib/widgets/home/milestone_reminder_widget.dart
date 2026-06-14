@@ -17,8 +17,8 @@ class MilestoneReminderWidget extends StatelessWidget {
     final daysText = daysLeft == 0
         ? 'Hôm nay!'
         : daysLeft == 1
-            ? 'Còn 1 ngày'
-            : 'Còn $daysLeft ngày';
+        ? 'Còn 1 ngày'
+        : 'Còn $daysLeft ngày';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

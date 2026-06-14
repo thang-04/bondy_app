@@ -48,7 +48,7 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                 BondyButton(
                   text: 'Quay lại',
                   onPressed: () => Navigator.pop(context),
-                )
+                ),
               ],
             ),
           ),
@@ -63,13 +63,15 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
 
     final totalQuestions = viewModel.questions.length;
     final progress = (viewModel.currentIndex + 1) / totalQuestions;
-    
+
     // Đồng bộ giá trị slider nếu có lưu từ trước
     if (currentQuestion.isSlider && viewModel.currentAnswer != null) {
       _localSliderValue = (viewModel.currentAnswer as num).toDouble();
     } else if (currentQuestion.isSlider) {
       // Setup default slider value
-      _localSliderValue = ((currentQuestion.maxValue ?? 10) + (currentQuestion.minValue ?? 0)) / 2;
+      _localSliderValue =
+          ((currentQuestion.maxValue ?? 10) + (currentQuestion.minValue ?? 0)) /
+          2;
     }
 
     return Scaffold(
@@ -78,7 +80,8 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
             if (viewModel.currentIndex > 0) {
-              viewModel.previousQuestion(); // Quay lại câu trc đó mà k back ra ngoài
+              viewModel
+                  .previousQuestion(); // Quay lại câu trc đó mà k back ra ngoài
             } else {
               Navigator.pop(context); // Trở về màn trước (Intro)
             }
@@ -125,9 +128,7 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
               ),
               const SizedBox(height: 24),
               // Dynamic Question Body rendered via switch case
-              Expanded(
-                child: _buildQuestionBody(currentQuestion, viewModel),
-              ),
+              Expanded(child: _buildQuestionBody(currentQuestion, viewModel)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -138,7 +139,10 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                         context.read<SurveyViewModel>().nextQuestion(context);
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         minimumSize: const Size(0, 56), // match height
                       ),
                       child: Text(
@@ -153,19 +157,29 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                   else
                     const SizedBox(), // Chỗ trống để đẩy nút Tiếp theo sang phải
                   ElevatedButton(
-                    onPressed: (viewModel.currentAnswer != null) || currentQuestion.isSlider || viewModel.isSubmitting
+                    onPressed:
+                        (viewModel.currentAnswer != null) ||
+                            currentQuestion.isSlider ||
+                            viewModel.isSubmitting
                         ? () {
                             if (viewModel.isSubmitting) return;
                             if (currentQuestion.isSlider) {
-                              context.read<SurveyViewModel>().saveAnswer(_localSliderValue);
+                              context.read<SurveyViewModel>().saveAnswer(
+                                _localSliderValue,
+                              );
                             }
-                            context.read<SurveyViewModel>().nextQuestion(context);
+                            context.read<SurveyViewModel>().nextQuestion(
+                              context,
+                            );
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: BondyColors.primary,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 56), // fixed height, flexible width
+                      minimumSize: const Size(
+                        0,
+                        56,
+                      ), // fixed height, flexible width
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),
@@ -179,7 +193,10 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                           const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         else ...[
                           Text(
@@ -192,7 +209,7 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                           const SizedBox(width: 8),
                           if (!viewModel.isLastQuestion)
                             const Icon(Icons.arrow_forward_rounded, size: 20),
-                        ]
+                        ],
                       ],
                     ),
                   ),
@@ -206,14 +223,18 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
     );
   }
 
-  Widget _buildQuestionBody(SurveyQuestion question, SurveyViewModel viewModel) {
+  Widget _buildQuestionBody(
+    SurveyQuestion question,
+    SurveyViewModel viewModel,
+  ) {
     switch (question.type.toUpperCase()) {
       case 'CHOICE':
       case 'SINGLE_CHOICE':
       case 'MULTIPLE_CHOICE':
       case 'YES_NO':
       case 'BOOLEAN':
-        if (question.isMultipleChoice || question.type.toUpperCase() == 'MULTIPLE_CHOICE') {
+        if (question.isMultipleChoice ||
+            question.type.toUpperCase() == 'MULTIPLE_CHOICE') {
           return _buildMultipleChoice(question, viewModel);
         }
         return _buildSingleChoice(question, viewModel);
@@ -232,7 +253,10 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
     }
   }
 
-  Widget _buildSingleChoice(SurveyQuestion question, SurveyViewModel viewModel) {
+  Widget _buildSingleChoice(
+    SurveyQuestion question,
+    SurveyViewModel viewModel,
+  ) {
     return ListView.separated(
       itemCount: question.options.length,
       separatorBuilder: (context, sepIndex) => const SizedBox(height: 12),
@@ -250,7 +274,10 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
     );
   }
 
-  Widget _buildMultipleChoice(SurveyQuestion question, SurveyViewModel viewModel) {
+  Widget _buildMultipleChoice(
+    SurveyQuestion question,
+    SurveyViewModel viewModel,
+  ) {
     return ListView.separated(
       itemCount: question.options.length,
       separatorBuilder: (context, sepIndex) => const SizedBox(height: 12),
@@ -312,7 +339,10 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
                 : 'Chọn ngày',
             style: GoogleFonts.plusJakartaSans(fontSize: 16),
           ),
-          trailing: const Icon(Icons.calendar_today, color: BondyColors.primary),
+          trailing: const Icon(
+            Icons.calendar_today,
+            color: BondyColors.primary,
+          ),
           onTap: () async {
             final picked = await showDatePicker(
               context: context,
@@ -368,7 +398,7 @@ class _SurveyQuestionScreenState extends State<SurveyQuestionScreen> {
     double maxVal = viewModel.currentQuestion?.maxValue?.toDouble() ?? 10.0;
     int divisions = (maxVal - minVal).round();
     if (divisions <= 0) divisions = 10;
-    
+
     // Đảm bảo value luôn nằm trong khoảng min..max để tránh lỗi assertion của Flutter
     double safeValue = _localSliderValue.clamp(minVal, maxVal);
 

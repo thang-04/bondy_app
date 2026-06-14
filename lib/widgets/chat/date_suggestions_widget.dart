@@ -25,7 +25,11 @@ class DateSuggestionsWidget extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Row(
             children: [
-              const Icon(Icons.auto_awesome, color: BondyColors.primary, size: 16),
+              const Icon(
+                Icons.auto_awesome,
+                color: BondyColors.primary,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 'Dưới đây là một vài gợi ý dành cho hai bạn:',
@@ -51,7 +55,9 @@ class DateSuggestionsWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: BondyColors.divider.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: BondyColors.divider.withValues(alpha: 0.5),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -73,11 +79,15 @@ class DateSuggestionsWidget extends StatelessWidget {
                             height: 140,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 140,
-                              color: BondyColors.primaryLight,
-                              child: const Icon(Icons.image_not_supported, color: BondyColors.primary),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 140,
+                                  color: BondyColors.primaryLight,
+                                  child: const Icon(
+                                    Icons.image_not_supported,
+                                    color: BondyColors.primary,
+                                  ),
+                                ),
                           ),
                           Container(
                             height: 140,
@@ -96,7 +106,10 @@ class DateSuggestionsWidget extends StatelessWidget {
                             top: 12,
                             left: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(12),
@@ -130,14 +143,20 @@ class DateSuggestionsWidget extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.location_on, color: Colors.white, size: 12),
+                                    const Icon(
+                                      Icons.location_on,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
                                     const SizedBox(width: 2),
                                     Text(
                                       '${place['distance']} • ${place['price']} • ${place['vibe']}',
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
-                                        color: Colors.white.withValues(alpha: 0.9),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -149,11 +168,18 @@ class DateSuggestionsWidget extends StatelessWidget {
                       ),
                       // Vibe Match Banner
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         color: BondyColors.primaryLight.withValues(alpha: 0.35),
                         child: Row(
                           children: [
-                            const Icon(Icons.auto_awesome, color: BondyColors.primary, size: 14),
+                            const Icon(
+                              Icons.auto_awesome,
+                              color: BondyColors.primary,
+                              size: 14,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               place['description'] ?? '',
@@ -169,7 +195,10 @@ class DateSuggestionsWidget extends StatelessWidget {
                       // Action Buttons
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [

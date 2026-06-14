@@ -53,14 +53,24 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         if (!mounted) return;
         navigator.pop(action);
         if (result.conversationId != null) {
+          final previewOther = result.matchPreview?.other;
+          final otherUserId = previewOther?.id.isNotEmpty == true
+              ? previewOther!.id
+              : profile.id;
+          final otherUserName = previewOther?.name.trim().isNotEmpty == true
+              ? previewOther!.name
+              : profile.name;
+          final otherUserPhoto =
+              previewOther?.photo ??
+              (profile.imageUrl.isNotEmpty ? profile.imageUrl : null);
           await navigator.pushNamed(
             '/chat',
             arguments: {
               'chatId': result.conversationId,
               'matchId': result.matchId,
-              'otherUserId': profile.id,
-              'name': profile.name,
-              'photo': profile.imageUrl.isNotEmpty ? profile.imageUrl : null,
+              'otherUserId': otherUserId,
+              'name': otherUserName,
+              'photo': otherUserPhoto,
             },
           );
         } else {

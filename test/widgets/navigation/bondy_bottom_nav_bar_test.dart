@@ -26,13 +26,7 @@ void main() {
       ),
     );
 
-    for (final label in [
-      'Home',
-      'Healing',
-      'Match',
-      'Matches',
-      'Profile',
-    ]) {
+    for (final label in ['Home', 'Healing', 'Match', 'Matches', 'Profile']) {
       final text = tester.widget<Text>(find.text(label));
 
       expect(text.maxLines, 1, reason: '$label should not wrap');

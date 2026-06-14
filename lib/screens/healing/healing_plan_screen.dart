@@ -185,13 +185,13 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
                       day.isCompleted
                           ? Icons.check_circle
                           : day.isUnlocked
-                              ? Icons.play_circle_outline
-                              : Icons.lock_outline,
+                          ? Icons.play_circle_outline
+                          : Icons.lock_outline,
                       color: day.isCompleted
                           ? const Color(0xFF16A34A)
                           : day.isUnlocked
-                              ? HealingStitchColors.pink
-                              : HealingStitchColors.textMuted,
+                          ? HealingStitchColors.pink
+                          : HealingStitchColors.textMuted,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -229,7 +229,9 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
                     child: Center(
                       child: Text(
                         'Ngày này chưa có nội dung. Hãy quay lại sau nhé.',
-                        style: healingText(color: HealingStitchColors.textMuted),
+                        style: healingText(
+                          color: HealingStitchColors.textMuted,
+                        ),
                       ),
                     ),
                   )
@@ -256,8 +258,11 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.lock_outline,
-                            color: HealingStitchColors.coral, size: 18),
+                        const Icon(
+                          Icons.lock_outline,
+                          color: HealingStitchColors.coral,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -326,10 +331,8 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
       // play được gì — user thấy màn loading rỗng → tưởng app treo.
       completed = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
-          builder: (_) => HealingAudioPlayerScreen(
-            planMode: true,
-            audioId: item.contentId,
-          ),
+          builder: (_) =>
+              HealingAudioPlayerScreen(planMode: true, audioId: item.contentId),
         ),
       );
       if (completed == true) {
@@ -546,11 +549,7 @@ class _PlanDayTile extends StatelessWidget {
   final bool isCurrent;
   final VoidCallback? onTap;
 
-  const _PlanDayTile({
-    required this.day,
-    required this.isCurrent,
-    this.onTap,
-  });
+  const _PlanDayTile({required this.day, required this.isCurrent, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -578,13 +577,13 @@ class _PlanDayTile extends StatelessWidget {
                 day.isCompleted
                     ? Icons.check_circle
                     : day.isUnlocked || isCurrent
-                        ? Icons.play_circle_outline
-                        : Icons.lock_outline,
+                    ? Icons.play_circle_outline
+                    : Icons.lock_outline,
                 color: day.isCompleted
                     ? const Color(0xFF16A34A)
                     : day.isUnlocked || isCurrent
-                        ? HealingStitchColors.pink
-                        : HealingStitchColors.textMuted,
+                    ? HealingStitchColors.pink
+                    : HealingStitchColors.textMuted,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -673,9 +672,7 @@ class _PlanItemListTile extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: item.isCompleted
-                  ? const Color(0xFFF0FDF4)
-                  : Colors.white,
+              color: item.isCompleted ? const Color(0xFFF0FDF4) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: item.isCompleted
@@ -711,7 +708,9 @@ class _PlanItemListTile extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: HealingStitchColors.paleCoral,
                               borderRadius: BorderRadius.circular(8),

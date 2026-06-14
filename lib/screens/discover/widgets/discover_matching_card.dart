@@ -321,11 +321,40 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
         return Image.network(
           url,
           fit: BoxFit.cover,
+          // Giới hạn decode size để giảm bộ nhớ → giảm lag.
+          cacheWidth: 720,
+          filterQuality: FilterQuality.medium,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildLoadingPlaceholder(loadingProgress);
+          },
           errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
         );
       }
     }
     return _buildPlaceholder();
+  }
+
+  Widget _buildLoadingPlaceholder(ImageChunkEvent progress) {
+    final total = progress.expectedTotalBytes;
+    final fraction = total != null && total > 0
+        ? progress.cumulativeBytesLoaded / total
+        : null;
+    return Container(
+      color: const Color(0xFF2A2A2A),
+      child: Center(
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: CircularProgressIndicator(
+            value: fraction,
+            strokeWidth: 3,
+            color: BondyColors.primary.withValues(alpha: 0.7),
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildPlaceholder() {

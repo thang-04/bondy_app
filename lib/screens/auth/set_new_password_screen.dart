@@ -91,7 +91,10 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -110,9 +113,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Đặt mật khẩu mới',
@@ -179,24 +180,35 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                         const SizedBox(height: 24),
                         BondyButton(
                           key: const Key('set_new_password_submit_button'),
-                          text: auth.isLoading ? 'Đang xác nhận...' : 'Xác nhận',
+                          text: auth.isLoading
+                              ? 'Đang xác nhận...'
+                              : 'Xác nhận',
                           isLoading: auth.isLoading,
                           borderRadius: 30,
-                          onPressed: _isValid && _confirmError == null && !auth.isLoading
+                          onPressed:
+                              _isValid &&
+                                  _confirmError == null &&
+                                  !auth.isLoading
                               ? () async {
-                                  final authViewModel = context.read<AuthViewModel>();
-                                  final success = await authViewModel.setPasswordEmailAndNavigate(
-                                    context,
-                                    email,
-                                    _passwordController.text,
-                                  );
+                                  final authViewModel = context
+                                      .read<AuthViewModel>();
+                                  final success = await authViewModel
+                                      .setPasswordEmailAndNavigate(
+                                        context,
+                                        email,
+                                        _passwordController.text,
+                                      );
                                   if (success && context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Đặt lại mật khẩu thành công!'),
+                                        content: Text(
+                                          'Đặt lại mật khẩu thành công!',
+                                        ),
                                       ),
                                     );
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
                                       '/login',
                                       (route) => route.isFirst,
                                     );
@@ -239,7 +251,8 @@ class _SetNewPasswordTextField extends StatefulWidget {
   });
 
   @override
-  State<_SetNewPasswordTextField> createState() => _SetNewPasswordTextFieldState();
+  State<_SetNewPasswordTextField> createState() =>
+      _SetNewPasswordTextFieldState();
 }
 
 class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
@@ -290,7 +303,7 @@ class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
                           : BondyColors.primary.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ]
                 : [bondySoftShadow(0.02)],
           ),
@@ -309,7 +322,9 @@ class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
                   widget.prefixIcon,
                   color: hasError
                       ? BondyColors.error
-                      : (_isFocused ? BondyColors.primary : BondyColors.textHint),
+                      : (_isFocused
+                            ? BondyColors.primary
+                            : BondyColors.textHint),
                   size: 22,
                 ),
               ),
@@ -323,7 +338,9 @@ class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
                               : Icons.visibility_outlined,
                           color: hasError
                               ? BondyColors.error
-                              : (_isFocused ? BondyColors.primary : BondyColors.textHint),
+                              : (_isFocused
+                                    ? BondyColors.primary
+                                    : BondyColors.textHint),
                           size: 22,
                         ),
                         onPressed: () {
@@ -343,7 +360,10 @@ class _SetNewPasswordTextFieldState extends State<_SetNewPasswordTextField> {
                 horizontal: 20,
                 vertical: 18,
               ),
-              hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
+              hintStyle: GoogleFonts.manrope(
+                color: BondyColors.textHint,
+                fontSize: 15,
+              ),
             ),
             style: GoogleFonts.manrope(
               fontSize: 16,

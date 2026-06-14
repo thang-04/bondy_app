@@ -7,7 +7,11 @@ import '../../screens/healing/healing_stitch_style.dart';
 class BondyFeedback {
   BondyFeedback._();
 
-  static void showError(BuildContext context, Object? error, {String? fallback}) {
+  static void showError(
+    BuildContext context,
+    Object? error, {
+    String? fallback,
+  }) {
     final text = fallback ?? BondyErrorMapper.message(error);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -50,10 +54,15 @@ class BondyFeedback {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message, style: healingText(size: 14, color: Colors.white)),
+          content: Text(
+            message,
+            style: healingText(size: 14, color: Colors.white),
+          ),
           backgroundColor: const Color(0xFF2E9E6A),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -82,7 +91,9 @@ class BondyErrorBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: HealingStitchColors.paleCoral,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HealingStitchColors.coral.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: HealingStitchColors.coral.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +101,11 @@ class BondyErrorBanner extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error_outline, color: HealingStitchColors.coral, size: 22),
+              const Icon(
+                Icons.error_outline,
+                color: HealingStitchColors.coral,
+                size: 22,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -205,7 +220,8 @@ class BondyInlineError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message == null || message!.trim().isEmpty) return const SizedBox.shrink();
+    if (message == null || message!.trim().isEmpty)
+      return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
       child: BondyErrorBanner(message: message!),

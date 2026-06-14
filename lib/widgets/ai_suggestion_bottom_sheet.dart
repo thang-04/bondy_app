@@ -89,7 +89,9 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
               children: [
                 const Text('✨ ', style: TextStyle(fontSize: 22)),
                 Text(
-                  partnerName == null ? 'AI Gợi ý' : 'AI gợi ý cho $partnerName',
+                  partnerName == null
+                      ? 'AI Gợi ý'
+                      : 'AI gợi ý cho $partnerName',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -116,7 +118,6 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ],
         ),
       ),
-
     );
   }
 

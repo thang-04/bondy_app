@@ -41,7 +41,10 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         backgroundColor: BondyColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: BondyColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: BondyColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -55,12 +58,14 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       ),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: BondyColors.primary))
+            ? const Center(
+                child: CircularProgressIndicator(color: BondyColors.primary),
+              )
             : _error != null
-                ? _buildError()
-                : _report == null
-                    ? _buildNoRelationship()
-                    : _buildReport(),
+            ? _buildError()
+            : _report == null
+            ? _buildNoRelationship()
+            : _buildReport(),
       ),
     );
   }
@@ -72,8 +77,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_error!, textAlign: TextAlign.center,
-                style: const TextStyle(color: BondyColors.error)),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: BondyColors.error),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _load, child: const Text('Thử lại')),
           ],
@@ -116,10 +124,12 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
             MoodDistributionChart(
               entries: moods
                   .whereType<Map<String, dynamic>>()
-                  .map((m) => MoodEntry(
-                        mood: m['mood']?.toString() ?? '',
-                        percentage: (m['percentage'] as num?)?.toInt() ?? 0,
-                      ))
+                  .map(
+                    (m) => MoodEntry(
+                      mood: m['mood']?.toString() ?? '',
+                      percentage: (m['percentage'] as num?)?.toInt() ?? 0,
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 16),
@@ -127,9 +137,9 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
           if (milestones.isNotEmpty) ...[
             _sectionTitle('Cột mốc sắp tới'),
             const SizedBox(height: 10),
-            ...milestones
-                .whereType<Map<String, dynamic>>()
-                .map((m) => _buildMilestoneRow(m)),
+            ...milestones.whereType<Map<String, dynamic>>().map(
+              (m) => _buildMilestoneRow(m),
+            ),
           ],
         ],
       ),
@@ -180,14 +190,26 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
       crossAxisSpacing: 12,
       childAspectRatio: 1.6,
       children: [
-        _statCard('Check-in cá nhân',
-            '${(summary['personalCheckins'] as num?)?.toInt() ?? 0}', Icons.person_outline),
-        _statCard('Check-in cặp đôi',
-            '${(summary['coupleCheckins'] as num?)?.toInt() ?? 0}', Icons.favorite_outline),
-        _statCard('Tin nhắn',
-            '${(summary['messagesExchanged'] as num?)?.toInt() ?? 0}', Icons.chat_bubble_outline),
-        _statCard('Nội dung healing',
-            '${(summary['healingCompletions'] as num?)?.toInt() ?? 0}', Icons.auto_awesome_outlined),
+        _statCard(
+          'Check-in cá nhân',
+          '${(summary['personalCheckins'] as num?)?.toInt() ?? 0}',
+          Icons.person_outline,
+        ),
+        _statCard(
+          'Check-in cặp đôi',
+          '${(summary['coupleCheckins'] as num?)?.toInt() ?? 0}',
+          Icons.favorite_outline,
+        ),
+        _statCard(
+          'Tin nhắn',
+          '${(summary['messagesExchanged'] as num?)?.toInt() ?? 0}',
+          Icons.chat_bubble_outline,
+        ),
+        _statCard(
+          'Nội dung healing',
+          '${(summary['healingCompletions'] as num?)?.toInt() ?? 0}',
+          Icons.auto_awesome_outlined,
+        ),
       ],
     );
   }
@@ -208,17 +230,21 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: BondyColors.textPrimary,
-                  )),
-              Text(label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: BondyColors.textSecondary,
-                  )),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: BondyColors.textPrimary,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: BondyColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ],
@@ -241,15 +267,21 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
           const Icon(Icons.star_outline, color: BondyColors.primary, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(m['title']?.toString() ?? '',
-                style: const TextStyle(
-                    fontSize: 14, color: BondyColors.textPrimary)),
+            child: Text(
+              m['title']?.toString() ?? '',
+              style: const TextStyle(
+                fontSize: 14,
+                color: BondyColors.textPrimary,
+              ),
+            ),
           ),
           if (date != null)
             Text(
               '${date.day}/${date.month}/${date.year}',
               style: const TextStyle(
-                  fontSize: 12, color: BondyColors.textSecondary),
+                fontSize: 12,
+                color: BondyColors.textSecondary,
+              ),
             ),
         ],
       ),

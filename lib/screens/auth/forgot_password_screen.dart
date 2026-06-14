@@ -68,7 +68,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -87,9 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Quên mật khẩu',
@@ -116,14 +117,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
                           autofocus: true,
-                          onChanged: context.read<AuthViewModel>().validateEmail,
+                          onChanged: context
+                              .read<AuthViewModel>()
+                              .validateEmail,
                         ),
                         const SizedBox(height: 12),
                         BondyInlineError(message: auth.errorMessage),
                         const SizedBox(height: 32),
                         BondyButton(
                           key: const Key('forgot_password_submit_button'),
-                          text: auth.isLoading ? 'Đang gửi...' : 'Gửi mã xác thực',
+                          text: auth.isLoading
+                              ? 'Đang gửi...'
+                              : 'Gửi mã xác thực',
                           isLoading: auth.isLoading,
                           borderRadius: 30,
                           onPressed: auth.isValid && !auth.isLoading
@@ -168,7 +173,8 @@ class _ForgotPasswordEmailField extends StatefulWidget {
   });
 
   @override
-  State<_ForgotPasswordEmailField> createState() => _ForgotPasswordEmailFieldState();
+  State<_ForgotPasswordEmailField> createState() =>
+      _ForgotPasswordEmailFieldState();
 }
 
 class _ForgotPasswordEmailFieldState extends State<_ForgotPasswordEmailField> {
@@ -208,7 +214,7 @@ class _ForgotPasswordEmailFieldState extends State<_ForgotPasswordEmailField> {
                   color: BondyColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : [bondySoftShadow(0.02)],
       ),
@@ -238,7 +244,10 @@ class _ForgotPasswordEmailFieldState extends State<_ForgotPasswordEmailField> {
             horizontal: 20,
             vertical: 18,
           ),
-          hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
+          hintStyle: GoogleFonts.manrope(
+            color: BondyColors.textHint,
+            fontSize: 15,
+          ),
         ),
         style: GoogleFonts.manrope(
           fontSize: 16,

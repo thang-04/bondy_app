@@ -20,6 +20,7 @@ class DiscoverViewModel extends ChangeNotifier {
   String? _profileIncompleteNextAction;
   String? _lastMatchId;
   String? _lastConversationId;
+  SwipeMatchPreview? _lastMatchPreview;
   // BUG-05: expose whether the last swipe API call failed so the screen can
   // restore the card instead of silently discarding it.
   bool _lastSwipeFailed = false;
@@ -32,6 +33,7 @@ class DiscoverViewModel extends ChangeNotifier {
   String? get profileIncompleteNextAction => _profileIncompleteNextAction;
   String? get lastMatchId => _lastMatchId;
   String? get lastConversationId => _lastConversationId;
+  SwipeMatchPreview? get lastMatchPreview => _lastMatchPreview;
   bool get lastSwipeFailed => _lastSwipeFailed;
 
   Future<void> loadQuota() async {
@@ -65,6 +67,15 @@ class DiscoverViewModel extends ChangeNotifier {
         .toList();
     if (nextProfiles.length == profiles.length) return;
     profiles = nextProfiles;
+    notifyListeners();
+  }
+
+  /// Thêm lại profile vào đầu deck — dùng khi server từ chối swipe (quota,
+  /// mạng lỗi…) và cần hiển thị lại card cho user.
+  void restoreProfile(DiscoverProfile profile) {
+    // Tránh duplicate nếu profile đã có trong list.
+    if (profiles.any((p) => p.id == profile.id)) return;
+    profiles = [profile, ...profiles];
     notifyListeners();
   }
 
@@ -112,6 +123,7 @@ class DiscoverViewModel extends ChangeNotifier {
   Future<bool> swipe(String targetUserId, String action) async {
     _lastMatchId = null;
     _lastConversationId = null;
+    _lastMatchPreview = null;
     _lastSwipeFailed = false;
     _quotaExceeded = false;
     final normalized = action.trim().toUpperCase();
@@ -138,6 +150,7 @@ class DiscoverViewModel extends ChangeNotifier {
       if (result.matched && result.matchId != null) {
         _lastMatchId = result.matchId;
         _lastConversationId = result.conversationId;
+        _lastMatchPreview = result.matchPreview;
       }
       await loadQuota();
     } on QuotaExceededException catch (e) {
@@ -157,6 +170,7 @@ class DiscoverViewModel extends ChangeNotifier {
   void clearLastMatch() {
     _lastMatchId = null;
     _lastConversationId = null;
+    _lastMatchPreview = null;
     notifyListeners();
   }
 

@@ -23,8 +23,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _picker = ImagePicker();
 
   // ── State ──────────────────────────────────────────────────────────────────
-  bool _isLoadingData = true;   // đang fetch dữ liệu từ server
-  bool _isSaving = false;       // đang lưu
+  bool _isLoadingData = true; // đang fetch dữ liệu từ server
+  bool _isSaving = false; // đang lưu
   String? _errorMessage;
 
   UserProfileModel? _profile;
@@ -139,7 +139,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage(int index) async {
     // Tự động nén ảnh gốc xuống tối đa 1080p và 70% chất lượng để tiết kiệm tài nguyên
     final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery, 
+      source: ImageSource.gallery,
       imageQuality: 70,
       maxWidth: 1080,
       maxHeight: 1080,
@@ -160,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // 1. Phân loại ảnh: Ảnh cũ (String URL) và Ảnh mới (XFile)
       List<String> finalPhotos = [];
       List<XFile> newPhotos = [];
-      
+
       for (var slot in _imageSlots) {
         if (slot is String) {
           finalPhotos.add(slot);
@@ -191,12 +191,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Hồ sơ đã được cập nhật ✓',
-              style: GoogleFonts.plusJakartaSans()),
+          content: Text(
+            'Hồ sơ đã được cập nhật ✓',
+            style: GoogleFonts.plusJakartaSans(),
+          ),
           backgroundColor: const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       Navigator.pop(context, true); // trả true → caller biết đã lưu
@@ -210,12 +213,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text(msg, style: GoogleFonts.plusJakartaSans(color: Colors.white)),
+        content: Text(
+          msg,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+        ),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -241,7 +245,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       title: Text(
         'Chỉnh sửa hồ sơ',
         style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700, fontSize: 18, color: Colors.black87),
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+          color: Colors.black87,
+        ),
       ),
       actions: [
         if (_isLoadingData)
@@ -251,9 +258,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             padding: EdgeInsets.only(right: 16),
             child: Center(
               child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
           )
         else
@@ -262,7 +270,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Text(
               'Lưu',
               style: GoogleFonts.plusJakartaSans(
-                  color: BondyColors.primary, fontWeight: FontWeight.w700),
+                color: BondyColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
       ],
@@ -295,15 +305,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.map_outlined, size: 18, color: BondyColors.primary),
+            const Icon(
+              Icons.map_outlined,
+              size: 18,
+              color: BondyColors.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _cityController.text.isEmpty ? 'Chọn địa chỉ...' : _cityController.text,
+                _cityController.text.isEmpty
+                    ? 'Chọn địa chỉ...'
+                    : _cityController.text,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: _cityController.text.isEmpty ? BondyColors.textHint : Colors.black87,
-                  fontWeight: _cityController.text.isEmpty ? FontWeight.w400 : FontWeight.w600,
+                  color: _cityController.text.isEmpty
+                      ? BondyColors.textHint
+                      : Colors.black87,
+                  fontWeight: _cityController.text.isEmpty
+                      ? FontWeight.w400
+                      : FontWeight.w600,
                 ),
               ),
             ),
@@ -314,7 +334,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-
   Widget _buildBody() {
     // ── Loading state ────────────────────────────────────────────────────────
     if (_isLoadingData) {
@@ -324,9 +343,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             const CircularProgressIndicator(color: BondyColors.primary),
             const SizedBox(height: 16),
-            Text('Đang tải hồ sơ...',
-                style: GoogleFonts.plusJakartaSans(
-                    color: BondyColors.textSecondary)),
+            Text(
+              'Đang tải hồ sơ...',
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.textSecondary,
+              ),
+            ),
           ],
         ),
       );
@@ -340,31 +362,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wifi_off_rounded,
-                  size: 56, color: Color(0xFFD1D5DB)),
+              const Icon(
+                Icons.wifi_off_rounded,
+                size: 56,
+                color: Color(0xFFD1D5DB),
+              ),
               const SizedBox(height: 16),
-              Text('Không thể tải hồ sơ',
-                  style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w700, fontSize: 16)),
+              Text(
+                'Không thể tải hồ sơ',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
                 style: GoogleFonts.plusJakartaSans(
-                    color: BondyColors.textSecondary, fontSize: 13),
+                  color: BondyColors.textSecondary,
+                  fontSize: 13,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _loadProfile,
                 icon: const Icon(Icons.refresh),
-                label: Text('Thử lại',
-                    style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Thử lại',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: BondyColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
+                  backgroundColor: BondyColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
           ),
@@ -421,7 +457,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final displayName = profile?.displayName ?? '...';
     final email = profile?.email ?? '';
     final avatarUrl =
-        profile?.image ?? (profile?.photos.isNotEmpty == true ? profile!.photos.first : null);
+        profile?.image ??
+        (profile?.photos.isNotEmpty == true ? profile!.photos.first : null);
 
     return Row(
       children: [
@@ -435,10 +472,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           child: avatarUrl != null
               ? ClipOval(
-                  child: Image.network(avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) =>
-                          _avatarPlaceholder(displayName)),
+                  child: Image.network(
+                    avatarUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) =>
+                        _avatarPlaceholder(displayName),
+                  ),
                 )
               : _avatarPlaceholder(displayName),
         ),
@@ -450,19 +489,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Text(
                 displayName,
                 style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700, fontSize: 18),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 email,
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13, color: BondyColors.textSecondary),
+                  fontSize: 13,
+                  color: BondyColors.textSecondary,
+                ),
               ),
               if (profile?.gender != null) ...[
                 const SizedBox(height: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: BondyColors.primaryLight,
                     borderRadius: BorderRadius.circular(6),
@@ -470,9 +515,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Text(
                     profile!.gender!,
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: BondyColors.primary),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: BondyColors.primary,
+                    ),
                   ),
                 ),
               ],
@@ -486,9 +532,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _avatarPlaceholder(String name) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Center(
-      child: Text(initial,
-          style: GoogleFonts.plusJakartaSans(
-              fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
+      child: Text(
+        initial,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 
@@ -499,12 +550,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         Row(
           children: [
-            _buildSectionTitle('Ảnh của bạn', icon: Icons.photo_library_outlined),
+            _buildSectionTitle(
+              'Ảnh của bạn',
+              icon: Icons.photo_library_outlined,
+            ),
             const Spacer(),
             Text(
               '${_imageSlots.where((s) => s != null).length}/6',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12, color: BondyColors.textSecondary),
+                fontSize: 12,
+                color: BondyColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -512,7 +568,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Text(
           'Ảnh đầu tiên sẽ là ảnh đại diện của bạn',
           style: GoogleFonts.plusJakartaSans(
-              fontSize: 12, color: BondyColors.textHint),
+            fontSize: 12,
+            color: BondyColors.textHint,
+          ),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -554,7 +612,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           color: const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasImage ? BondyColors.primary.withValues(alpha: 0.4) : const Color(0xFFE5E7EB),
+            color: hasImage
+                ? BondyColors.primary.withValues(alpha: 0.4)
+                : const Color(0xFFE5E7EB),
             width: hasImage ? 1.5 : 1,
           ),
           image: imageProvider != null
@@ -570,16 +630,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       left: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: BondyColors.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('⭐ Chính',
-                            style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white)),
+                        child: Text(
+                          '⭐ Chính',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   // Nút xóa
@@ -592,9 +657,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         width: 22,
                         height: 22,
                         decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
-                        child: const Icon(Icons.close,
-                            size: 14, color: Colors.black54),
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.black54,
+                        ),
                       ),
                     ),
                   ),
@@ -679,9 +749,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Text(
           title,
           style: GoogleFonts.plusJakartaSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: BondyColors.textPrimary),
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: BondyColors.textPrimary,
+          ),
         ),
       ],
     );
@@ -698,8 +769,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       style: GoogleFonts.plusJakartaSans(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            GoogleFonts.plusJakartaSans(color: BondyColors.textHint, fontSize: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: BondyColors.textHint,
+          fontSize: 14,
+        ),
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
         border: OutlineInputBorder(
@@ -714,8 +787,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: BondyColors.primary, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -725,16 +800,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (profile == null) return const SizedBox.shrink();
 
     final hasZodiac = profile.zodiacSign != null;
-    final zodiacName = hasZodiac ? (_zodiacNames[profile.zodiacSign!.toLowerCase()] ?? profile.zodiacSign) : 'Chưa thiết lập';
-    final zodiacSymbol = hasZodiac ? (_zodiacSymbols[profile.zodiacSign!.toLowerCase()] ?? '') : '';
+    final zodiacName = hasZodiac
+        ? (_zodiacNames[profile.zodiacSign!.toLowerCase()] ??
+              profile.zodiacSign)
+        : 'Chưa thiết lập';
+    final zodiacSymbol = hasZodiac
+        ? (_zodiacSymbols[profile.zodiacSign!.toLowerCase()] ?? '')
+        : '';
 
     final hasLifePath = profile.lifePathNumber != null;
-    final lifePathText = hasLifePath ? 'Số ${profile.lifePathNumber}' : 'Chưa thiết lập';
+    final lifePathText = hasLifePath
+        ? 'Số ${profile.lifePathNumber}'
+        : 'Chưa thiết lập';
 
-    final freeTimes = profile.freeTimeSlots.map((slot) => _freeTimeLabels[slot] ?? slot).join(', ');
+    final freeTimes = profile.freeTimeSlots
+        .map((slot) => _freeTimeLabels[slot] ?? slot)
+        .join(', ');
     final freeTimeText = freeTimes.isNotEmpty ? freeTimes : 'Chưa thiết lập';
 
-    final partnerType = profile.desiredPartnerType != null ? (_partnerTypeLabels[profile.desiredPartnerType!] ?? profile.desiredPartnerType) : 'Chưa thiết lập';
+    final partnerType = profile.desiredPartnerType != null
+        ? (_partnerTypeLabels[profile.desiredPartnerType!] ??
+              profile.desiredPartnerType)
+        : 'Chưa thiết lập';
 
     return _buildFieldSection(
       title: 'Tương thích sâu (DeepMatch)',
@@ -761,7 +848,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDeepMatchRow('Cung hoàng đạo', hasZodiac ? '$zodiacSymbol $zodiacName' : 'Chưa thiết lập'),
+              _buildDeepMatchRow(
+                'Cung hoàng đạo',
+                hasZodiac ? '$zodiacSymbol $zodiacName' : 'Chưa thiết lập',
+              ),
               const Divider(height: 20, color: Color(0xFFE5E7EB)),
               _buildDeepMatchRow('Số chủ đạo', lifePathText),
               const Divider(height: 20, color: Color(0xFFE5E7EB)),
@@ -781,7 +871,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_ios, size: 12, color: BondyColors.primary),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: BondyColors.primary,
+                  ),
                 ],
               ),
             ],

@@ -91,11 +91,7 @@ class LikeQuotaExceededDialog extends StatelessWidget {
       child: const Stack(
         alignment: Alignment.center,
         children: [
-          Icon(
-            Icons.favorite_rounded,
-            color: BondyColors.primary,
-            size: 40,
-          ),
+          Icon(Icons.favorite_rounded, color: BondyColors.primary, size: 40),
           Positioned(
             right: 18,
             bottom: 18,

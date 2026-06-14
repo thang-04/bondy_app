@@ -68,10 +68,9 @@ class StarterRecommendationScreen extends StatelessWidget {
               title: 'Lộ trình 7 ngày',
               subtitle: 'Bắt đầu lại với tiến trình nhỏ mỗi ngày',
               icon: Icons.route_outlined,
-              onTap: () => Navigator.of(context).pushNamed(
-                healingPlanRoute,
-                arguments: const {'preview': true},
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed(healingPlanRoute, arguments: const {'preview': true}),
             ),
           ],
         ),
@@ -123,16 +122,26 @@ class _StarterItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: healingText(size: 15, weight: FontWeight.w800)),
+                    Text(
+                      title,
+                      style: healingText(size: 15, weight: FontWeight.w800),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: healingText(size: 12, color: HealingStitchColors.textSoft),
+                      style: healingText(
+                        size: 12,
+                        color: HealingStitchColors.textSoft,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: HealingStitchColors.textMuted),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: HealingStitchColors.textMuted,
+              ),
             ],
           ),
         ),

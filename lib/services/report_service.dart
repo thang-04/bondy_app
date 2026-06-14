@@ -1,12 +1,6 @@
 import 'api_client.dart';
 
-enum ReportReason {
-  spam,
-  harassment,
-  fakeProfile,
-  inappropriate,
-  other,
-}
+enum ReportReason { spam, harassment, fakeProfile, inappropriate, other }
 
 extension ReportReasonExtension on ReportReason {
   String get value {
@@ -29,10 +23,7 @@ class ReportResult {
   final String reportId;
   final String status;
 
-  const ReportResult({
-    required this.reportId,
-    required this.status,
-  });
+  const ReportResult({required this.reportId, required this.status});
 
   factory ReportResult.fromJson(Map<String, dynamic> json) {
     return ReportResult(
@@ -53,10 +44,7 @@ class ReportService {
   }) async {
     final response = await _apiClient.post(
       '/reports',
-      body: {
-        'targetUserId': targetUserId,
-        'reason': reason.value,
-      },
+      body: {'targetUserId': targetUserId, 'reason': reason.value},
       authenticated: true,
     );
     return ReportResult.fromJson(response['data'] as Map<String, dynamic>);

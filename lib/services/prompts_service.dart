@@ -39,7 +39,8 @@ class PromptAnswer {
 class PromptsService {
   final ApiClient _apiClient;
 
-  PromptsService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  PromptsService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   Future<List<PromptCatalogItem>> fetchCatalog() async {
     final response = await _apiClient.get(

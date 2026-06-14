@@ -529,8 +529,8 @@ class _HealingModeDashboardScreenState
     final items = rituals.isNotEmpty
         ? rituals
         : fallback.isNotEmpty
-              ? fallback
-              : (home?.sections.articles ?? const []);
+        ? fallback
+        : (home?.sections.articles ?? const []);
     if (items.isEmpty) {
       return const [SizedBox.shrink()];
     }
@@ -2061,4 +2061,3 @@ class _ConnectGentlyCard extends StatelessWidget {
     );
   }
 }
-

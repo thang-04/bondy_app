@@ -18,21 +18,28 @@ void main() {
     test('creates report with SPAM reason', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.headers['authorization'], 'Bearer access-token');
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['targetUserId'], 'target-user-id');
-        expect(body['reason'], 'SPAM');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'reportId': 'report-123',
-            'status': 'CREATED',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.headers['authorization'], 'Bearer access-token');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['targetUserId'], 'target-user-id');
+          expect(body['reason'], 'SPAM');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {'reportId': 'report-123', 'status': 'CREATED'},
+            }),
+            200,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       final result = await service.createReport(
@@ -47,19 +54,26 @@ void main() {
     test('creates report with HARASSMENT reason', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        expect(request.method, 'POST');
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['reason'], 'HARASSMENT');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'reportId': 'report-456',
-            'status': 'CREATED',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          expect(request.method, 'POST');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'HARASSMENT');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {'reportId': 'report-456', 'status': 'CREATED'},
+            }),
+            200,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       final result = await service.createReport(
@@ -73,18 +87,25 @@ void main() {
     test('creates report with FAKE_PROFILE reason', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['reason'], 'FAKE_PROFILE');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'reportId': 'report-789',
-            'status': 'CREATED',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'FAKE_PROFILE');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {'reportId': 'report-789', 'status': 'CREATED'},
+            }),
+            200,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       final result = await service.createReport(
@@ -98,18 +119,25 @@ void main() {
     test('creates report with INAPPROPRIATE reason', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['reason'], 'INAPPROPRIATE');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'reportId': 'report-999',
-            'status': 'CREATED',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'INAPPROPRIATE');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {'reportId': 'report-999', 'status': 'CREATED'},
+            }),
+            200,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       final result = await service.createReport(
@@ -123,18 +151,25 @@ void main() {
     test('creates report with OTHER reason', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['reason'], 'OTHER');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'reportId': 'report-101',
-            'status': 'CREATED',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'OTHER');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {'reportId': 'report-101', 'status': 'CREATED'},
+            }),
+            200,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       final result = await service.createReport(
@@ -148,17 +183,27 @@ void main() {
     test('throws ApiClientException when report fails', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response(jsonEncode({
-          'success': false,
-          'error': 'User not found',
-        }), 404);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            jsonEncode({'success': false, 'error': 'User not found'}),
+            404,
+          );
+        }),
+      );
       final service = ReportService(apiClient);
 
       expect(
-        () => service.createReport(targetUserId: 'nonexistent', reason: ReportReason.spam),
+        () => service.createReport(
+          targetUserId: 'nonexistent',
+          reason: ReportReason.spam,
+        ),
         throwsA(isA<ApiClientException>()),
       );
     });

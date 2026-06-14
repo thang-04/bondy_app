@@ -52,11 +52,14 @@ class EmotionCheckinWidget extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pushNamed('/relationship/checkin'),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/relationship/checkin'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFb70047),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: const Text('Bắt đầu check-in'),
             ),
@@ -81,9 +84,9 @@ class HomeQuickMoodChip extends StatelessWidget {
         try {
           await RelationshipService().submitCheckin(mood: mood);
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Đã ghi nhận: $label')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Đã ghi nhận: $label')));
         } catch (e) {
           if (!context.mounted) return;
           BondyFeedback.showError(context, e);

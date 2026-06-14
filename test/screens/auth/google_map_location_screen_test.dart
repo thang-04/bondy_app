@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('location setup renders free map flow without Google Maps key', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: GoogleMapLocationScreen(),
-      ),
-    );
+  testWidgets('location setup renders free map flow without Google Maps key', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: GoogleMapLocationScreen()));
     await tester.pump();
 
     expect(find.text('Vị trí của bạn'), findsOneWidget);

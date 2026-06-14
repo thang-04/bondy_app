@@ -88,11 +88,7 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                 top: -20,
                 child: Opacity(
                   opacity: 0.05,
-                  child: Icon(
-                    Icons.spa,
-                    size: 120,
-                    color: Color(0xFFE056FD),
-                  ),
+                  child: Icon(Icons.spa, size: 120, color: Color(0xFFE056FD)),
                 ),
               ),
               Row(
@@ -212,9 +208,7 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
           ],
         ),
         centerTitle: true,
-        actions: const [
-          SizedBox(width: 48),
-        ],
+        actions: const [SizedBox(width: 48)],
       ),
       body: Column(
         children: [
@@ -254,12 +248,13 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.15,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 1.15,
+                        ),
                     itemCount: _emotions.length,
                     itemBuilder: (context, index) {
                       final emotion = _emotions[index];
@@ -268,7 +263,8 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                       final tileColor = Color(colorHex);
 
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedEmoji = emotion['emoji']),
+                        onTap: () =>
+                            setState(() => _selectedEmoji = emotion['emoji']),
                         child: Container(
                           decoration: BoxDecoration(
                             color: isSelected ? Colors.white : tileColor,
@@ -276,7 +272,9 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 4),
                                     ),
@@ -348,7 +346,8 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                         maxLines: 3,
                         style: GoogleFonts.plusJakartaSans(fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Có chuyện gì cụ thể đang làm bạn bận tâm không?...',
+                          hintText:
+                              'Có chuyện gì cụ thể đang làm bạn bận tâm không?...',
                           hintStyle: GoogleFonts.plusJakartaSans(
                             color: Colors.grey.shade400,
                             fontSize: 13,
@@ -365,7 +364,9 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: Color(0xFFFF9A9E)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFFF9A9E),
+                            ),
                           ),
                           contentPadding: const EdgeInsets.all(16),
                         ),
@@ -405,7 +406,9 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                     ? []
                     : [
                         BoxShadow(
-                          color: const Color(0xFFE056FD).withValues(alpha: 0.25),
+                          color: const Color(
+                            0xFFE056FD,
+                          ).withValues(alpha: 0.25),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -424,7 +427,10 @@ class _CouplesEmotionsCheckinState extends State<CouplesEmotionsCheckin> {
                             note: _noteController.text.trim(),
                           );
                           if (!context.mounted) return;
-                          Navigator.pushNamed(context, '/relationship/confirmed');
+                          Navigator.pushNamed(
+                            context,
+                            '/relationship/confirmed',
+                          );
                         } catch (e) {
                           if (!context.mounted) return;
                           BondyFeedback.showError(context, e);

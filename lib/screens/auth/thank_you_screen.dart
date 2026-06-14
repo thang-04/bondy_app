@@ -11,9 +11,7 @@ class ThankYouScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
+        decoration: const BoxDecoration(color: Colors.white),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -29,10 +27,7 @@ class ThankYouScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Text(
-                      '✨',
-                      style: TextStyle(fontSize: 48),
-                    ),
+                    child: Text('✨', style: TextStyle(fontSize: 48)),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -58,7 +53,9 @@ class ThankYouScreen extends StatelessWidget {
                 BondyButton(
                   text: 'Bắt đầu ngay',
                   onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/home', (route) => false);
                   },
                 ),
               ],

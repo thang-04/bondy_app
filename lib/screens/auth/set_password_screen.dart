@@ -80,7 +80,10 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -99,9 +102,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Tạo mật khẩu',
@@ -146,12 +147,15 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                         const SizedBox(height: 24),
                         BondyButton(
                           key: const Key('register_submit_button'),
-                          text: auth.isLoading ? 'Đang tạo...' : 'Tạo tài khoản',
+                          text: auth.isLoading
+                              ? 'Đang tạo...'
+                              : 'Tạo tài khoản',
                           isLoading: auth.isLoading,
                           borderRadius: 30,
                           onPressed: _isValid && !auth.isLoading
-                              ? () =>
-                                    context.read<AuthViewModel>().setPasswordAndNavigate(
+                              ? () => context
+                                    .read<AuthViewModel>()
+                                    .setPasswordAndNavigate(
                                       context,
                                       _passwordController.text,
                                     )
@@ -232,7 +236,7 @@ class _SetPasswordTextFieldState extends State<_SetPasswordTextField> {
                   color: BondyColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : [bondySoftShadow(0.02)],
       ),
@@ -261,7 +265,9 @@ class _SetPasswordTextFieldState extends State<_SetPasswordTextField> {
                       _obscureText
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: _isFocused ? BondyColors.primary : BondyColors.textHint,
+                      color: _isFocused
+                          ? BondyColors.primary
+                          : BondyColors.textHint,
                       size: 22,
                     ),
                     onPressed: () {
@@ -281,7 +287,10 @@ class _SetPasswordTextFieldState extends State<_SetPasswordTextField> {
             horizontal: 20,
             vertical: 18,
           ),
-          hintStyle: GoogleFonts.manrope(color: BondyColors.textHint, fontSize: 15),
+          hintStyle: GoogleFonts.manrope(
+            color: BondyColors.textHint,
+            fontSize: 15,
+          ),
         ),
         style: GoogleFonts.manrope(
           fontSize: 16,

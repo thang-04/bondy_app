@@ -17,15 +17,15 @@ class _SurveyIntroGraphicState extends State<SurveyIntroGraphic>
   void initState() {
     super.initState();
     _controller = AnimationController(
-       vsync: this,
-       duration: const Duration(seconds: 3),
+      vsync: this,
+      duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
-    
+
     // Float up and down by 10 pixels
-    _animation = Tween<double>(begin: 0, end: -10).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    _animation = Tween<double>(
+      begin: 0,
+      end: -10,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -44,9 +44,7 @@ class _SurveyIntroGraphicState extends State<SurveyIntroGraphic>
           child: SizedBox(
             width: 256,
             height: 256,
-            child: CustomPaint(
-              painter: _GraphicPainter(),
-            ),
+            child: CustomPaint(painter: _GraphicPainter()),
           ),
         );
       },
@@ -76,7 +74,7 @@ class _GraphicPainter extends CustomPainter {
         end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(20, 25, 160, 155))
       ..style = PaintingStyle.fill;
-      
+
     final Path heartPath = Path()
       ..moveTo(100, 180)
       ..cubicTo(40, 130, 20, 90, 20, 60)
@@ -92,7 +90,7 @@ class _GraphicPainter extends CustomPainter {
     final Path dashedArc = Path()
       ..moveTo(60, 60)
       ..quadraticBezierTo(100, 20, 140, 60);
-      
+
     canvas.drawPath(
       dashedArc,
       Paint()
@@ -104,11 +102,20 @@ class _GraphicPainter extends CustomPainter {
 
     // Floating particles (circles)
     canvas.drawCircle(
-        const Offset(100, 40), 4, Paint()..color = Colors.white.withValues(alpha: 0.8));
-    canvas.drawCircle(const Offset(160, 50), 8,
-        Paint()..color = const Color(0xFFE797A3).withValues(alpha: 0.6));
-    canvas.drawCircle(const Offset(40, 120), 6,
-        Paint()..color = const Color(0xFFCC99CC).withValues(alpha: 0.6));
+      const Offset(100, 40),
+      4,
+      Paint()..color = Colors.white.withValues(alpha: 0.8),
+    );
+    canvas.drawCircle(
+      const Offset(160, 50),
+      8,
+      Paint()..color = const Color(0xFFE797A3).withValues(alpha: 0.6),
+    );
+    canvas.drawCircle(
+      const Offset(40, 120),
+      6,
+      Paint()..color = const Color(0xFFCC99CC).withValues(alpha: 0.6),
+    );
 
     canvas.restore();
   }

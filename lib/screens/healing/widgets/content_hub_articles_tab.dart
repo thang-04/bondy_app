@@ -27,7 +27,9 @@ class _ContentHubArticlesTabState extends State<ContentHubArticlesTab> {
   Widget build(BuildContext context) {
     final categories = <String>{
       'Tất cả',
-      ...widget.articles.map((item) => _titleCase(item.category)).where((item) => item.isNotEmpty),
+      ...widget.articles
+          .map((item) => _titleCase(item.category))
+          .where((item) => item.isNotEmpty),
     }.toList();
     final items = _filteredArticles();
 
@@ -54,9 +56,15 @@ class _ContentHubArticlesTabState extends State<ContentHubArticlesTab> {
               decoration: InputDecoration(
                 hintText: 'Tìm bài đọc, chủ đề...',
                 hintStyle: healingText(color: HealingStitchColors.textMuted),
-                prefixIcon: const Icon(Icons.search, color: HealingStitchColors.textMuted),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: HealingStitchColors.textMuted,
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
               ),
             ),
           ),
@@ -100,11 +108,15 @@ class _ContentHubArticlesTabState extends State<ContentHubArticlesTab> {
   List<HealingContentPreview> _filteredArticles() {
     final query = _searchController.text.trim().toLowerCase();
     return widget.articles.where((item) {
-      final matchesCategory = _selectedCategory == 'Tất cả' ||
+      final matchesCategory =
+          _selectedCategory == 'Tất cả' ||
           _titleCase(item.category) == _selectedCategory;
-      final haystack = [item.title, item.summary, item.category, ...item.tags]
-          .join(' ')
-          .toLowerCase();
+      final haystack = [
+        item.title,
+        item.summary,
+        item.category,
+        ...item.tags,
+      ].join(' ').toLowerCase();
       final matchesQuery = query.isEmpty || haystack.contains(query);
       return matchesCategory && matchesQuery;
     }).toList();
@@ -133,7 +145,9 @@ class _ArticleCategoryChip extends StatelessWidget {
           color: isSelected ? HealingStitchColors.paleCoral : Colors.white,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? HealingStitchColors.paleCoral : const Color(0xFFF3F4F6),
+            color: isSelected
+                ? HealingStitchColors.paleCoral
+                : const Color(0xFFF3F4F6),
           ),
         ),
         child: Text(
@@ -141,7 +155,9 @@ class _ArticleCategoryChip extends StatelessWidget {
           style: healingText(
             size: 14,
             weight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? HealingStitchColors.pink : HealingStitchColors.textSoft,
+            color: isSelected
+                ? HealingStitchColors.pink
+                : HealingStitchColors.textSoft,
           ),
         ),
       ),
@@ -186,18 +202,30 @@ class _ArticleCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   article.title,
-                  style: healingText(size: 18, weight: FontWeight.w800, height: 1.2),
+                  style: healingText(
+                    size: 18,
+                    weight: FontWeight.w800,
+                    height: 1.2,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 14, color: HealingStitchColors.textMuted),
+                    const Icon(
+                      Icons.schedule,
+                      size: 14,
+                      color: HealingStitchColors.textMuted,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       _durationLabel(article),
-                      style: healingText(size: 12, weight: FontWeight.w600, color: HealingStitchColors.textMuted),
+                      style: healingText(
+                        size: 12,
+                        weight: FontWeight.w600,
+                        color: HealingStitchColors.textMuted,
+                      ),
                     ),
                   ],
                 ),

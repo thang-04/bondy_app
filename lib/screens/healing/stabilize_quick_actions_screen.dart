@@ -7,17 +7,18 @@ class StabilizeQuickActionsScreen extends StatefulWidget {
   const StabilizeQuickActionsScreen({super.key});
 
   @override
-  State<StabilizeQuickActionsScreen> createState() => _StabilizeQuickActionsScreenState();
+  State<StabilizeQuickActionsScreen> createState() =>
+      _StabilizeQuickActionsScreenState();
 }
 
-class _StabilizeQuickActionsScreenState extends State<StabilizeQuickActionsScreen> {
+class _StabilizeQuickActionsScreenState
+    extends State<StabilizeQuickActionsScreen> {
   final Set<String> _completedActions = {};
 
   Future<void> _openExercise(String id) async {
-    final result = await Navigator.of(context).pushNamed(
-      healingExerciseDetailRoute,
-      arguments: id,
-    );
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(healingExerciseDetailRoute, arguments: id);
     if (result == true) {
       setState(() {
         _completedActions.add(id);
@@ -33,7 +34,10 @@ class _StabilizeQuickActionsScreenState extends State<StabilizeQuickActionsScree
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Mình tạm ổn định trước nhé', style: healingText(size: 22, weight: FontWeight.w900)),
+          Text(
+            'Mình tạm ổn định trước nhé',
+            style: healingText(size: 22, weight: FontWeight.w900),
+          ),
           const SizedBox(height: 12),
           // Bug fix: IDs phải khớp với seed data trong
           // bondy_server/src/service/healing.seed.ts (exercise-breathing-478,
@@ -91,7 +95,9 @@ class _ActionTile extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isCompleted ? const Color(0xFF86EFAC) : const Color(0xFFF2F0ED),
+          color: isCompleted
+              ? const Color(0xFF86EFAC)
+              : const Color(0xFFF2F0ED),
         ),
       ),
       child: ListTile(
@@ -104,22 +110,38 @@ class _ActionTile extends StatelessWidget {
                   color: Color(0xFFDCFCE7),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, size: 20, color: Color(0xFF16A34A)),
+                child: const Icon(
+                  Icons.check,
+                  size: 20,
+                  color: Color(0xFF16A34A),
+                ),
               )
             : null,
         title: Text(
           title,
           style: healingText(
             weight: FontWeight.w800,
-            color: isCompleted ? const Color(0xFF15803D) : HealingStitchColors.textMain,
+            color: isCompleted
+                ? const Color(0xFF15803D)
+                : HealingStitchColors.textMain,
           ),
         ),
         subtitle: isCompleted
             ? Text(
                 'Đã hoàn thành ✓',
-                style: healingText(size: 12, weight: FontWeight.w600, color: const Color(0xFF16A34A)),
+                style: healingText(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: const Color(0xFF16A34A),
+                ),
               )
-            : Text(subtitle, style: healingText(size: 12, color: HealingStitchColors.textMuted)),
+            : Text(
+                subtitle,
+                style: healingText(
+                  size: 12,
+                  color: HealingStitchColors.textMuted,
+                ),
+              ),
         trailing: isCompleted
             ? const Icon(Icons.check_circle, size: 24, color: Color(0xFF16A34A))
             : const Icon(Icons.arrow_forward_ios, size: 16),

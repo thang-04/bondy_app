@@ -23,9 +23,7 @@ class MoodDistributionChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BondyColors.divider),
       ),
-      child: Column(
-        children: entries.map((e) => _buildRow(e)).toList(),
-      ),
+      child: Column(children: entries.map((e) => _buildRow(e)).toList()),
     );
   }
 
@@ -39,7 +37,9 @@ class MoodDistributionChart extends StatelessWidget {
             child: Text(
               _moodLabel(entry.mood),
               style: const TextStyle(
-                  fontSize: 13, color: BondyColors.textSecondary),
+                fontSize: 13,
+                color: BondyColors.textSecondary,
+              ),
             ),
           ),
           Expanded(
@@ -50,7 +50,8 @@ class MoodDistributionChart extends StatelessWidget {
                 minHeight: 10,
                 backgroundColor: BondyColors.divider,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                    _moodColor(entry.mood)),
+                  _moodColor(entry.mood),
+                ),
               ),
             ),
           ),
@@ -60,9 +61,10 @@ class MoodDistributionChart extends StatelessWidget {
             child: Text(
               '${entry.percentage}%',
               style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: BondyColors.textSecondary),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: BondyColors.textSecondary,
+              ),
               textAlign: TextAlign.right,
             ),
           ),

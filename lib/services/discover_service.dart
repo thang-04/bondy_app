@@ -1,4 +1,5 @@
 import '../core/bondy_exceptions.dart';
+import '../core/media_url.dart';
 import '../models/discover/discover_profile_model.dart';
 import 'api_client.dart';
 
@@ -26,8 +27,59 @@ class SwipeResult {
   final bool matched;
   final String? matchId;
   final String? conversationId;
+  final SwipeMatchPreview? matchPreview;
 
-  const SwipeResult({required this.matched, this.matchId, this.conversationId});
+  const SwipeResult({
+    required this.matched,
+    this.matchId,
+    this.conversationId,
+    this.matchPreview,
+  });
+}
+
+class SwipeMatchUser {
+  final String id;
+  final String name;
+  final String? photo;
+
+  const SwipeMatchUser({required this.id, required this.name, this.photo});
+
+  factory SwipeMatchUser.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return const SwipeMatchUser(id: '', name: '');
+    }
+    return SwipeMatchUser(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      photo: rewriteMediaUrl(json['photo']?.toString()),
+    );
+  }
+}
+
+class SwipeMatchPreview {
+  final String? matchId;
+  final String? conversationId;
+  final SwipeMatchUser current;
+  final SwipeMatchUser other;
+
+  const SwipeMatchPreview({
+    this.matchId,
+    this.conversationId,
+    required this.current,
+    required this.other,
+  });
+
+  factory SwipeMatchPreview.fromJson(Map<String, dynamic>? json) {
+    final users = json?['users'] as Map<String, dynamic>?;
+    return SwipeMatchPreview(
+      matchId: json?['matchId']?.toString(),
+      conversationId: json?['conversationId']?.toString(),
+      current: SwipeMatchUser.fromJson(
+        users?['current'] as Map<String, dynamic>?,
+      ),
+      other: SwipeMatchUser.fromJson(users?['other'] as Map<String, dynamic>?),
+    );
+  }
 }
 
 class DiscoverFetchResult {
@@ -44,6 +96,26 @@ class DiscoverService {
 
   DiscoverService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
+
+  List<String>? _stringList(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is List) {
+      final values = raw
+          .map((item) => item.toString())
+          .where((item) => item.trim().isNotEmpty)
+          .toList();
+      return values.isEmpty ? null : values;
+    }
+    if (raw is String && raw.trim().isNotEmpty) {
+      final values = raw
+          .split(',')
+          .map((item) => item.trim())
+          .where((item) => item.isNotEmpty)
+          .toList();
+      return values.isEmpty ? null : values;
+    }
+    return null;
+  }
 
   Future<DiscoverFetchResult> fetchProfilesFull({
     Map<String, dynamic>? filters,
@@ -90,6 +162,11 @@ class DiscoverService {
         matched: data['matched'] == true,
         matchId: data['matchId']?.toString(),
         conversationId: data['conversationId']?.toString(),
+        matchPreview: data['matchPreview'] is Map<String, dynamic>
+            ? SwipeMatchPreview.fromJson(
+                data['matchPreview'] as Map<String, dynamic>,
+              )
+            : null,
       );
     } on ApiClientException catch (e) {
       if (e.code == 'QUOTA_EXCEEDED') {
@@ -106,16 +183,16 @@ class DiscoverService {
     );
     final data = response['data'] as Map<String, dynamic>? ?? {};
     return DiscoverFilters(
-      minAge: (data['minAge'] as num?)?.toInt(),
-      maxAge: (data['maxAge'] as num?)?.toInt(),
-      maxDistance: (data['maxDistance'] as num?)?.toInt(),
-      gender: data['gender']?.toString(),
-      orientation: data['orientation']?.toString(),
-      datingGoal: data['datingGoal']?.toString(),
-      interests: (data['interests'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList(),
+      minAge: ((data['ageMin'] ?? data['minAge']) as num?)?.toInt(),
+      maxAge: ((data['ageMax'] ?? data['maxAge']) as num?)?.toInt(),
+      maxDistance: ((data['distanceKm'] ?? data['maxDistance']) as num?)
+          ?.toInt(),
+      genders: _stringList(data['genders'] ?? data['gender']),
+      orientations: _stringList(data['orientations'] ?? data['orientation']),
+      goals: _stringList(data['goals'] ?? data['datingGoal']),
+      interests: _stringList(data['interestIds'] ?? data['interests']),
       minCompatibility: (data['minCompatibility'] as num?)?.toInt(),
+      vibes: _stringList(data['vibes']),
     );
   }
 
@@ -126,13 +203,19 @@ class DiscoverService {
       body: {
         if (filters.minAge != null) 'minAge': filters.minAge,
         if (filters.maxAge != null) 'maxAge': filters.maxAge,
-        if (filters.maxDistance != null) 'maxDistance': filters.maxDistance,
-        if (filters.gender != null) 'gender': filters.gender,
-        if (filters.orientation != null) 'orientation': filters.orientation,
-        if (filters.datingGoal != null) 'datingGoal': filters.datingGoal,
-        if (filters.interests != null) 'interests': filters.interests,
+        if (filters.maxDistance != null) 'distanceKm': filters.maxDistance,
+        if (filters.genders != null && filters.genders!.isNotEmpty)
+          'genders': filters.genders,
+        if (filters.orientations != null && filters.orientations!.isNotEmpty)
+          'orientations': filters.orientations,
+        if (filters.goals != null && filters.goals!.isNotEmpty)
+          'goals': filters.goals,
+        if (filters.interests != null && filters.interests!.isNotEmpty)
+          'interestIds': filters.interests,
         if (filters.minCompatibility != null)
           'minCompatibility': filters.minCompatibility,
+        if (filters.vibes != null && filters.vibes!.isNotEmpty)
+          'vibes': filters.vibes,
       },
     );
   }

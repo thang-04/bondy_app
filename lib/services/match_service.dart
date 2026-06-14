@@ -39,8 +39,7 @@ class PendingMatch {
     );
   }
 
-  bool get needsConfirmation =>
-      status == 'PENDING' && chatId == null;
+  bool get needsConfirmation => status == 'PENDING' && chatId == null;
 }
 
 class ConfirmMatchResult {

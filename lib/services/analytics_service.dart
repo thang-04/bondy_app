@@ -37,14 +37,19 @@ class AnalyticsService {
   void appOpen() => track('app_open');
 
   void signupStart() => track('signup_start');
-  void signupComplete(String userId) => track('signup_complete', {'userId': userId});
+  void signupComplete(String userId) =>
+      track('signup_complete', {'userId': userId});
   void profileComplete() => track('profile_complete');
 
   void discoverView() => track('discover_view');
-  void swipeLike(String targetUserId) => track('swipe_like', {'targetUserId': targetUserId});
-  void swipePass(String targetUserId) => track('swipe_pass', {'targetUserId': targetUserId});
-  void matchCreated(String matchId) => track('match_created', {'matchId': matchId});
-  void matchConfirmed(String matchId) => track('match_confirmed', {'matchId': matchId});
+  void swipeLike(String targetUserId) =>
+      track('swipe_like', {'targetUserId': targetUserId});
+  void swipePass(String targetUserId) =>
+      track('swipe_pass', {'targetUserId': targetUserId});
+  void matchCreated(String matchId) =>
+      track('match_created', {'matchId': matchId});
+  void matchConfirmed(String matchId) =>
+      track('match_confirmed', {'matchId': matchId});
 
   void chatOpened(String chatId) => track('chat_opened', {'chatId': chatId});
   void messageSent(String chatId, String messageType) =>

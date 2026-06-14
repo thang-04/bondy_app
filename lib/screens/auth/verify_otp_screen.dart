@@ -102,7 +102,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
     // If verify succeeded, navigate to set-new-password
     if (auth.errorMessage == null && mounted) {
-      Navigator.of(context).pushNamed('/set-new-password', arguments: widget.email);
+      Navigator.of(
+        context,
+      ).pushNamed('/set-new-password', arguments: widget.email);
     }
   }
 
@@ -161,7 +163,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -180,9 +185,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Xác thực mã OTP',
@@ -206,7 +209,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: List.generate(6, (index) {
-                            final isFilled = _controllers[index].text.isNotEmpty;
+                            final isFilled =
+                                _controllers[index].text.isNotEmpty;
                             return SizedBox(
                               width: 48,
                               height: 58,
@@ -230,7 +234,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                     _focusNodes[index - 1].requestFocus();
                                   }
                                   setState(() {
-                                    _isComplete = _controllers.every((c) => c.text.isNotEmpty);
+                                    _isComplete = _controllers.every(
+                                      (c) => c.text.isNotEmpty,
+                                    );
                                   });
                                 },
                                 style: GoogleFonts.plusJakartaSans(
@@ -265,7 +271,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                   ),
                                   filled: true,
                                   fillColor: isFilled
-                                      ? BondyColors.primaryLight.withValues(alpha: 0.4)
+                                      ? BondyColors.primaryLight.withValues(
+                                          alpha: 0.4,
+                                        )
                                       : Colors.white,
                                 ),
                               ),
@@ -299,8 +307,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           text: isLoading
                               ? 'Đang xác thực...'
                               : _isExpired
-                                  ? 'Mã đã hết hạn'
-                                  : 'Xác nhận',
+                              ? 'Mã đã hết hạn'
+                              : 'Xác nhận',
                           isLoading: isLoading,
                           borderRadius: 30,
                           onPressed: _isComplete && !_isExpired && !isLoading
@@ -312,7 +320,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         Center(
                           child: TextButton(
                             key: const Key('verify_otp_resend_button'),
-                            onPressed: !_isExpired && !isLoading ? _handleResend : null,
+                            onPressed: !_isExpired && !isLoading
+                                ? _handleResend
+                                : null,
                             child: Text(
                               'Chưa nhận được mã? Gửi lại',
                               style: GoogleFonts.plusJakartaSans(

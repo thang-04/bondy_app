@@ -45,8 +45,9 @@ class _AccountDeleteScreenState extends State<AccountDeleteScreen> {
     try {
       await _profileService.deleteAccount(password: _passwordController.text);
       if (!mounted) return;
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil('/onboarding', (_) => false);
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/onboarding', (_) => false);
     } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(context, e);
@@ -78,8 +79,7 @@ class _AccountDeleteScreenState extends State<AccountDeleteScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: BondyColors.error),
+                    Icon(Icons.warning_amber_rounded, color: BondyColors.error),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -112,12 +112,13 @@ class _AccountDeleteScreenState extends State<AccountDeleteScreen> {
                     'Subscription chưa hết hạn sẽ KHÔNG được hoàn tiền tự động — liên hệ hỗ trợ trước.',
               ),
               const _BulletItem(
-                text:
-                    'Bạn cần đăng ký lại từ đầu nếu muốn quay lại sau này.',
+                text: 'Bạn cần đăng ký lại từ đầu nếu muốn quay lại sau này.',
               ),
               const SizedBox(height: 24),
-              Text('Mật khẩu hiện tại',
-                  style: bondyText(weight: FontWeight.w700)),
+              Text(
+                'Mật khẩu hiện tại',
+                style: bondyText(weight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
@@ -129,8 +130,10 @@ class _AccountDeleteScreenState extends State<AccountDeleteScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Nhập "$_confirmPhrase" để xác nhận',
-                  style: bondyText(weight: FontWeight.w700)),
+              Text(
+                'Nhập "$_confirmPhrase" để xác nhận',
+                style: bondyText(weight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _confirmController,
@@ -175,7 +178,11 @@ class _BulletItem extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 6, right: 10),
-            child: Icon(Icons.circle, size: 6, color: BondyColors.textSecondary),
+            child: Icon(
+              Icons.circle,
+              size: 6,
+              color: BondyColors.textSecondary,
+            ),
           ),
           Expanded(
             child: Text(

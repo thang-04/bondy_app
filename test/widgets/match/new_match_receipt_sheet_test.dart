@@ -50,4 +50,36 @@ void main() {
     await tester.tap(find.text('Đóng'));
     expect(dismissed, isTrue);
   });
+
+  testWidgets('renders both current and matched user photos when provided', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: NewMatchReceiptSheet(
+              currentUserPhoto: 'https://example.com/me.jpg',
+              otherUserName: 'Linh',
+              otherUserPhoto: 'https://example.com/linh.jpg',
+              compatibilityScore: 82,
+              factors: const [],
+              onOpenChat: () {},
+              onDismiss: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+
+    expect(images, hasLength(2));
+    expect((images[0].image as NetworkImage).url, 'https://example.com/me.jpg');
+    expect(
+      (images[1].image as NetworkImage).url,
+      'https://example.com/linh.jpg',
+    );
+  });
 }

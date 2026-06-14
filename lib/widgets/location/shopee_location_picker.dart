@@ -4,12 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
 
 class ShopeeLocationPicker extends StatefulWidget {
-  final void Function(String address, double? latitude, double? longitude) onSelected;
+  final void Function(String address, double? latitude, double? longitude)
+  onSelected;
 
-  const ShopeeLocationPicker({
-    super.key,
-    required this.onSelected,
-  });
+  const ShopeeLocationPicker({super.key, required this.onSelected});
 
   @override
   State<ShopeeLocationPicker> createState() => _ShopeeLocationPickerState();
@@ -99,15 +97,22 @@ class _ShopeeLocationPickerState extends State<ShopeeLocationPicker> {
                         fillColor: const Color(0xFFF9FAFB),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: BondyColors.primary, width: 1.5),
+                          borderSide: const BorderSide(
+                            color: BondyColors.primary,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
@@ -129,7 +134,8 @@ class _ShopeeLocationPickerState extends State<ShopeeLocationPicker> {
                         controller: scrollController,
                         padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
                         itemCount: locations.length,
-                        separatorBuilder: (_, index) => const Divider(height: 1),
+                        separatorBuilder: (_, index) =>
+                            const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final address = locations[index];
                           return ListTile(

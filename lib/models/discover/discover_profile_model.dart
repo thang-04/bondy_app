@@ -60,7 +60,6 @@ class DeepMatchData {
   }
 }
 
-
 class DiscoverProfile {
   final String id;
   final String name;
@@ -124,25 +123,30 @@ class DiscoverProfile {
     final String city = json['city']?.toString() ?? '';
     final String distanceLabel = distanceKm != null
         ? (distanceKm % 1 == 0
-            ? 'Cách bạn ${distanceKm.toInt()} km'
-            : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
+              ? 'Cách bạn ${distanceKm.toInt()} km'
+              : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
         : '';
-    
+
     final String finalDistance = [
       if (distanceLabel.isNotEmpty) distanceLabel,
       if (city.isNotEmpty) city,
     ].join(' • ');
 
     final deepMatchRaw = json['deepMatch'] as Map<String, dynamic>?;
-    final deepMatch = deepMatchRaw != null ? DeepMatchData.fromJson(deepMatchRaw) : null;
+    final deepMatch = deepMatchRaw != null
+        ? DeepMatchData.fromJson(deepMatchRaw)
+        : null;
 
     final compatibilityRaw = json['compatibility'] as Map<String, dynamic>?;
     final factorsRaw = compatibilityRaw?['factors'] as List<dynamic>?;
     final List<CompatibilityFactor> compatibilityFactors = factorsRaw != null
         ? factorsRaw
-            .whereType<Map<String, dynamic>>()
-            .map((e) => CompatibilityFactor.fromJson(Map<String, dynamic>.from(e)))
-            .toList()
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (e) =>
+                    CompatibilityFactor.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList()
         : const [];
 
     return DiscoverProfile(
@@ -156,13 +160,15 @@ class DiscoverProfile {
           .whereType<Map<String, dynamic>>()
           .map(DiscoverPrompt.fromJson)
           .toList(),
-      tags: ((json['interests'] as List<dynamic>?) ??
-              (json['commonInterests'] as List<dynamic>?) ??
-              [])
-          .map((tag) => tag.toString())
-          .toList(),
+      tags:
+          ((json['interests'] as List<dynamic>?) ??
+                  (json['commonInterests'] as List<dynamic>?) ??
+                  [])
+              .map((tag) => tag.toString())
+              .toList(),
       matchPercentage: (json['matchPercentage'] as num?)?.toInt() ?? 0,
-      imageUrl: rewriteMediaUrl(
+      imageUrl:
+          rewriteMediaUrl(
             primaryPhoto?['url']?.toString() ??
                 fallbackPhoto?['url']?.toString(),
           ) ??
@@ -180,9 +186,9 @@ class DiscoverFilters {
   final int? minAge;
   final int? maxAge;
   final int? maxDistance;
-  final String? gender;
-  final String? orientation;
-  final String? datingGoal;
+  final List<String>? genders;
+  final List<String>? orientations;
+  final List<String>? goals;
   final List<String>? interests;
   final int? minCompatibility;
   final List<String>? vibes;
@@ -191,9 +197,9 @@ class DiscoverFilters {
     this.minAge,
     this.maxAge,
     this.maxDistance,
-    this.gender,
-    this.orientation,
-    this.datingGoal,
+    this.genders,
+    this.orientations,
+    this.goals,
     this.interests,
     this.minCompatibility,
     this.vibes,
@@ -204,9 +210,15 @@ class DiscoverFilters {
     if (minAge != null) params['ageMin'] = minAge;
     if (maxAge != null) params['ageMax'] = maxAge;
     if (maxDistance != null) params['distanceKm'] = maxDistance;
-    if (gender != null) params['genders'] = gender;
-    if (orientation != null) params['orientations'] = orientation;
-    if (datingGoal != null) params['goals'] = datingGoal;
+    if (genders != null && genders!.isNotEmpty) {
+      params['genders'] = genders!.join(',');
+    }
+    if (orientations != null && orientations!.isNotEmpty) {
+      params['orientations'] = orientations!.join(',');
+    }
+    if (goals != null && goals!.isNotEmpty) {
+      params['goals'] = goals!.join(',');
+    }
     if (interests != null && interests!.isNotEmpty) {
       params['interestIds'] = interests!.join(',');
     }

@@ -63,18 +63,54 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
   };
 
   final Map<String, Map<String, dynamic>> _freeTimeData = const {
-    'morning': {'label': 'Buổi sáng', 'icon': Icons.wb_sunny_outlined, 'desc': '6:00 - 12:00'},
-    'afternoon': {'label': 'Buổi chiều', 'icon': Icons.wb_twilight, 'desc': '12:00 - 18:00'},
-    'evening': {'label': 'Buổi tối', 'icon': Icons.nightlight_round_outlined, 'desc': '18:00 - 24:00'},
-    'weekend': {'label': 'Cuối tuần', 'icon': Icons.calendar_month_outlined, 'desc': 'Thứ 7 & Chủ Nhật'},
-    'flexible': {'label': 'Linh hoạt', 'icon': Icons.all_inclusive, 'desc': 'Có thể sắp xếp bất kỳ lúc nào'},
+    'morning': {
+      'label': 'Buổi sáng',
+      'icon': Icons.wb_sunny_outlined,
+      'desc': '6:00 - 12:00',
+    },
+    'afternoon': {
+      'label': 'Buổi chiều',
+      'icon': Icons.wb_twilight,
+      'desc': '12:00 - 18:00',
+    },
+    'evening': {
+      'label': 'Buổi tối',
+      'icon': Icons.nightlight_round_outlined,
+      'desc': '18:00 - 24:00',
+    },
+    'weekend': {
+      'label': 'Cuối tuần',
+      'icon': Icons.calendar_month_outlined,
+      'desc': 'Thứ 7 & Chủ Nhật',
+    },
+    'flexible': {
+      'label': 'Linh hoạt',
+      'icon': Icons.all_inclusive,
+      'desc': 'Có thể sắp xếp bất kỳ lúc nào',
+    },
   };
 
   final Map<String, Map<String, dynamic>> _partnerTypeData = const {
-    'confidant': {'label': 'Bạn tâm sự', 'icon': Icons.chat_bubble_outline_rounded, 'desc': 'Một người lắng nghe và chia sẻ mọi buồn vui'},
-    'lover': {'label': 'Người yêu', 'icon': Icons.favorite_border_rounded, 'desc': 'Kết nối lãng mạn, tìm hiểu tiến tới tình yêu'},
-    'life_partner': {'label': 'Bạn đời', 'icon': Icons.volunteer_activism_outlined, 'desc': 'Tìm kiếm một mối quan hệ cam kết lâu dài'},
-    'undecided': {'label': 'Chưa xác định', 'icon': Icons.help_outline_rounded, 'desc': 'Mở lòng với mọi kiểu kết nối tự nhiên nhất'},
+    'confidant': {
+      'label': 'Bạn tâm sự',
+      'icon': Icons.chat_bubble_outline_rounded,
+      'desc': 'Một người lắng nghe và chia sẻ mọi buồn vui',
+    },
+    'lover': {
+      'label': 'Người yêu',
+      'icon': Icons.favorite_border_rounded,
+      'desc': 'Kết nối lãng mạn, tìm hiểu tiến tới tình yêu',
+    },
+    'life_partner': {
+      'label': 'Bạn đời',
+      'icon': Icons.volunteer_activism_outlined,
+      'desc': 'Tìm kiếm một mối quan hệ cam kết lâu dài',
+    },
+    'undecided': {
+      'label': 'Chưa xác định',
+      'icon': Icons.help_outline_rounded,
+      'desc': 'Mở lòng với mọi kiểu kết nối tự nhiên nhất',
+    },
   };
 
   @override
@@ -107,9 +143,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tải thông tin hồ sơ: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi tải thông tin hồ sơ: $e')));
       }
     }
   }
@@ -145,19 +181,32 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
 
   String _getLifePathDesc(int? number) {
     switch (number) {
-      case 1: return 'Người tiên phong, độc lập và quyết đoán.';
-      case 2: return 'Người hòa giải, nhạy cảm và hợp tác.';
-      case 3: return 'Người truyền cảm hứng, sáng tạo và giao tiếp tốt.';
-      case 4: return 'Người thực tế, chăm chỉ và đáng tin cậy.';
-      case 5: return 'Người tự do, phiêu lưu và thích thích nghi.';
-      case 6: return 'Người nuôi dưỡng, trách nhiệm và yêu thương gia đình.';
-      case 7: return 'Người tìm kiếm tri thức, phân tích và sâu sắc.';
-      case 8: return 'Người điều hành, thành công và định hướng mục tiêu.';
-      case 9: return 'Người nhân đạo, cống hiến và vị tha.';
-      case 11: return 'Người có trực giác nhạy bén, tâm linh sâu sắc.';
-      case 22: return 'Người kiến tạo bậc thầy, hiện thực hóa ước mơ lớn.';
-      case 33: return 'Người thầy vĩ đại, dẫn dắt bằng tình yêu thương.';
-      default: return '';
+      case 1:
+        return 'Người tiên phong, độc lập và quyết đoán.';
+      case 2:
+        return 'Người hòa giải, nhạy cảm và hợp tác.';
+      case 3:
+        return 'Người truyền cảm hứng, sáng tạo và giao tiếp tốt.';
+      case 4:
+        return 'Người thực tế, chăm chỉ và đáng tin cậy.';
+      case 5:
+        return 'Người tự do, phiêu lưu và thích thích nghi.';
+      case 6:
+        return 'Người nuôi dưỡng, trách nhiệm và yêu thương gia đình.';
+      case 7:
+        return 'Người tìm kiếm tri thức, phân tích và sâu sắc.';
+      case 8:
+        return 'Người điều hành, thành công và định hướng mục tiêu.';
+      case 9:
+        return 'Người nhân đạo, cống hiến và vị tha.';
+      case 11:
+        return 'Người có trực giác nhạy bén, tâm linh sâu sắc.';
+      case 22:
+        return 'Người kiến tạo bậc thầy, hiện thực hóa ước mơ lớn.';
+      case 33:
+        return 'Người thầy vĩ đại, dẫn dắt bằng tình yêu thương.';
+      default:
+        return '';
     }
   }
 
@@ -175,7 +224,8 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
       setState(() => _isSubmitting = false);
 
       // Extract targetRoute from navigation arguments if any
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final isEditMode = args?['isEditMode'] == true;
 
       if (isEditMode) {
@@ -221,9 +271,7 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final int? lifePath = _lifePathNumber;
@@ -234,7 +282,11 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: BondyColors.textPrimary, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: BondyColors.textPrimary,
+            size: 18,
+          ),
           onPressed: _prevStep,
         ),
         title: Text(
@@ -456,7 +508,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
               color: isSelected ? BondyColors.primary : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? BondyColors.primary : Colors.black.withOpacity(0.06),
+                color: isSelected
+                    ? BondyColors.primary
+                    : Colors.black.withOpacity(0.06),
                 width: 1,
               ),
               boxShadow: [
@@ -537,12 +591,17 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? BondyColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? BondyColors.primary : Colors.black.withOpacity(0.06),
+                      color: isSelected
+                          ? BondyColors.primary
+                          : Colors.black.withOpacity(0.06),
                       width: 1,
                     ),
                   ),
@@ -563,7 +622,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: isSelected ? Colors.white : BondyColors.textPrimary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : BondyColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -572,7 +633,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected ? Colors.white.withOpacity(0.8) : BondyColors.textHint,
+                                color: isSelected
+                                    ? Colors.white.withOpacity(0.8)
+                                    : BondyColors.textHint,
                               ),
                             ),
                           ],
@@ -628,12 +691,17 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
               child: GestureDetector(
                 onTap: () => setState(() => _selectedPartnerType = key),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? BondyColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? BondyColors.primary : Colors.black.withOpacity(0.06),
+                      color: isSelected
+                          ? BondyColors.primary
+                          : Colors.black.withOpacity(0.06),
                       width: 1,
                     ),
                   ),
@@ -654,7 +722,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: isSelected ? Colors.white : BondyColors.textPrimary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : BondyColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -663,7 +733,9 @@ class _DeepMatchSetupScreenState extends State<DeepMatchSetupScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected ? Colors.white.withOpacity(0.8) : BondyColors.textHint,
+                                color: isSelected
+                                    ? Colors.white.withOpacity(0.8)
+                                    : BondyColors.textHint,
                               ),
                             ),
                           ],

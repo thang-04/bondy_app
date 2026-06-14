@@ -8,7 +8,7 @@ class SubscriptionViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   SubscriptionViewModel({SubscriptionService? service})
-      : _service = service ?? SubscriptionService();
+    : _service = service ?? SubscriptionService();
 
   SubscriptionInfo? get currentSubscription => _currentSubscription;
   bool get isLoading => _isLoading;

@@ -24,7 +24,8 @@ class AIPromptsConfig {
       'price': '\$\$',
       'vibe': 'Yên tĩnh',
       'description': 'Phù hợp với vibe của hai bạn',
-      'image': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=600',
+      'image':
+          'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=600',
     },
     {
       'name': "Pizza 4P's",
@@ -33,7 +34,8 @@ class AIPromptsConfig {
       'price': '\$\$\$',
       'vibe': 'Lãng mạn',
       'description': 'Không gian lãng mạn',
-      'image': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=600',
+      'image':
+          'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=600',
     },
     {
       'name': 'West Lake Sunset',
@@ -42,7 +44,8 @@ class AIPromptsConfig {
       'price': 'Free',
       'vibe': 'Dạo bộ',
       'description': 'Thư giãn cuối tuần',
-      'image': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600',
+      'image':
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600',
     },
   ];
 }

@@ -13,7 +13,12 @@ class ApiClientException implements Exception {
   final String? code;
   final Map<String, dynamic>? data;
 
-  const ApiClientException(this.message, {this.statusCode, this.code, this.data});
+  const ApiClientException(
+    this.message, {
+    this.statusCode,
+    this.code,
+    this.data,
+  });
 
   @override
   String toString() => message;
@@ -117,7 +122,9 @@ class ApiClient {
     request,
   }) async {
     try {
-      var response = await request(await _headers(authenticated: authenticated));
+      var response = await request(
+        await _headers(authenticated: authenticated),
+      );
 
       if (authenticated && response.statusCode == 401) {
         try {
@@ -141,9 +148,13 @@ class ApiClient {
     } on SessionExpiredException {
       rethrow;
     } on SocketException {
-      throw const ApiClientException('Không có kết nối mạng. Vui lòng kiểm tra Internet.');
+      throw const ApiClientException(
+        'Không có kết nối mạng. Vui lòng kiểm tra Internet.',
+      );
     } on TimeoutException {
-      throw const ApiClientException('Kết nối quá lâu. Kiểm tra mạng và thử lại.');
+      throw const ApiClientException(
+        'Kết nối quá lâu. Kiểm tra mạng và thử lại.',
+      );
     } on http.ClientException {
       throw const ApiClientException(
         'Không kết nối được máy chủ. Kiểm tra mạng hoặc địa chỉ API.',
@@ -186,7 +197,8 @@ class ApiClient {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final errorCode = body['code']?.toString();
-      final serverMessage = body['error']?.toString() ??
+      final serverMessage =
+          body['error']?.toString() ??
           body['message']?.toString() ??
           _statusFallback(response.statusCode);
       final responseData = body['data'] is Map<String, dynamic>

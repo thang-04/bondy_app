@@ -3,6 +3,7 @@
 enum MissingField {
   fullName,
   gender,
+  preferredGenders,
   birthDate,
   city,
   photos,
@@ -13,6 +14,7 @@ enum MissingField {
 
 enum NextOnboardingAction {
   COMPLETE_PROFILE,
+  SET_MATCH_PREFERENCES,
   ADD_PHOTOS,
   SET_LOCATION,
   ADD_INTERESTS,

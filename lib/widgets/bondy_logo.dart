@@ -10,7 +10,8 @@ class BondyLogo extends StatelessWidget {
   const BondyLogo({
     super.key,
     this.size = 200, // Increased default size
-    this.showText = true, // The new logo image already has text, but kept for compatibility if needed.
+    this.showText =
+        true, // The new logo image already has text, but kept for compatibility if needed.
     this.showTagline = false,
   });
 

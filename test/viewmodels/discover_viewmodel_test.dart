@@ -133,6 +133,20 @@ void main() {
           matched: true,
           matchId: 'match-123',
           conversationId: 'chat-456',
+          matchPreview: SwipeMatchPreview(
+            matchId: 'match-123',
+            conversationId: 'chat-456',
+            current: SwipeMatchUser(
+              id: 'me',
+              name: 'An',
+              photo: 'https://example.com/me.jpg',
+            ),
+            other: SwipeMatchUser(
+              id: 'candidate-id',
+              name: 'Linh',
+              photo: 'https://example.com/linh.jpg',
+            ),
+          ),
         ),
       );
       final viewModel = DiscoverViewModel(service: service);
@@ -142,6 +156,18 @@ void main() {
       expect(matched, true);
       expect(viewModel.lastMatchId, 'match-123');
       expect(viewModel.lastConversationId, 'chat-456');
+      expect(
+        viewModel.lastMatchPreview?.current.photo,
+        'https://example.com/me.jpg',
+      );
+      expect(
+        viewModel.lastMatchPreview?.other.photo,
+        'https://example.com/linh.jpg',
+      );
+
+      viewModel.clearLastMatch();
+
+      expect(viewModel.lastMatchPreview, isNull);
     },
   );
 }

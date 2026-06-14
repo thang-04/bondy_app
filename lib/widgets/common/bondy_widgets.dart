@@ -22,8 +22,7 @@ TextStyle bondyText({
   FontWeight weight = FontWeight.w500,
   Color color = HealingStitchColors.textMain,
   double? height,
-}) =>
-    healingText(size: size, weight: weight, color: color, height: height);
+}) => healingText(size: size, weight: weight, color: color, height: height);
 
 /// Canonical soft shadow used by cards and surfaces.
 BoxShadow bondySoftShadow([double opacity = 0.05]) =>

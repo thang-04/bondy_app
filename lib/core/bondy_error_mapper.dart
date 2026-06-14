@@ -48,7 +48,9 @@ class BondyErrorMapper {
       return 'Dữ liệu nhận về không hợp lệ. Vui lòng thử lại.';
     }
     if (error is PlatformException) {
-      return _clean(error.message ?? 'Không thực hiện được thao tác trên thiết bị.');
+      return _clean(
+        error.message ?? 'Không thực hiện được thao tác trên thiết bị.',
+      );
     }
     if (error is StateError) {
       return _clean(error.message);
@@ -95,7 +97,7 @@ class BondyErrorMapper {
 
   static String _clean(String? value) {
     var text = (value ?? '').trim();
-    
+
     // Loại bỏ các tiền tố Exception/Error phổ biến để lấy thông báo thực tế
     if (text.toLowerCase().startsWith('exception:')) {
       text = text.substring(10).trim();

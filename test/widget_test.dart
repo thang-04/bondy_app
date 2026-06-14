@@ -13,9 +13,7 @@ void main() {
 
   testWidgets('Material smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: Text('Bondy')),
-      ),
+      const MaterialApp(home: Scaffold(body: Text('Bondy'))),
     );
     expect(find.text('Bondy'), findsOneWidget);
   });

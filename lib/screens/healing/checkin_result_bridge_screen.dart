@@ -51,8 +51,9 @@ class CheckinResultBridgeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil(healingHomeRoute, (_) => false),
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil(healingHomeRoute, (_) => false),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                     ),
@@ -77,27 +78,33 @@ class CheckinResultBridgeScreen extends StatelessWidget {
     final ar = bundle.suggestedArticle;
     final co = bundle.suggestedCourse;
     if (ex != null) {
-      widgets.add(_SuggestionCard(
-        item: ex,
-        badge: 'BÀI TẬP',
-        onTap: () => _openContent(context, ex),
-      ));
+      widgets.add(
+        _SuggestionCard(
+          item: ex,
+          badge: 'BÀI TẬP',
+          onTap: () => _openContent(context, ex),
+        ),
+      );
     }
     if (ar != null) {
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 10));
-      widgets.add(_SuggestionCard(
-        item: ar,
-        badge: 'BÀI ĐỌC',
-        onTap: () => _openContent(context, ar),
-      ));
+      widgets.add(
+        _SuggestionCard(
+          item: ar,
+          badge: 'BÀI ĐỌC',
+          onTap: () => _openContent(context, ar),
+        ),
+      );
     }
     if (co != null) {
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 10));
-      widgets.add(_SuggestionCard(
-        item: co,
-        badge: 'KHOÁ HỌC',
-        onTap: () => _openContent(context, co),
-      ));
+      widgets.add(
+        _SuggestionCard(
+          item: co,
+          badge: 'KHOÁ HỌC',
+          onTap: () => _openContent(context, co),
+        ),
+      );
     }
     return widgets;
   }
@@ -111,7 +118,8 @@ class CheckinResultBridgeScreen extends StatelessWidget {
   }
 
   void _onPrimaryCta(BuildContext context, HealingRecoveryBundle? bundle) {
-    final firstSuggestion = bundle?.suggestedExercise ??
+    final firstSuggestion =
+        bundle?.suggestedExercise ??
         bundle?.suggestedArticle ??
         bundle?.suggestedCourse;
     if (firstSuggestion != null) {
@@ -146,10 +154,7 @@ class _BridgeAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: onClose,
-          ),
+          IconButton(icon: const Icon(Icons.close), onPressed: onClose),
           Expanded(
             child: Text(
               'Kết quả check-in',
@@ -191,7 +196,8 @@ class _MoodHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mood = _extractMood(result);
-    final acknowledgement = result?.recoveryBundle.acknowledgement.isNotEmpty == true
+    final acknowledgement =
+        result?.recoveryBundle.acknowledgement.isNotEmpty == true
         ? result!.recoveryBundle.acknowledgement
         : 'Bạn đã check-in hôm nay';
     return Container(
@@ -209,7 +215,11 @@ class _MoodHeader extends StatelessWidget {
           Expanded(
             child: Text(
               acknowledgement,
-              style: healingText(size: 16, weight: FontWeight.w900, height: 1.35),
+              style: healingText(
+                size: 16,
+                weight: FontWeight.w900,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -234,7 +244,11 @@ class _GroundingBlock extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: healingText(size: 13, height: 1.45, color: const Color(0xFF9A3412)),
+        style: healingText(
+          size: 13,
+          height: 1.45,
+          color: const Color(0xFF9A3412),
+        ),
       ),
     );
   }
@@ -373,10 +387,7 @@ class _ReflectionBlock extends StatelessWidget {
             ).copyWith(letterSpacing: 0.8),
           ),
           const SizedBox(height: 6),
-          Text(
-            prompt,
-            style: healingText(size: 13, height: 1.45),
-          ),
+          Text(prompt, style: healingText(size: 13, height: 1.45)),
         ],
       ),
     );

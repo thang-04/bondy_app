@@ -6,44 +6,45 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('keeps plan audio completable when the audio file is unavailable', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    Object? result;
+  testWidgets(
+    'keeps plan audio completable when the audio file is unavailable',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      Object? result;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => ElevatedButton(
-            onPressed: () async {
-              result = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (_) => HealingAudioPlayerScreen(
-                    planMode: true,
-                    audioId: 'audio-name-the-loop',
-                    service: _FakeAudioDataSource(),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                result = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => HealingAudioPlayerScreen(
+                      planMode: true,
+                      audioId: 'audio-name-the-loop',
+                      service: _FakeAudioDataSource(),
+                    ),
                   ),
-                ),
-              );
-            },
-            child: const Text('Open audio'),
+                );
+              },
+              child: const Text('Open audio'),
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Open audio'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Open audio'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Day 1 audio'), findsOneWidget);
-    expect(find.textContaining('file'), findsOneWidget);
+      expect(find.text('Day 1 audio'), findsOneWidget);
+      expect(find.textContaining('file'), findsOneWidget);
 
-    await tester.tap(find.textContaining('session'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('session'));
+      await tester.pumpAndSettle();
 
-    expect(result, isTrue);
-  });
+      expect(result, isTrue);
+    },
+  );
 }
 
 class _FakeAudioDataSource implements HealingDataSource {

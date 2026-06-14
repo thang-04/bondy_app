@@ -31,6 +31,7 @@ import 'screens/auth/basic_profile_setup_screen.dart';
 import 'screens/auth/interests_setup_screen.dart';
 import 'screens/auth/image_upload_screen.dart';
 import 'screens/auth/google_map_location_screen.dart';
+import 'screens/auth/match_preferences_setup_screen.dart';
 
 // Survey screens
 import 'screens/survey/survey_intro_screen.dart';
@@ -239,6 +240,8 @@ class BondyApp extends StatelessWidget {
           },
           '/verify-email': (context) => const VerifyEmailScreen(),
           '/profile-setup': (context) => const BasicProfileSetupScreen(),
+          '/match-preferences/setup': (context) =>
+              const MatchPreferencesSetupScreen(),
           '/interests-setup': (context) => const InterestsSetupScreen(),
           '/survey/intro': (context) => const SurveyIntroScreen(),
           '/survey/question': (context) => const SurveyQuestionScreen(),

@@ -111,6 +111,7 @@ class _MockAuthService implements AuthService {
     _accessToken = accessToken;
     _refreshToken = refreshToken;
   }
+
   String get baseUrl => 'https://api.example.com/api';
 }
 

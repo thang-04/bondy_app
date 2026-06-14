@@ -34,8 +34,9 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
     _viewModel.addListener(_onViewModelChange);
     _viewModel.loadMatchStatus();
 
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
 
     _pulseController = AnimationController(
       vsync: this,
@@ -47,14 +48,18 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
     );
 
     // Fetch current user photo
-    AuthService().getCurrentUser().then((user) {
-      if (mounted) {
-        setState(() {
-          _currentUserName = user['name'] ?? 'Bạn';
-          _currentUserPhoto = user['profile']?['photos']?[0] ?? user['image'];
-        });
-      }
-    }).catchError((_) {});
+    AuthService()
+        .getCurrentUser()
+        .then((user) {
+          if (mounted) {
+            setState(() {
+              _currentUserName = user['name'] ?? 'Bạn';
+              _currentUserPhoto =
+                  user['profile']?['photos']?[0] ?? user['image'];
+            });
+          }
+        })
+        .catchError((_) {});
   }
 
   void _onViewModelChange() {
@@ -179,8 +184,10 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
                     top: 10,
                     left: 10,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: BondyColors.textPrimary),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: BondyColors.textPrimary,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
@@ -244,7 +251,9 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: BondyColors.primary.withValues(alpha: shadowAlpha),
+                          color: BondyColors.primary.withValues(
+                            alpha: shadowAlpha,
+                          ),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
@@ -261,7 +270,9 @@ class _MatchConfirmationScreenState extends State<MatchConfirmationScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: BondyColors.primary.withValues(alpha: shadowAlpha),
+                          color: BondyColors.primary.withValues(
+                            alpha: shadowAlpha,
+                          ),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),

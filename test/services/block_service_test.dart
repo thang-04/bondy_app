@@ -18,23 +18,35 @@ void main() {
     test('creates block for target user', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.headers['authorization'], 'Bearer access-token');
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['blockedUserId'], 'blocked-user-id');
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'blockId': 'block-123',
-            'blockedAt': '2026-05-18T10:00:00Z',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.headers['authorization'], 'Bearer access-token');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['blockedUserId'], 'blocked-user-id');
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {
+                'blockId': 'block-123',
+                'blockedAt': '2026-05-18T10:00:00Z',
+              },
+            }),
+            200,
+          );
+        }),
+      );
       final service = BlockService(apiClient);
 
-      final result = await service.createBlock(blockedUserId: 'blocked-user-id');
+      final result = await service.createBlock(
+        blockedUserId: 'blocked-user-id',
+      );
 
       expect(result.blockId, 'block-123');
       expect(result.blockedAt.isNotEmpty, true);
@@ -43,13 +55,20 @@ void main() {
     test('throws ApiClientException when block fails', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response(jsonEncode({
-          'success': false,
-          'error': 'User not found',
-        }), 404);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            jsonEncode({'success': false, 'error': 'User not found'}),
+            404,
+          );
+        }),
+      );
       final service = BlockService(apiClient);
 
       expect(
@@ -61,16 +80,26 @@ void main() {
     test('block result parses blockedAt correctly', () async {
       final storage = FlutterSecureStorage();
       await storage.write(key: 'accessToken', value: 'access-token');
-      final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-      final apiClient = ApiClient(baseUrlOverride: 'https://api.example.com/api', authService: authService, client: MockClient((request) async {
-        return http.Response(jsonEncode({
-          'success': true,
-          'data': {
-            'blockId': 'block-456',
-            'blockedAt': '2026-05-18T15:30:00Z',
-          },
-        }), 200);
-      }));
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final apiClient = ApiClient(
+        baseUrlOverride: 'https://api.example.com/api',
+        authService: authService,
+        client: MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {
+                'blockId': 'block-456',
+                'blockedAt': '2026-05-18T15:30:00Z',
+              },
+            }),
+            200,
+          );
+        }),
+      );
       final service = BlockService(apiClient);
 
       final result = await service.createBlock(blockedUserId: 'user-to-block');

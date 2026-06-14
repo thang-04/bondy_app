@@ -71,10 +71,7 @@ class CompatibilityReceiptModal extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           'Bạn và $otherUserName có nhiều điểm chung',
-          style: TextStyle(
-            fontSize: 14,
-            color: BondyColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 14, color: BondyColors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],
@@ -92,7 +89,9 @@ class CompatibilityReceiptModal extends StatelessWidget {
             value: compatibilityScore / 100,
             strokeWidth: 8,
             backgroundColor: BondyColors.primary.withValues(alpha: 0.15),
-            valueColor: const AlwaysStoppedAnimation<Color>(BondyColors.primary),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              BondyColors.primary,
+            ),
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -164,8 +163,9 @@ class CompatibilityReceiptModal extends StatelessWidget {
                 value: (score / 100).clamp(0.0, 1.0),
                 minHeight: 8,
                 backgroundColor: BondyColors.primary.withValues(alpha: 0.12),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(BondyColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  BondyColors.primary,
+                ),
               ),
             ),
           ),
@@ -211,12 +211,16 @@ class CompatibilityReceiptModal extends StatelessWidget {
               backgroundColor: BondyColors.primary,
               minimumSize: const Size(double.infinity, 52),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: const Text(
               'Mở chat',
               style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

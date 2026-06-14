@@ -41,8 +41,10 @@ class BondyColors {
   static const Color paleCoral = HealingStitchColors.paleCoral;
 
   // Common UI Gradient
-  static const LinearGradient primaryGradient = HealingStitchColors.warmGradient;
-  static const LinearGradient signatureGradient = HealingStitchColors.brandGradient;
+  static const LinearGradient primaryGradient =
+      HealingStitchColors.warmGradient;
+  static const LinearGradient signatureGradient =
+      HealingStitchColors.brandGradient;
 }
 
 class BondyRadius {
@@ -83,7 +85,9 @@ class BondyTheme {
           backgroundColor: BondyColors.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: GoogleFonts.manrope(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -95,7 +99,9 @@ class BondyTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: BondyColors.textPrimary,
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           side: const BorderSide(color: BondyColors.divider),
           textStyle: GoogleFonts.manrope(
             fontSize: 16,

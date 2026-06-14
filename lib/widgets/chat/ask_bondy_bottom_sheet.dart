@@ -68,7 +68,11 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                             shape: BoxShape.circle,
                             gradient: BondyColors.primaryGradient,
                           ),
-                          child: const Icon(Icons.favorite, color: Colors.white, size: 13),
+                          child: const Icon(
+                            Icons.favorite,
+                            color: Colors.white,
+                            size: 13,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -103,7 +107,11 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                       color: Colors.grey.shade100,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                    child: const Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ],
@@ -118,7 +126,10 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                 angle: 0.025,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     gradient: BondyColors.primaryGradient,
                     borderRadius: BorderRadius.circular(18),
@@ -139,7 +150,11 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 26),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 26,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -149,136 +164,147 @@ class _AskBondyBottomSheetState extends State<AskBondyBottomSheet> {
                             Text(
                               'Bondy lắng nghe bạn...',
                               style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                'Không gian an toàn để chia sẻ cảm xúc.',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withValues(alpha: 0.88),
-                                ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Không gian an toàn để chia sẻ cảm xúc.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.88),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 22),
+            ),
+            const SizedBox(height: 22),
 
-              // ── Section label ── căn trái cùng với header
-              Text(
-                'GỢI Ý TRÒ CHUYỆN',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.grey.shade400,
-                  letterSpacing: 0.8,
-                ),
+            // ── Section label ── căn trái cùng với header
+            Text(
+              'GỢI Ý TRÒ CHUYỆN',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade400,
+                letterSpacing: 0.8,
               ),
-              const SizedBox(height: 10),
+            ),
+            const SizedBox(height: 10),
 
-              // ── Prompt buttons ── chiều rộng full (= container width - 24*2)
-              _buildPromptButton(
-                icon: Icons.forum_outlined,
-                text: 'Làm sao để mở đầu câu chuyện?',
-                color: const Color(0xFFF0F7FF),
-                onTap: () => widget.onSubmit('Làm sao để mở đầu câu chuyện?'),
-              ),
-              _buildPromptButton(
-                icon: Icons.sentiment_dissatisfied_outlined,
-                text: 'Hôm nay mình thấy hơi mệt mỏi',
-                color: const Color(0xFFF5F3FF),
-                onTap: () => widget.onSubmit('Hôm nay mình thấy hơi mệt mỏi'),
-              ),
-              _buildPromptButton(
-                icon: Icons.track_changes,
-                text: 'Tư vấn về mục tiêu yêu đương',
-                color: const Color(0xFFFFF1F2),
-                onTap: () => widget.onSubmit('Tư vấn về mục tiêu yêu đương'),
-              ),
-              const SizedBox(height: 16),
+            // ── Prompt buttons ── chiều rộng full (= container width - 24*2)
+            _buildPromptButton(
+              icon: Icons.forum_outlined,
+              text: 'Làm sao để mở đầu câu chuyện?',
+              color: const Color(0xFFF0F7FF),
+              onTap: () => widget.onSubmit('Làm sao để mở đầu câu chuyện?'),
+            ),
+            _buildPromptButton(
+              icon: Icons.sentiment_dissatisfied_outlined,
+              text: 'Hôm nay mình thấy hơi mệt mỏi',
+              color: const Color(0xFFF5F3FF),
+              onTap: () => widget.onSubmit('Hôm nay mình thấy hơi mệt mỏi'),
+            ),
+            _buildPromptButton(
+              icon: Icons.track_changes,
+              text: 'Tư vấn về mục tiêu yêu đương',
+              color: const Color(0xFFFFF1F2),
+              onTap: () => widget.onSubmit('Tư vấn về mục tiêu yêu đương'),
+            ),
+            const SizedBox(height: 16),
 
-              // ── Chat input ── cùng chiều rộng với prompt buttons
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minHeight: 48,
-                        maxHeight: 120,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      child: TextField(
-                        controller: _controller,
-                        minLines: 1,
-                        maxLines: 4,
-                        keyboardType: TextInputType.multiline,
-                        decoration: InputDecoration(
-                          hintText: 'Nhập câu hỏi của bạn...',
-                          hintStyle: GoogleFonts.plusJakartaSans(
-                            color: Colors.grey.shade400,
-                            fontSize: 13,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            // ── Chat input ── cùng chiều rộng với prompt buttons
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      maxHeight: 120,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      minLines: 1,
+                      maxLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: 'Nhập câu hỏi của bạn...',
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          color: Colors.grey.shade400,
+                          fontSize: 13,
                         ),
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       ),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () {
-                      final txt = _controller.text.trim();
-                      if (txt.isNotEmpty) widget.onSubmit(txt);
-                    },
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: BondyColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    final txt = _controller.text.trim();
+                    if (txt.isNotEmpty) widget.onSubmit(txt);
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: BondyColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
 
-              // ── Security note ── căn giữa
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.verified_user_outlined, color: Colors.green, size: 13),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Cuộc trò chuyện của bạn luôn được bảo mật',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade400,
-                    ),
+            // ── Security note ── căn giữa
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.verified_user_outlined,
+                  color: Colors.green,
+                  size: 13,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Cuộc trò chuyện của bạn luôn được bảo mật',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade400,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

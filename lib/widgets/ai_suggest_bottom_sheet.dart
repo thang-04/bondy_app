@@ -91,7 +91,6 @@ class AiSuggestBottomSheet extends StatelessWidget {
           ],
         ),
       ),
-
     );
   }
 

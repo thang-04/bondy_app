@@ -149,8 +149,11 @@ class WeekendDateSuggestionsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.schedule,
-                        size: 14, color: BondyColors.textHint),
+                    const Icon(
+                      Icons.schedule,
+                      size: 14,
+                      color: BondyColors.textHint,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       time,

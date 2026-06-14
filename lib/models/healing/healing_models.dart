@@ -875,9 +875,9 @@ class HealingPlanTimeline {
       currentDay: _intFrom(json['currentDay'], 1),
       lastCompletedDay: _intFrom(json['lastCompletedDay']),
       progressPercent: _intFrom(json['progressPercent']),
-      days: _mapListFrom(json['days'])
-          .map(HealingPlanDayTimeline.fromJson)
-          .toList(),
+      days: _mapListFrom(
+        json['days'],
+      ).map(HealingPlanDayTimeline.fromJson).toList(),
     );
   }
 }

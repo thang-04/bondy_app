@@ -64,7 +64,10 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: BondyColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: BondyColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -77,11 +80,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(
-                  Icons.smart_toy,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: Icon(Icons.smart_toy, color: Colors.white, size: 20),
               ),
             ),
             const SizedBox(width: 10),
@@ -242,38 +241,45 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         setState(() {
           final lowercase = message.toLowerCase();
           if (lowercase.contains('mở lời') || lowercase.contains('phá băng')) {
-            _messages.add(_BotMessage(
-              'Để tạo một mở đầu thấu cảm và tự nhiên, bạn có thể gửi một trong các câu hỏi phá băng nhẹ nhàng này nhé: ✨\n\n'
-              '1. "Khoảnh khắc bình yên nhất trong ngày của bạn là gì?"\n'
-              '2. "Vibe hôm nay của bạn có màu gì?"\n'
-              '3. "Bài hát yêu thích lúc này của bạn là gì?"',
-              false,
-            ));
-          } else if (lowercase.contains('chỗ chơi') || lowercase.contains('địa điểm') || lowercase.contains('hẹn hò')) {
-            _messages.add(_BotMessage(
-              'Cuối tuần sắp đến rồi, hai bạn hãy thử dành thời gian chất lượng bên nhau nhé! Dưới đây là một vài địa điểm hẹn hò cực kỳ lãng mạn được đề xuất riêng cho hai bạn: 🗺️',
-              false,
-            ));
-            _messages.add(_BotMessage(
-              '',
-              false,
-              messageType: 'DATE_SUGGESTION',
-            ));
-          } else if (lowercase.contains('giữ lửa') || lowercase.contains('bí quyết')) {
-            _messages.add(_BotMessage(
-              'Bí quyết giữ lửa đơn giản nhất là dành cho nhau những khoảng thời gian chất lượng (Quality Time). Hãy cùng nhau làm một việc chưa từng thử, hoặc gửi cho đối phương những câu hỏi sâu để thấu hiểu thế giới nội tâm của nhau hơn nhé! 💕',
-              false,
-            ));
+            _messages.add(
+              _BotMessage(
+                'Để tạo một mở đầu thấu cảm và tự nhiên, bạn có thể gửi một trong các câu hỏi phá băng nhẹ nhàng này nhé: ✨\n\n'
+                '1. "Khoảnh khắc bình yên nhất trong ngày của bạn là gì?"\n'
+                '2. "Vibe hôm nay của bạn có màu gì?"\n'
+                '3. "Bài hát yêu thích lúc này của bạn là gì?"',
+                false,
+              ),
+            );
+          } else if (lowercase.contains('chỗ chơi') ||
+              lowercase.contains('địa điểm') ||
+              lowercase.contains('hẹn hò')) {
+            _messages.add(
+              _BotMessage(
+                'Cuối tuần sắp đến rồi, hai bạn hãy thử dành thời gian chất lượng bên nhau nhé! Dưới đây là một vài địa điểm hẹn hò cực kỳ lãng mạn được đề xuất riêng cho hai bạn: 🗺️',
+                false,
+              ),
+            );
+            _messages.add(
+              _BotMessage('', false, messageType: 'DATE_SUGGESTION'),
+            );
+          } else if (lowercase.contains('giữ lửa') ||
+              lowercase.contains('bí quyết')) {
+            _messages.add(
+              _BotMessage(
+                'Bí quyết giữ lửa đơn giản nhất là dành cho nhau những khoảng thời gian chất lượng (Quality Time). Hãy cùng nhau làm một việc chưa từng thử, hoặc gửi cho đối phương những câu hỏi sâu để thấu hiểu thế giới nội tâm của nhau hơn nhé! 💕',
+                false,
+              ),
+            );
           } else {
-            _messages.add(_BotMessage(
-              'Mình đã nhận được câu hỏi của bạn. Để giúp bạn kết nối tốt nhất, mình khuyên hai bạn thử trải nghiệm một buổi hẹn hò cuối tuần ấm áp xem sao nhé! Dưới đây là gợi ý địa điểm riêng cho bạn: 🌸',
-              false,
-            ));
-            _messages.add(_BotMessage(
-              '',
-              false,
-              messageType: 'DATE_SUGGESTION',
-            ));
+            _messages.add(
+              _BotMessage(
+                'Mình đã nhận được câu hỏi của bạn. Để giúp bạn kết nối tốt nhất, mình khuyên hai bạn thử trải nghiệm một buổi hẹn hò cuối tuần ấm áp xem sao nhé! Dưới đây là gợi ý địa điểm riêng cho bạn: 🌸',
+                false,
+              ),
+            );
+            _messages.add(
+              _BotMessage('', false, messageType: 'DATE_SUGGESTION'),
+            );
           }
         });
       }
@@ -295,11 +301,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(
-                  Icons.smart_toy,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: Icon(Icons.smart_toy, color: Colors.white, size: 16),
               ),
             ),
             const SizedBox(width: 8),
@@ -331,8 +333,9 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            msg.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: msg.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!msg.isUser) ...[
@@ -344,11 +347,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(
-                  Icons.smart_toy,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: Icon(Icons.smart_toy, color: Colors.white, size: 16),
               ),
             ),
             const SizedBox(width: 8),
@@ -360,9 +359,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
               ),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: msg.isUser
-                    ? BondyColors.primaryGradient
-                    : null,
+                gradient: msg.isUser ? BondyColors.primaryGradient : null,
                 color: msg.isUser ? null : const Color(0xFFFFF1EE),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
@@ -375,8 +372,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 msg.text,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color:
-                      msg.isUser ? Colors.white : BondyColors.textPrimary,
+                  color: msg.isUser ? Colors.white : BondyColors.textPrimary,
                   height: 1.35,
                 ),
               ),
@@ -464,7 +460,8 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => setState(() => _showSafetyWarning = false),
+                        onPressed: () =>
+                            setState(() => _showSafetyWarning = false),
                         child: const Text('Quay lại'),
                       ),
                     ),
@@ -515,11 +512,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(
-                      Icons.smart_toy,
-                      color: Colors.white,
-                      size: 32,
-                    ),
+                    child: Icon(Icons.smart_toy, color: Colors.white, size: 32),
                   ),
                 ),
                 const SizedBox(height: 16),

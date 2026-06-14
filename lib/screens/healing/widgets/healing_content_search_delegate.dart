@@ -24,10 +24,7 @@ class HealingContentSearchDelegate extends SearchDelegate<void> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () => query = '',
-        ),
+        IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
     ];
   }
 
@@ -67,10 +64,7 @@ class HealingContentSearchDelegate extends SearchDelegate<void> {
             side: const BorderSide(color: HealingStitchColors.border),
           ),
           tileColor: HealingStitchColors.surface,
-          title: Text(
-            item.title,
-            style: healingText(weight: FontWeight.w800),
-          ),
+          title: Text(item.title, style: healingText(weight: FontWeight.w800)),
           subtitle: Text(
             '${item.type} · ${item.category}',
             style: healingText(size: 12, color: HealingStitchColors.textMuted),
@@ -86,7 +80,9 @@ class HealingContentSearchDelegate extends SearchDelegate<void> {
   }
 }
 
-List<HealingContentPreview> flattenHealingSections(HealingHomeSections sections) {
+List<HealingContentPreview> flattenHealingSections(
+  HealingHomeSections sections,
+) {
   return [
     ...sections.courses,
     ...sections.articles,

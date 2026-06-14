@@ -71,9 +71,7 @@ class _BasicProfileSetupScreenState extends State<BasicProfileSetupScreen> {
       await OnboardingRouter.navigateToNextStep(context);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(BondyErrorMapper.message(error)),
           backgroundColor: BondyColors.error,
@@ -283,7 +281,6 @@ class _BasicProfileSetupScreenState extends State<BasicProfileSetupScreen> {
               const SizedBox(height: 24),
 
               // Removed Job and Education Sections
-
               const SizedBox(height: 24),
 
               const SizedBox(height: 24),

@@ -4,9 +4,13 @@ import 'api_client.dart';
 class CommunityService {
   final ApiClient _apiClient;
 
-  CommunityService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  CommunityService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
-  Future<List<DiscoverProfile>> fetchFeed({int limit = 20, int offset = 0}) async {
+  Future<List<DiscoverProfile>> fetchFeed({
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final response = await _apiClient.get(
       '/community/feed',
       authenticated: true,

@@ -31,5 +31,7 @@ void openHealingContent(
     return;
   }
 
-  Navigator.of(context).pushNamed(routeForHealingContent(item), arguments: item.id);
+  Navigator.of(
+    context,
+  ).pushNamed(routeForHealingContent(item), arguments: item.id);
 }

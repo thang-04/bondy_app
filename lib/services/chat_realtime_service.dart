@@ -39,7 +39,8 @@ class ChatRealtimeEvent {
         'connected' => ChatRealtimeEventKind.connected,
         'relationship_invited' => ChatRealtimeEventKind.relationshipInvited,
         'relationship_accepted' => ChatRealtimeEventKind.relationshipAccepted,
-        'relationship_invite_canceled' => ChatRealtimeEventKind.relationshipInviteCanceled,
+        'relationship_invite_canceled' =>
+          ChatRealtimeEventKind.relationshipInviteCanceled,
         _ => null,
       };
       return kind == null ? null : ChatRealtimeEvent(kind: kind, data: data);

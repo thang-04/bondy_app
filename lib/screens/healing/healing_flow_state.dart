@@ -68,8 +68,8 @@ class HealingFlowState {
 
   HealingRecoveryAction get recoveryPrimaryAction =>
       primaryIntent == HealingPrimaryIntent.stabilize
-          ? HealingRecoveryAction.doExercise
-          : HealingRecoveryAction.startReflection;
+      ? HealingRecoveryAction.doExercise
+      : HealingRecoveryAction.startReflection;
 
   HealingRoute get routeAfterCheckin => entry == HealingEntry.triggered
       ? HealingRoute.recoveryResult

@@ -21,9 +21,7 @@ class _FakeChatService extends ChatService {
 class _FakeRelationshipService extends RelationshipService {
   @override
   Future<RelationshipDashboard> getDashboard() async {
-    return RelationshipDashboard(
-      hasRelationship: false,
-    );
+    return RelationshipDashboard(hasRelationship: false);
   }
 }
 
@@ -44,7 +42,8 @@ void main() {
             create: (_) => ChatViewModel(service: _FakeChatService()),
           ),
           ChangeNotifierProvider(
-            create: (_) => RelationshipViewModel(service: _FakeRelationshipService()),
+            create: (_) =>
+                RelationshipViewModel(service: _FakeRelationshipService()),
           ),
         ],
         child: MaterialApp(

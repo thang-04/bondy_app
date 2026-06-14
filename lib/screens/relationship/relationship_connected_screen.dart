@@ -12,7 +12,8 @@ class RelationshipConnectedScreen extends StatefulWidget {
       _RelationshipConnectedScreenState();
 }
 
-class _RelationshipConnectedScreenState extends State<RelationshipConnectedScreen>
+class _RelationshipConnectedScreenState
+    extends State<RelationshipConnectedScreen>
     with SingleTickerProviderStateMixin {
   late final ConfettiController _confettiController;
   late final AnimationController _pulseController;
@@ -24,8 +25,9 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
   @override
   void initState() {
     super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 5),
+    );
     _confettiController.play();
 
     _pulseController = AnimationController(
@@ -149,8 +151,9 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.12),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       blurRadius: 15,
                                       offset: const Offset(0, 4),
                                     ),
@@ -182,8 +185,9 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.12),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.12,
+                                          ),
                                           blurRadius: 15,
                                           offset: const Offset(0, 4),
                                         ),
@@ -192,12 +196,14 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                                     ),
                                     child: CircleAvatar(
                                       backgroundColor: Colors.white,
-                                      backgroundImage: _partnerPhoto != null &&
+                                      backgroundImage:
+                                          _partnerPhoto != null &&
                                               _partnerPhoto!.startsWith('http')
                                           ? NetworkImage(_partnerPhoto!)
                                           : const NetworkImage(
-                                              'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
-                                            ) as ImageProvider,
+                                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx',
+                                                )
+                                                as ImageProvider,
                                     ),
                                   ),
                                   // Icon Trái tim kết nối lồi ra
@@ -243,9 +249,7 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                   // Tiêu đề ăn mừng
                   Text(
                     '🎉',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 40,
-                    ),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 40),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
@@ -354,7 +358,9 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF4B7D).withValues(alpha: 0.28),
+                          color: const Color(
+                            0xFFFF4B7D,
+                          ).withValues(alpha: 0.28),
                           blurRadius: 18,
                           offset: const Offset(0, 8),
                         ),
@@ -362,10 +368,9 @@ class _RelationshipConnectedScreenState extends State<RelationshipConnectedScree
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/home',
-                          (route) => false,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/home', (route) => false);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,

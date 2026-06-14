@@ -362,10 +362,7 @@ class _CompactAudioLibrary extends StatelessWidget {
   final List<HealingContentPreview> audios;
   final VoidCallback onViewAll;
 
-  const _CompactAudioLibrary({
-    required this.audios,
-    required this.onViewAll,
-  });
+  const _CompactAudioLibrary({required this.audios, required this.onViewAll});
 
   ({String image, IconData icon, Color color}) _decoration(int index) {
     return index.isEven
@@ -424,10 +421,9 @@ class _CompactAudioLibrary extends StatelessWidget {
               final audio = audios[index];
               final deco = _decoration(index);
               return GestureDetector(
-                onTap: () => Navigator.of(context).pushNamed(
-                  '/healing/audio-player',
-                  arguments: audio.id,
-                ),
+                onTap: () => Navigator.of(
+                  context,
+                ).pushNamed('/healing/audio-player', arguments: audio.id),
                 child: SizedBox(
                   width: 250,
                   child: Column(

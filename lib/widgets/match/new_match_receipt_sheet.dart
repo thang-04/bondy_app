@@ -11,6 +11,7 @@ class NewMatchReceiptFactor {
 }
 
 class NewMatchReceiptSheet extends StatelessWidget {
+  final String? currentUserPhoto;
   final String otherUserName;
   final String? otherUserPhoto;
   final int compatibilityScore;
@@ -20,6 +21,7 @@ class NewMatchReceiptSheet extends StatelessWidget {
 
   const NewMatchReceiptSheet({
     super.key,
+    this.currentUserPhoto,
     required this.otherUserName,
     this.otherUserPhoto,
     required this.compatibilityScore,
@@ -57,7 +59,6 @@ class NewMatchReceiptSheet extends StatelessWidget {
               ],
             ),
           ),
-
         ),
       ),
     );
@@ -82,9 +83,20 @@ class NewMatchReceiptSheet extends StatelessWidget {
         children: [
           Positioned(
             left: 52,
-            child: _buildInitialAvatar('B', BondyColors.primary),
+            child: _buildUserAvatar(
+              photo: currentUserPhoto,
+              initial: 'B',
+              color: BondyColors.primary,
+            ),
           ),
-          Positioned(right: 52, child: _buildOtherUserAvatar()),
+          Positioned(
+            right: 52,
+            child: _buildUserAvatar(
+              photo: otherUserPhoto,
+              initial: _initialFor(otherUserName),
+              color: BondyColors.purple,
+            ),
+          ),
           Container(
             width: 48,
             height: 48,
@@ -107,8 +119,11 @@ class NewMatchReceiptSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildOtherUserAvatar() {
-    final photo = otherUserPhoto;
+  Widget _buildUserAvatar({
+    required String? photo,
+    required String initial,
+    required Color color,
+  }) {
     if (photo != null && photo.startsWith('http')) {
       return Container(
         width: 78,
@@ -128,16 +143,14 @@ class NewMatchReceiptSheet extends StatelessWidget {
           child: Image.network(
             photo,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _buildInitialAvatar(
-              _initialFor(otherUserName),
-              BondyColors.purple,
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                _buildInitialAvatar(initial, color),
           ),
         ),
       );
     }
 
-    return _buildInitialAvatar(_initialFor(otherUserName), BondyColors.purple);
+    return _buildInitialAvatar(initial, color);
   }
 
   Widget _buildInitialAvatar(String initial, Color color) {

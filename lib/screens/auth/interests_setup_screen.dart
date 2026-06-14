@@ -81,7 +81,9 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
             ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         Navigator.pop(context, true);
@@ -128,7 +130,9 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
                   child: Text(
                     _isSubmitting ? 'Đang lưu...' : 'Lưu',
                     style: GoogleFonts.plusJakartaSans(
-                      color: _isValid ? BondyColors.primary : BondyColors.textHint,
+                      color: _isValid
+                          ? BondyColors.primary
+                          : BondyColors.textHint,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -139,10 +143,12 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: BondyColors.primary))
+            ? const Center(
+                child: CircularProgressIndicator(color: BondyColors.primary),
+              )
             : _errorMessage != null
-                ? _buildError()
-                : _buildContent(),
+            ? _buildError()
+            : _buildContent(),
       ),
     );
   }
@@ -154,7 +160,11 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFD1D5DB)),
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 48,
+              color: Color(0xFFD1D5DB),
+            ),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
@@ -164,8 +174,10 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: _loadData,
-              child: Text('Thử lại',
-                  style: GoogleFonts.plusJakartaSans(color: BondyColors.primary)),
+              child: Text(
+                'Thử lại',
+                style: GoogleFonts.plusJakartaSans(color: BondyColors.primary),
+              ),
             ),
           ],
         ),
@@ -204,9 +216,14 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
                 // Counter badge
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _isValid ? BondyColors.primaryLight : const Color(0xFFF3F4F6),
+                    color: _isValid
+                        ? BondyColors.primaryLight
+                        : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -214,7 +231,9 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: _isValid ? BondyColors.primary : BondyColors.textHint,
+                      color: _isValid
+                          ? BondyColors.primary
+                          : BondyColors.textHint,
                     ),
                   ),
                 ),
@@ -254,8 +273,8 @@ class _InterestsSetupScreenState extends State<InterestsSetupScreen> {
               text: _isSubmitting
                   ? 'Đang lưu...'
                   : _isValid
-                      ? 'Tiếp tục'
-                      : 'Chọn ít nhất 3 sở thích',
+                  ? 'Tiếp tục'
+                  : 'Chọn ít nhất 3 sở thích',
               onPressed: _isValid && !_isSubmitting ? _saveInterests : () {},
             ),
           ),
@@ -290,7 +309,13 @@ class _InterestChip extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
-              ? [BoxShadow(color: BondyColors.primary.withValues(alpha: 0.15), blurRadius: 6, offset: const Offset(0, 2))]
+              ? [
+                  BoxShadow(
+                    color: BondyColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
         child: Text(

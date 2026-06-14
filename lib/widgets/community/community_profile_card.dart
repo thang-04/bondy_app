@@ -92,7 +92,10 @@ class CommunityProfileCard extends StatelessWidget {
                           profile.tags.take(3).join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: healingText(size: 12, color: HealingStitchColors.textMuted),
+                          style: healingText(
+                            size: 12,
+                            color: HealingStitchColors.textMuted,
+                          ),
                         ),
                       ],
                     ],
@@ -110,7 +113,10 @@ class CommunityProfileCard extends StatelessWidget {
                       minimumSize: const Size(0, 44),
                       foregroundColor: HealingStitchColors.textMuted,
                     ),
-                    child: Text('Bỏ qua', style: healingText(weight: FontWeight.w600)),
+                    child: Text(
+                      'Bỏ qua',
+                      style: healingText(weight: FontWeight.w600),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

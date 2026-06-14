@@ -5,7 +5,9 @@ import 'app_theme.dart';
 /// @deprecated Use [BondyColors] (from `theme/app_theme.dart`) and
 /// [bondyText] (from `widgets/common/bondy_widgets.dart`) instead.
 /// Kept temporarily to avoid breaking older imports. Will be removed.
-@Deprecated('Use BondyColors and bondyText from app_theme.dart / bondy_widgets.dart')
+@Deprecated(
+  'Use BondyColors and bondyText from app_theme.dart / bondy_widgets.dart',
+)
 class BondyDesignTokens {
   static const Color warmBackground = BondyColors.background;
   static const Color creamBackground = BondyColors.backgroundCream;
@@ -25,14 +27,11 @@ class BondyDesignTokens {
     double size = 24,
     FontWeight weight = FontWeight.w800,
     Color color = textMain,
-  }) =>
-      bondyText(size: size, weight: weight, color: color);
+  }) => bondyText(size: size, weight: weight, color: color);
 
   static TextStyle bodyText({
     double size = 14,
     FontWeight weight = FontWeight.w500,
     Color color = textMuted,
-  }) =>
-      bondyText(size: size, weight: weight, color: color);
+  }) => bondyText(size: size, weight: weight, color: color);
 }
-

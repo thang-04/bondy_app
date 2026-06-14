@@ -31,7 +31,7 @@ class _EmotionalCheckinDialogState extends State<EmotionalCheckinDialog> {
 
   Future<void> _handleSubmit() async {
     if (_selectedMood == null) return;
-    
+
     setState(() {
       _isSubmitting = true;
     });
@@ -84,176 +84,184 @@ class _EmotionalCheckinDialogState extends State<EmotionalCheckinDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  // Close Button Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
+                    // Close Button Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: HealingStitchColors.contentBackground,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: HealingStitchColors.textMuted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Text Content
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: HealingStitchColors.paleCoral,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.favorite,
+                        color: HealingStitchColors.pink,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Hôm nay bạn cảm thấy thế nào?',
+                      textAlign: TextAlign.center,
+                      style: healingText(size: 20, weight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Take a moment to check in with yourself.',
+                      textAlign: TextAlign.center,
+                      style: healingText(
+                        size: 14,
+                        color: HealingStitchColors.textSoft,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Mood Selection Grid
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: _moods.map((m) {
+                        final isSelected = _selectedMood == m['mood'];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMood = m['mood'];
+                              _selectedIntensity = m['intensity'];
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? HealingStitchColors.paleCoral
+                                      : HealingStitchColors.contentBackground,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? HealingStitchColors.pink.withValues(
+                                            alpha: 0.3,
+                                          )
+                                        : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [healingSoftShadow(0.05)]
+                                      : [],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  m['emoji'],
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                m['label'],
+                                style: healingText(
+                                  size: 12,
+                                  weight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: isSelected
+                                      ? HealingStitchColors.textMain
+                                      : HealingStitchColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Text Area
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Want to share more? (Optional)',
+                          style: healingText(
+                            size: 12,
+                            weight: FontWeight.w700,
+                            color: HealingStitchColors.textSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
                           decoration: BoxDecoration(
                             color: HealingStitchColors.contentBackground,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: HealingStitchColors.textMuted,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Text Content
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: HealingStitchColors.paleCoral,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite,
-                      color: HealingStitchColors.pink,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Hôm nay bạn cảm thấy thế nào?',
-                    textAlign: TextAlign.center,
-                    style: healingText(size: 20, weight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Take a moment to check in with yourself.',
-                    textAlign: TextAlign.center,
-                    style: healingText(
-                      size: 14,
-                      color: HealingStitchColors.textSoft,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Mood Selection Grid
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: _moods.map((m) {
-                      final isSelected = _selectedMood == m['mood'];
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedMood = m['mood'];
-                            _selectedIntensity = m['intensity'];
-                          });
-                        },
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: isSelected 
-                                    ? HealingStitchColors.paleCoral 
-                                    : HealingStitchColors.contentBackground,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected 
-                                      ? HealingStitchColors.pink.withValues(alpha: 0.3)
-                                      : Colors.transparent,
-                                  width: 2,
+                          child: TextField(
+                            controller: _noteController,
+                            maxLines: 3,
+                            style: healingText(size: 14),
+                            decoration: InputDecoration(
+                              hintText: "I'm feeling...",
+                              hintStyle: healingText(
+                                size: 14,
+                                color: HealingStitchColors.textMuted.withValues(
+                                  alpha: 0.5,
                                 ),
-                                boxShadow: isSelected 
-                                    ? [healingSoftShadow(0.05)]
-                                    : [],
                               ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                m['emoji'],
-                                style: const TextStyle(fontSize: 28),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
                               ),
+                              contentPadding: const EdgeInsets.all(12),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              m['label'],
-                              style: healingText(
-                                size: 12,
-                                weight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                color: isSelected 
-                                    ? HealingStitchColors.textMain 
-                                    : HealingStitchColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Text Area
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Want to share more? (Optional)',
-                        style: healingText(
-                          size: 12,
-                          weight: FontWeight.w700,
-                          color: HealingStitchColors.textSoft,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: HealingStitchColors.contentBackground,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: _noteController,
-                          maxLines: 3,
-                          style: healingText(size: 14),
-                          decoration: InputDecoration(
-                            hintText: "I'm feeling...",
-                            hintStyle: healingText(
-                              size: 14,
-                              color: HealingStitchColors.textMuted.withValues(alpha: 0.5),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.all(12),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
 
-                  // Call to Action
-                  Opacity(
-                    opacity: _selectedMood == null ? 0.5 : 1.0,
-                    child: IgnorePointer(
-                      ignoring: _selectedMood == null || _isSubmitting,
-                      child: HealingGradientButton(
-                        label: _isSubmitting ? 'Đang lưu...' : 'Lưu Check-in',
-                        icon: Icons.check,
-                        onTap: _handleSubmit,
+                    // Call to Action
+                    Opacity(
+                      opacity: _selectedMood == null ? 0.5 : 1.0,
+                      child: IgnorePointer(
+                        ignoring: _selectedMood == null || _isSubmitting,
+                        child: HealingGradientButton(
+                          label: _isSubmitting ? 'Đang lưu...' : 'Lưu Check-in',
+                          icon: Icons.check,
+                          onTap: _handleSubmit,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  Text(
-                    'Your check-ins are private and secure.',
-                    style: healingText(
-                      size: 11,
-                      color: HealingStitchColors.textMuted.withValues(alpha: 0.7),
+                    const SizedBox(height: 12),
+
+                    Text(
+                      'Your check-ins are private and secure.',
+                      style: healingText(
+                        size: 11,
+                        color: HealingStitchColors.textMuted.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
                     ),
-                  ),
                   ],
                 ),
               ),

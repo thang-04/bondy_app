@@ -11,7 +11,8 @@ class MilestoneRemindersScreen extends StatefulWidget {
   const MilestoneRemindersScreen({super.key});
 
   @override
-  State<MilestoneRemindersScreen> createState() => _MilestoneRemindersScreenState();
+  State<MilestoneRemindersScreen> createState() =>
+      _MilestoneRemindersScreenState();
 }
 
 class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
@@ -27,48 +28,62 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
       {
         'title': 'Thinking of you',
         'category': 'Short & Sweet',
-        'content': 'Happy anniversary to my better half. Every moment with you is a treasure.',
-        'image': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Happy anniversary to my better half. Every moment with you is a treasure.',
+        'image':
+            'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=300&auto=format&fit=crop',
       },
       {
         'title': 'Happy Anniversary',
         'category': 'Classic',
-        'content': 'Cheers to another year of love, laughter, and happiness. I love you!',
-        'image': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Cheers to another year of love, laughter, and happiness. I love you!',
+        'image':
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&auto=format&fit=crop',
       },
       {
         'title': 'My Love',
         'category': 'Emotional',
-        'content': 'You are my rock, my love, and my best friend. Here\'s to us forever.',
-        'image': 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'You are my rock, my love, and my best friend. Here\'s to us forever.',
+        'image':
+            'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=300&auto=format&fit=crop',
       },
     ],
     'Hẹn hò': [
       {
         'title': 'Bữa tối lãng mạn',
         'category': 'Cozy & Sweet',
-        'content': 'Cùng nấu một bữa tối ấm cúng tại nhà dưới ánh nến lung linh và nhạc nhẹ.',
-        'image': 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Cùng nấu một bữa tối ấm cúng tại nhà dưới ánh nến lung linh và nhạc nhẹ.',
+        'image':
+            'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=300&auto=format&fit=crop',
       },
       {
         'title': 'Đêm nhạc acoustic',
         'category': 'Chill Vibe',
-        'content': 'Dành buổi tối tại một quán cà phê acoustic và lắng nghe những bản tình ca.',
-        'image': 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Dành buổi tối tại một quán cà phê acoustic và lắng nghe những bản tình ca.',
+        'image':
+            'https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=300&auto=format&fit=crop',
       },
     ],
     'Quà tặng': [
       {
         'title': 'Hoa dại rực rỡ',
         'category': 'Surprise',
-        'content': 'Một bó hoa dại nhỏ đặt trên bàn làm việc của người ấy vào sáng sớm.',
-        'image': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Một bó hoa dại nhỏ đặt trên bàn làm việc của người ấy vào sáng sớm.',
+        'image':
+            'https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=300&auto=format&fit=crop',
       },
       {
         'title': 'Bức thư viết tay',
         'category': 'Meaningful',
-        'content': 'Viết một bức thư tay kể lại những khoảnh khắc đáng nhớ nhất của hai bạn trong năm qua.',
-        'image': 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=300&auto=format&fit=crop',
+        'content':
+            'Viết một bức thư tay kể lại những khoảnh khắc đáng nhớ nhất của hai bạn trong năm qua.',
+        'image':
+            'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=300&auto=format&fit=crop',
       },
     ],
   };
@@ -103,7 +118,13 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: const Color(0xFFFFFDFB),
-        title: Text('Thêm cột mốc mới 📅', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
+        title: Text(
+          'Thêm cột mốc mới 📅',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -125,15 +146,30 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                 );
                 if (picked != null) selected = picked;
               },
-              child: Text('Chọn ngày kỷ niệm', style: GoogleFonts.plusJakartaSans(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.w700)),
+              child: Text(
+                'Chọn ngày kỷ niệm',
+                style: GoogleFonts.plusJakartaSans(
+                  color: const Color(0xFFFF6B6B),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Lưu lại', style: GoogleFonts.plusJakartaSans(color: const Color(0xFFFF6B6B), fontWeight: FontWeight.w800)),
+            child: Text(
+              'Lưu lại',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFFFF6B6B),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
@@ -166,7 +202,7 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    
+
     // Tìm cột mốc sắp tới gần nhất
     Map<String, dynamic>? nextMilestone;
     for (final m in _milestones) {
@@ -175,7 +211,9 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
         if (nextMilestone == null) {
           nextMilestone = m;
         } else {
-          final nextD = DateTime.tryParse(nextMilestone['milestoneDate']?.toString() ?? '');
+          final nextD = DateTime.tryParse(
+            nextMilestone['milestoneDate']?.toString() ?? '',
+          );
           if (nextD != null && d.isBefore(nextD)) {
             nextMilestone = m;
           }
@@ -204,15 +242,16 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
         ),
         centerTitle: true,
         actions: [
-          HealingIconButton(
-            icon: Icons.calendar_month,
-            onTap: _showAddDialog,
-          ),
+          HealingIconButton(icon: Icons.calendar_month, onTap: _showAddDialog),
           const SizedBox(width: 12),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: HealingStitchColors.coral))
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: HealingStitchColors.coral,
+              ),
+            )
           : Column(
               children: [
                 Expanded(
@@ -220,13 +259,21 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                     onRefresh: _load,
                     color: HealingStitchColors.coral,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (_error != null) ...[
-                            Text(_error!, style: healingText(color: HealingStitchColors.textSoft)),
+                            Text(
+                              _error!,
+                              style: healingText(
+                                color: HealingStitchColors.textSoft,
+                              ),
+                            ),
                             const SizedBox(height: 12),
                           ],
 
@@ -271,7 +318,9 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFB74D).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFFFFB74D,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -289,7 +338,11 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.edit_calendar, color: Colors.white, size: 18),
+                          const Icon(
+                            Icons.edit_calendar,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Plan This Event',
@@ -309,7 +362,10 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
     );
   }
 
-  Widget _buildCountdownBanner(Map<String, dynamic>? nextMilestone, int daysLeft) {
+  Widget _buildCountdownBanner(
+    Map<String, dynamic>? nextMilestone,
+    int daysLeft,
+  ) {
     if (nextMilestone == null) {
       return Container(
         width: double.infinity,
@@ -421,7 +477,10 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEDE2B),
                     borderRadius: BorderRadius.circular(100),
@@ -473,7 +532,10 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                 // Countdown Box
                 Row(
                   children: [
-                    _buildCountdownUnit(daysLeft.toString().padLeft(2, '0'), 'Days'),
+                    _buildCountdownUnit(
+                      daysLeft.toString().padLeft(2, '0'),
+                      'Days',
+                    ),
                     const SizedBox(width: 8),
                     _buildCountdownUnit('12', 'Hours'),
                   ],
@@ -518,7 +580,11 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
 
   Widget _buildTabFilter() {
     final tabs = ['Tin nhắn', 'Hẹn hò', 'Quà tặng'];
-    final icons = [Icons.chat_bubble_outline, Icons.favorite_border, Icons.card_giftcard];
+    final icons = [
+      Icons.chat_bubble_outline,
+      Icons.favorite_border,
+      Icons.card_giftcard,
+    ];
 
     return SizedBox(
       height: 48,
@@ -540,7 +606,9 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                   color: isSelected ? Colors.white : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFFFFB74D) : Colors.transparent,
+                    color: isSelected
+                        ? const Color(0xFFFFB74D)
+                        : Colors.transparent,
                     width: 1.5,
                   ),
                   boxShadow: isSelected
@@ -558,7 +626,9 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                     Icon(
                       icon,
                       size: 18,
-                      color: isSelected ? const Color(0xFFFFB74D) : HealingStitchColors.textMuted,
+                      color: isSelected
+                          ? const Color(0xFFFFB74D)
+                          : HealingStitchColors.textMuted,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -566,7 +636,9 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: isSelected ? const Color(0xFFFFB74D) : HealingStitchColors.textMain,
+                        color: isSelected
+                            ? const Color(0xFFFFB74D)
+                            : HealingStitchColors.textMain,
                       ),
                     ),
                   ],
@@ -616,7 +688,10 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3E8FF),
                     borderRadius: BorderRadius.circular(8),
@@ -660,7 +735,10 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                   child: OutlinedButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: item['content']!));
-                      BondyFeedback.showSuccess(context, 'Đã sao chép nội dung gợi ý!');
+                      BondyFeedback.showSuccess(
+                        context,
+                        'Đã sao chép nội dung gợi ý!',
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -671,7 +749,11 @@ class _MilestoneRemindersScreenState extends State<MilestoneRemindersScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.content_copy, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.content_copy,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Copy Text',

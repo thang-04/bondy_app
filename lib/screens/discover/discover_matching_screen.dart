@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:appinio_swiper/appinio_swiper.dart';
 import '../../theme/app_theme.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../services/discover_service.dart';
+import '../../services/profile_service.dart';
 import '../../services/onboarding_router.dart';
 import '../../viewmodels/discover/discover_viewmodel.dart';
 import '../../widgets/match/new_match_receipt_sheet.dart';
@@ -45,15 +47,38 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   String? _swipeFeedbackAction;
   bool _swipeFeedbackVisible = false;
   Timer? _swipeFeedbackTimer;
+  String? _currentUserPhoto;
+
+  // Queue tuần tự cho API swipe — tránh race condition khi quẹt nhanh.
+  final Queue<_SwipeJob> _swipeQueue = Queue();
+  bool _isProcessingSwipe = false;
 
   @override
   void initState() {
     super.initState();
     _discoverService = DiscoverService();
     _viewModel = DiscoverViewModel(service: _discoverService);
-    _viewModel.loadFilters();
-    _viewModel.loadProfiles();
     _viewModel.addListener(_onViewModelUpdate);
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    _loadCurrentUserPhoto();
+    await _viewModel.loadFilters();
+    if (!mounted) return;
+    await _viewModel.loadProfiles();
+    _precacheNextImages();
+  }
+
+  Future<void> _loadCurrentUserPhoto() async {
+    try {
+      final profile = await ProfileService().getProfile();
+      if (!mounted) return;
+      final photo = profile.photos.isNotEmpty
+          ? profile.photos.first
+          : profile.image;
+      setState(() => _currentUserPhoto = photo);
+    } catch (_) {}
   }
 
   void _onViewModelUpdate() {
@@ -95,40 +120,97 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     if (activity is! Swipe) return;
     final profiles = _viewModel.profiles;
     if (previousIndex >= profiles.length) return;
+
+    // Capture profile trước khi mutate list.
     final profile = profiles[previousIndex];
     final action = discoverSwipeActionForDirection(activity.direction);
-    final matched = await _viewModel.swipe(profile.id, action);
-    if (!mounted) return;
 
-    // Tests #14/#18: nếu server từ chối (quota / mạng lỗi), KHÔNG được coi
-    // card đã được xử lý — phải hoàn tác animation và giữ card lại trong deck.
-    // Nếu để removeProfileAt() chạy thì người dùng tưởng đã like/pass thành công.
-    if (_viewModel.quotaExceeded) {
+    // Pre-check quota ĐỒNG BỘ trước khi remove card — nếu hết quota thì giữ
+    // card lại ngay lập tức, không cần chờ server.
+    if ((action == 'LIKE' || action == 'SUPER_LIKE') &&
+        _viewModel.quota != null &&
+        _viewModel.quota!.remaining <= 0) {
       await _swiperController.unswipe();
       if (!mounted) return;
       _showQuotaDialog();
       return;
     }
-    if (_viewModel.lastSwipeFailed) {
-      await _swiperController.unswipe();
-      if (!mounted) return;
-      final message =
-          _viewModel.errorMessage ??
-          'Không gửi được thao tác. Vui lòng thử lại.';
-      BondyFeedback.showError(context, message);
-      return;
+
+    // ── QUAN TRỌNG: Remove card NGAY LẬP TỨC bằng ID ──
+    // Giữ swiper luôn đồng bộ với cardCount, tránh trắng màn khi quẹt nhanh.
+    _viewModel.removeProfileById(profile.id);
+    _precacheNextImages();
+
+    // Enqueue API call xử lý tuần tự ở background.
+    _swipeQueue.add(_SwipeJob(profile: profile, action: action));
+    _processSwipeQueue();
+  }
+
+  /// Xử lý queue swipe tuần tự — mỗi lần chỉ 1 API call chạy.
+  Future<void> _processSwipeQueue() async {
+    if (_isProcessingSwipe) return;
+    _isProcessingSwipe = true;
+
+    while (_swipeQueue.isNotEmpty) {
+      final job = _swipeQueue.removeFirst();
+      try {
+        final matched = await _viewModel.swipe(job.profile.id, job.action);
+        if (!mounted) break;
+
+        if (matched && _viewModel.lastMatchId != null) {
+          await context.read<ChatViewModel>().fetchChats();
+          if (!mounted) break;
+          _showNewMatchDialog(
+            _viewModel.lastMatchId!,
+            _viewModel.lastConversationId,
+            job.profile,
+            _viewModel.lastMatchPreview,
+          );
+          _viewModel.clearLastMatch();
+        }
+
+        // Nếu server từ chối (quota exhausted, mạng lỗi…) thì thêm lại
+        // profile vào đầu deck để user thấy card quay lại.
+        if (_viewModel.lastSwipeFailed || _viewModel.quotaExceeded) {
+          _viewModel.restoreProfile(job.profile);
+          if (!mounted) break;
+          if (_viewModel.quotaExceeded) {
+            _showQuotaDialog();
+          } else {
+            BondyFeedback.showError(
+              context,
+              _viewModel.errorMessage ??
+                  'Không gửi được thao tác. Vui lòng thử lại.',
+            );
+          }
+        }
+      } catch (_) {
+        // Lỗi không mong muốn — restore card.
+        if (mounted) _viewModel.restoreProfile(job.profile);
+        break;
+      }
     }
 
-    _viewModel.removeProfileAt(previousIndex);
-    if (matched && _viewModel.lastMatchId != null) {
-      await context.read<ChatViewModel>().fetchChats();
-      if (!mounted) return;
-      _showNewMatchDialog(
-        _viewModel.lastMatchId!,
-        _viewModel.lastConversationId,
-        profile,
-      );
-      _viewModel.clearLastMatch();
+    _isProcessingSwipe = false;
+  }
+
+  /// Precache ảnh cho 2-3 card tiếp theo để giảm lag khi scroll.
+  void _precacheNextImages() {
+    if (!mounted) return;
+    final profiles = _viewModel.profiles;
+    final count = profiles.length.clamp(0, 3);
+    for (int i = 0; i < count; i++) {
+      final url = profiles[i].imageUrl;
+      if (url.isNotEmpty && url.startsWith('http')) {
+        precacheImage(NetworkImage(url), context).catchError((_) {});
+      }
+      // Cũng precache ảnh đầu tiên trong gallery nếu khác imageUrl
+      if (profiles[i].photos.isNotEmpty) {
+        final firstPhoto = profiles[i].photos.first;
+        if (firstPhoto != url && firstPhoto.startsWith('http')) {
+          precacheImage(NetworkImage(firstPhoto), context).catchError((_) {});
+        }
+      }
     }
   }
 
@@ -185,7 +267,20 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     String matchId,
     String? chatId,
     DiscoverProfile profile,
+    SwipeMatchPreview? matchPreview,
   ) {
+    final previewOther = matchPreview?.other;
+    final otherUserId = previewOther?.id.isNotEmpty == true
+        ? previewOther!.id
+        : profile.id;
+    final otherUserName = previewOther?.name.trim().isNotEmpty == true
+        ? previewOther!.name
+        : profile.name;
+    final otherUserPhoto =
+        previewOther?.photo ??
+        (profile.imageUrl.isNotEmpty ? profile.imageUrl : null) ??
+        (profile.photos.isNotEmpty ? profile.photos.first : null);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -193,8 +288,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
       enableDrag: false,
       isScrollControlled: true,
       builder: (ctx) => NewMatchReceiptSheet(
-        otherUserName: profile.name,
-        otherUserPhoto: profile.imageUrl.isNotEmpty ? profile.imageUrl : null,
+        currentUserPhoto: matchPreview?.current.photo ?? _currentUserPhoto,
+        otherUserName: otherUserName,
+        otherUserPhoto: otherUserPhoto,
         compatibilityScore: profile.matchPercentage,
         factors: _buildMatchReceiptFactors(profile),
         onOpenChat: () {
@@ -205,9 +301,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
               arguments: {
                 'chatId': chatId,
                 'matchId': matchId,
-                'otherUserId': profile.id,
-                'name': profile.name,
-                'photo': profile.imageUrl.isNotEmpty ? profile.imageUrl : null,
+                'otherUserId': otherUserId,
+                'name': otherUserName,
+                'photo': otherUserPhoto,
               },
             );
           } else {
@@ -586,4 +682,12 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
       ),
     );
   }
+}
+
+/// Job struct cho swipe queue.
+class _SwipeJob {
+  final DiscoverProfile profile;
+  final String action;
+
+  const _SwipeJob({required this.profile, required this.action});
 }

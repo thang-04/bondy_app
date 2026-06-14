@@ -14,7 +14,7 @@ class ProfileService {
   late final Dio _dio;
 
   ProfileService({ApiClient? apiClient, Dio? dio})
-      : _apiClient = apiClient ?? ApiClient() {
+    : _apiClient = apiClient ?? ApiClient() {
     _dio = dio ?? Dio(BaseOptions(baseUrl: _apiClient.baseUrl));
   }
 
@@ -95,7 +95,9 @@ class ProfileService {
           return url;
         }
       }
-      debugPrint('[IMG-DBG] upload failed: ${response.statusCode} ${response.body}');
+      debugPrint(
+        '[IMG-DBG] upload failed: ${response.statusCode} ${response.body}',
+      );
       return null;
     } catch (e) {
       debugPrint('Upload media error: $e');
@@ -118,7 +120,8 @@ class ProfileService {
     if (gender != null) data['gender'] = gender;
     if (city != null) data['city'] = city;
     if (datingGoal != null) data['datingGoal'] = datingGoal;
-    if (birthDate is DateTime) data['birthDate'] = birthDate.toIso8601String().split('T')[0];
+    if (birthDate is DateTime)
+      data['birthDate'] = birthDate.toIso8601String().split('T')[0];
     if (birthDate is String) data['birthDate'] = birthDate;
     if (photos != null) data['photos'] = photos;
 
@@ -138,11 +141,7 @@ class ProfileService {
   }) async {
     final body = await _apiClient.patch(
       '/profile/location',
-      body: {
-        'city': city,
-        'latitude': latitude,
-        'longitude': longitude,
-      },
+      body: {'city': city, 'latitude': latitude, 'longitude': longitude},
       authenticated: true,
     );
 
@@ -160,7 +159,10 @@ class ProfileService {
 
   /// Trả về danh sách interest ID mà user đã chọn
   Future<List<String>> getUserInterests() async {
-    final body = await _apiClient.get('/profile/interests', authenticated: true);
+    final body = await _apiClient.get(
+      '/profile/interests',
+      authenticated: true,
+    );
     final data = body['data'];
     if (data is List) {
       return data.map((e) => e.toString()).toList();
@@ -248,9 +250,11 @@ class ProfileService {
   }) async {
     final data = <String, dynamic>{};
     if (zodiacSign != null) data['zodiacSign'] = zodiacSign;
-    if (zodiacPreferences != null) data['zodiacPreferences'] = zodiacPreferences;
+    if (zodiacPreferences != null)
+      data['zodiacPreferences'] = zodiacPreferences;
     if (freeTimeSlots != null) data['freeTimeSlots'] = freeTimeSlots;
-    if (desiredPartnerType != null) data['desiredPartnerType'] = desiredPartnerType;
+    if (desiredPartnerType != null)
+      data['desiredPartnerType'] = desiredPartnerType;
 
     final body = await _apiClient.put(
       '/profile/deep-match',

@@ -25,8 +25,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   final List<XFile?> _images = List.generate(6, (index) => null);
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
-  
-  
+
   String get _baseUrl => AuthService.resolveBaseUrl();
 
   void _showSkipWarning() {
@@ -45,14 +44,25 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Quay lại thêm ảnh', style: GoogleFonts.plusJakartaSans(color: BondyColors.primary, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Quay lại thêm ảnh',
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               OnboardingRouter.navigateToNextStep(context);
             },
-            child: Text('Bỏ qua', style: GoogleFonts.plusJakartaSans(color: BondyColors.textSecondary)),
+            child: Text(
+              'Bỏ qua',
+              style: GoogleFonts.plusJakartaSans(
+                color: BondyColors.textSecondary,
+              ),
+            ),
           ),
         ],
       ),
@@ -77,7 +87,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         String fileName = img!.name;
         final bytes = await img.readAsBytes();
         final ext = fileName.split('.').last.toLowerCase();
-        final mimeType = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+        final mimeType = ext == 'png'
+            ? 'image/png'
+            : (ext == 'webp'
+                  ? 'image/webp'
+                  : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
 
         // Use the native http package MultipartRequest to upload files,
         // which avoids the Safari iOS type conversion InvalidAccessError Blob bug!
@@ -86,7 +100,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         if (token != null) {
           request.headers['Authorization'] = 'Bearer $token';
         }
-        
+
         request.files.add(
           http_client.MultipartFile.fromBytes(
             'file',
@@ -95,9 +109,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
             contentType: MediaType.parse(mimeType),
           ),
         );
-        
+
         final streamedResponse = await request.send();
-        final response = await http_client.Response.fromStream(streamedResponse);
+        final response = await http_client.Response.fromStream(
+          streamedResponse,
+        );
 
         if (response.statusCode == 200) {
           final responseData = jsonDecode(response.body);
@@ -110,7 +126,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       if (uploadedUrls.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không có ảnh nào được tải lên thành công. Vui lòng thử lại.')),
+            const SnackBar(
+              content: Text(
+                'Không có ảnh nào được tải lên thành công. Vui lòng thử lại.',
+              ),
+            ),
           );
         }
         return;
@@ -129,7 +149,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       );
 
       if (patchResponse.statusCode < 200 || patchResponse.statusCode >= 300) {
-        throw Exception("Không thể cập nhật ảnh vào hồ sơ (Mã lỗi: ${patchResponse.statusCode})");
+        throw Exception(
+          "Không thể cập nhật ảnh vào hồ sơ (Mã lỗi: ${patchResponse.statusCode})",
+        );
       }
 
       if (mounted) {
@@ -141,7 +163,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Lỗi tải ảnh lên. Vui lòng thử lại.'),
-            action: SnackBarAction(label: 'Thử lại', onPressed: _uploadImagesAndContinue),
+            action: SnackBarAction(
+              label: 'Thử lại',
+              onPressed: _uploadImagesAndContinue,
+            ),
           ),
         );
       }
@@ -229,7 +254,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: isEmpty ? BondyColors.primaryLight.withValues(alpha: 0.3) : BondyColors.primaryLight,
+              color: isEmpty
+                  ? BondyColors.primaryLight.withValues(alpha: 0.3)
+                  : BondyColors.primaryLight,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isEmpty ? BondyColors.divider : BondyColors.primary,
@@ -243,7 +270,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                       children: [
                         Icon(
                           Icons.add_photo_alternate_rounded,
-                          color: isProfile ? BondyColors.primary : BondyColors.textHint,
+                          color: isProfile
+                              ? BondyColors.primary
+                              : BondyColors.textHint,
                           size: 32,
                         ),
                         const SizedBox(height: 8),
@@ -251,8 +280,12 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                           isProfile ? 'Ảnh đại diện' : 'Thêm ảnh',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            fontWeight: isProfile ? FontWeight.w600 : FontWeight.w500,
-                            color: isProfile ? BondyColors.primary : BondyColors.textHint,
+                            fontWeight: isProfile
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isProfile
+                                ? BondyColors.primary
+                                : BondyColors.textHint,
                           ),
                         ),
                       ],
@@ -260,19 +293,19 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: kIsWeb 
-                      ? Image.network(
-                          image.path,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )
-                      : Image.file(
-                          File(image.path),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
+                    child: kIsWeb
+                        ? Image.network(
+                            image.path,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : Image.file(
+                            File(image.path),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
                   ),
           ),
           if (!isEmpty)
@@ -287,11 +320,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                     color: Colors.black54,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 16,
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 16),
                 ),
               ),
             ),
@@ -345,7 +374,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-               Text(
+              Text(
                 'Thêm ít nhất 1 ảnh đại diện và 2 ảnh giới thiệu để mọi người hiểu thêm về bạn nhé.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
@@ -369,23 +398,23 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Text(
-                      '${_images.where((img) => img != null).length}/6 ảnh',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: BondyColors.textSecondary,
-                      ),
-                   ),
-                ]
+                  Text(
+                    '${_images.where((img) => img != null).length}/6 ảnh',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: BondyColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              _isUploading 
-                ? const Center(child: CircularProgressIndicator()) 
-                : BondyButton(
-                    text: 'Tiếp tục',
-                    onPressed: _uploadImagesAndContinue,
-                  ),
+              _isUploading
+                  ? const Center(child: CircularProgressIndicator())
+                  : BondyButton(
+                      text: 'Tiếp tục',
+                      onPressed: _uploadImagesAndContinue,
+                    ),
               const SizedBox(height: 32),
             ],
           ),

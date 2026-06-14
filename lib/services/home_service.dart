@@ -18,8 +18,7 @@ class HomeService {
       throw Exception(body['error']?.toString() ?? 'Lỗi không xác định');
     }
 
-    final widgetsJson =
-        (body['data']?['widgets'] as List<dynamic>?) ?? [];
+    final widgetsJson = (body['data']?['widgets'] as List<dynamic>?) ?? [];
 
     final widgets = widgetsJson
         .map((w) => HomeWidget.fromJson(w as Map<String, dynamic>))

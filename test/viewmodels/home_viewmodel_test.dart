@@ -9,14 +9,20 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
   });
 
-  test('authenticated home loading reports error when no user is stored', () async {
-    const storage = FlutterSecureStorage();
-    final authService = AuthService(baseUrlOverride: 'https://api.example.com/api', storage: storage);
-    final viewModel = HomeViewModel();
+  test(
+    'authenticated home loading reports error when no user is stored',
+    () async {
+      const storage = FlutterSecureStorage();
+      final authService = AuthService(
+        baseUrlOverride: 'https://api.example.com/api',
+        storage: storage,
+      );
+      final viewModel = HomeViewModel();
 
-    await viewModel.loadAuthenticatedContent(authService: authService);
+      await viewModel.loadAuthenticatedContent(authService: authService);
 
-    expect(viewModel.state, isA<HomeError>());
-    expect((viewModel.state as HomeError).message, contains('đăng nhập'));
-  });
+      expect(viewModel.state, isA<HomeError>());
+      expect((viewModel.state as HomeError).message, contains('đăng nhập'));
+    },
+  );
 }

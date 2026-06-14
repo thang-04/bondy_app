@@ -47,15 +47,15 @@ class RitualAudioDetailScreen extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           const ColoredBox(
-                        color: HealingStitchColors.paleCoral,
-                        child: Center(
-                          child: Icon(
-                            Icons.headphones,
-                            color: HealingStitchColors.pink,
-                            size: 52,
+                            color: HealingStitchColors.paleCoral,
+                            child: Center(
+                              child: Icon(
+                                Icons.headphones,
+                                color: HealingStitchColors.pink,
+                                size: 52,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(

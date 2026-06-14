@@ -65,5 +65,6 @@ class _RiskPattern {
   final RegExp regex;
   final int weight;
 
-  _RiskPattern(String pattern, this.weight) : regex = RegExp(pattern, caseSensitive: false);
+  _RiskPattern(String pattern, this.weight)
+    : regex = RegExp(pattern, caseSensitive: false);
 }

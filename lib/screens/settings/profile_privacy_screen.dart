@@ -87,18 +87,26 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
                 ('30d', '30 ngày'),
               ])
                 ListTile(
-                  leading: const Icon(Icons.pause_circle_outline,
-                      color: BondyColors.primary),
-                  title: Text(option.$2,
-                      style: bondyText(weight: FontWeight.w700)),
+                  leading: const Icon(
+                    Icons.pause_circle_outline,
+                    color: BondyColors.primary,
+                  ),
+                  title: Text(
+                    option.$2,
+                    style: bondyText(weight: FontWeight.w700),
+                  ),
                   onTap: () => Navigator.pop(ctx, option.$1),
                 ),
               if (_snooze?.isSnoozed == true)
                 ListTile(
-                  leading: const Icon(Icons.play_circle_outline,
-                      color: Color(0xFF10B981)),
-                  title: Text('Bật lại ngay',
-                      style: bondyText(weight: FontWeight.w700)),
+                  leading: const Icon(
+                    Icons.play_circle_outline,
+                    color: Color(0xFF10B981),
+                  ),
+                  title: Text(
+                    'Bật lại ngay',
+                    style: bondyText(weight: FontWeight.w700),
+                  ),
                   onTap: () => Navigator.pop(ctx, null),
                 ),
             ],
@@ -162,40 +170,57 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
                 ),
                 const Divider(height: 24),
                 ListTile(
-                  leading: const Icon(Icons.pause_circle_outline,
-                      color: BondyColors.primary),
-                  title: Text('Tạm dừng khám phá',
-                      style: bondyText(weight: FontWeight.w700)),
-                  subtitle: Text(_formatSnooze(),
-                      style: bondyText(
-                        size: 13,
-                        color: BondyColors.textSecondary,
-                      )),
+                  leading: const Icon(
+                    Icons.pause_circle_outline,
+                    color: BondyColors.primary,
+                  ),
+                  title: Text(
+                    'Tạm dừng khám phá',
+                    style: bondyText(weight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    _formatSnooze(),
+                    style: bondyText(
+                      size: 13,
+                      color: BondyColors.textSecondary,
+                    ),
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _saving ? null : _pickSnooze,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.notifications_none,
-                      color: BondyColors.primary),
-                  title: Text('Cài đặt thông báo',
-                      style: bondyText(weight: FontWeight.w700)),
+                  leading: const Icon(
+                    Icons.notifications_none,
+                    color: BondyColors.primary,
+                  ),
+                  title: Text(
+                    'Cài đặt thông báo',
+                    style: bondyText(weight: FontWeight.w700),
+                  ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context)
-                      .pushNamed('/settings/notifications'),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).pushNamed('/settings/notifications'),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.block_outlined,
-                      color: BondyColors.primary),
-                  title: Text('Danh sách đã chặn',
-                      style: bondyText(weight: FontWeight.w700)),
+                  leading: const Icon(
+                    Icons.block_outlined,
+                    color: BondyColors.primary,
+                  ),
+                  title: Text(
+                    'Danh sách đã chặn',
+                    style: bondyText(weight: FontWeight.w700),
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () =>
                       Navigator.of(context).pushNamed('/settings/blocked'),
                 ),
                 const Divider(height: 24),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline,
-                      color: BondyColors.error),
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: BondyColors.error,
+                  ),
                   title: Text(
                     'Xóa tài khoản',
                     style: bondyText(

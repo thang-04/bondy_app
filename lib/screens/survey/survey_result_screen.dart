@@ -19,12 +19,13 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
   String? _finalModeCode;
   bool _isSaving = false;
 
-  void _navigateToRoute(String targetRoute, [Map<String, dynamic>? targetArgs]) {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      targetRoute,
-      (_) => false,
-      arguments: targetArgs,
-    );
+  void _navigateToRoute(
+    String targetRoute, [
+    Map<String, dynamic>? targetArgs,
+  ]) {
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(targetRoute, (_) => false, arguments: targetArgs);
   }
 
   @override
@@ -52,9 +53,9 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
       _navigateToRoute(healingPlanRoute);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi bắt đầu lộ trình: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi khi bắt đầu lộ trình: $e')));
       }
     } finally {
       if (mounted) {
@@ -70,9 +71,7 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: BondyColors.background,
-        ),
+        decoration: const BoxDecoration(color: BondyColors.background),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -83,11 +82,17 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: needsHealing ? BondyColors.primary : const Color(0xFF10B981),
+                    color: needsHealing
+                        ? BondyColors.primary
+                        : const Color(0xFF10B981),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (needsHealing ? BondyColors.primary : const Color(0xFF10B981)).withValues(alpha: 0.3),
+                        color:
+                            (needsHealing
+                                    ? BondyColors.primary
+                                    : const Color(0xFF10B981))
+                                .withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -214,10 +219,9 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                         ),
                       ),
                       onPressed: () {
-                        _navigateToRoute(
-                          healingPlanRoute,
-                          const {'preview': true},
-                        );
+                        _navigateToRoute(healingPlanRoute, const {
+                          'preview': true,
+                        });
                       },
                       child: Text(
                         'Xem trước',

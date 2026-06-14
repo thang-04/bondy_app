@@ -79,10 +79,11 @@ class UserProfileModel {
     }
 
     // User identity: ưu tiên user.id (server mới) → userId field → json['id']
-    final userId = userNode?['id']?.toString()
-        ?? json['userId']?.toString()
-        ?? json['id']?.toString()
-        ?? '';
+    final userId =
+        userNode?['id']?.toString() ??
+        json['userId']?.toString() ??
+        json['id']?.toString() ??
+        '';
 
     // isVisible từ server, isHidden = !isVisible
     final isVisible = profileFields['isVisible'] as bool?;
@@ -91,17 +92,15 @@ class UserProfileModel {
 
     return UserProfileModel(
       id: userId,
-      email: userNode?['email']?.toString()
-          ?? json['email']?.toString()
-          ?? '',
-      name: userNode?['name']?.toString()
-          ?? json['name']?.toString(),
+      email: userNode?['email']?.toString() ?? json['email']?.toString() ?? '',
+      name: userNode?['name']?.toString() ?? json['name']?.toString(),
       image: () {
-            final rawImg = userNode?['image']?.toString() ?? json['image']?.toString();
-            final rewrittenImg = rewriteMediaUrl(rawImg);
-            debugPrint('[IMG-DBG] user.image raw=$rawImg rewritten=$rewrittenImg');
-            return rewrittenImg;
-          }(),
+        final rawImg =
+            userNode?['image']?.toString() ?? json['image']?.toString();
+        final rewrittenImg = rewriteMediaUrl(rawImg);
+        debugPrint('[IMG-DBG] user.image raw=$rawImg rewritten=$rewrittenImg');
+        return rewrittenImg;
+      }(),
       phone: json['phone']?.toString(),
       // Profile fields (top-level trên server mới, nested trên format cũ)
       fullName: profileFields['fullName']?.toString(),
@@ -115,7 +114,9 @@ class UserProfileModel {
       photos: parsePhotos(profileFields['photos']),
       isHidden: isHidden,
       zodiacSign: profileFields['zodiacSign']?.toString(),
-      zodiacPreferences: List<String>.from(profileFields['zodiacPreferences'] ?? []),
+      zodiacPreferences: List<String>.from(
+        profileFields['zodiacPreferences'] ?? [],
+      ),
       lifePathNumber: profileFields['lifePathNumber'] as int?,
       freeTimeSlots: List<String>.from(profileFields['freeTimeSlots'] ?? []),
       desiredPartnerType: profileFields['desiredPartnerType']?.toString(),
@@ -123,31 +124,30 @@ class UserProfileModel {
   }
 
   /// Tên hiển thị: ưu tiên fullName → name → email prefix
-  String get displayName =>
-      fullName?.isNotEmpty == true
-          ? fullName!
-          : name?.isNotEmpty == true
-              ? name!
-              : email.split('@').first;
+  String get displayName => fullName?.isNotEmpty == true
+      ? fullName!
+      : name?.isNotEmpty == true
+      ? name!
+      : email.split('@').first;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'name': name,
-        'image': image,
-        'phone': phone,
-        'fullName': fullName,
-        'gender': gender,
-        'birthDate': birthDate?.toIso8601String(),
-        'city': city,
-        'bio': bio,
-        'datingGoal': datingGoal,
-        'photos': photos,
-        'isHidden': isHidden,
-        'zodiacSign': zodiacSign,
-        'zodiacPreferences': zodiacPreferences,
-        'lifePathNumber': lifePathNumber,
-        'freeTimeSlots': freeTimeSlots,
-        'desiredPartnerType': desiredPartnerType,
-      };
+    'id': id,
+    'email': email,
+    'name': name,
+    'image': image,
+    'phone': phone,
+    'fullName': fullName,
+    'gender': gender,
+    'birthDate': birthDate?.toIso8601String(),
+    'city': city,
+    'bio': bio,
+    'datingGoal': datingGoal,
+    'photos': photos,
+    'isHidden': isHidden,
+    'zodiacSign': zodiacSign,
+    'zodiacPreferences': zodiacPreferences,
+    'lifePathNumber': lifePathNumber,
+    'freeTimeSlots': freeTimeSlots,
+    'desiredPartnerType': desiredPartnerType,
+  };
 }

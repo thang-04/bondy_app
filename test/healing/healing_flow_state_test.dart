@@ -24,7 +24,10 @@ void main() {
         lastIntensity: 2,
       );
       expect(state.primaryIntent, HealingPrimaryIntent.reflect);
-      expect(state.recoveryPrimaryAction, HealingRecoveryAction.startReflection);
+      expect(
+        state.recoveryPrimaryAction,
+        HealingRecoveryAction.startReflection,
+      );
     });
 
     test('returns startReflection for rebuild intent (in-progress, low)', () {
@@ -36,7 +39,10 @@ void main() {
         lastIntensity: 4,
       );
       expect(state.primaryIntent, HealingPrimaryIntent.rebuild);
-      expect(state.recoveryPrimaryAction, HealingRecoveryAction.startReflection);
+      expect(
+        state.recoveryPrimaryAction,
+        HealingRecoveryAction.startReflection,
+      );
     });
   });
 

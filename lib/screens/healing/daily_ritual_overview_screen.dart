@@ -143,7 +143,10 @@ class _RitualList extends StatelessWidget {
         final item = items[i];
         return Card(
           child: ListTile(
-            title: Text(item.title, style: healingText(weight: FontWeight.w800)),
+            title: Text(
+              item.title,
+              style: healingText(weight: FontWeight.w800),
+            ),
             subtitle: Text(
               item.summary.isNotEmpty
                   ? item.summary

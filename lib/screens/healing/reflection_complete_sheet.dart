@@ -60,7 +60,10 @@ class ReflectionCompleteSheet extends StatelessWidget {
                     Text(
                       'Mỗi bước nhỏ đều giúp bạn nhẹ lòng hơn.',
                       textAlign: TextAlign.center,
-                      style: healingText(size: 14, color: HealingStitchColors.textSoft),
+                      style: healingText(
+                        size: 14,
+                        color: HealingStitchColors.textSoft,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     HealingGradientButton(
@@ -70,8 +73,9 @@ class ReflectionCompleteSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushNamedAndRemoveUntil(healingHomeRoute, (_) => false),
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil(healingHomeRoute, (_) => false),
                       child: const Text('Về Healing Home'),
                     ),
                   ],

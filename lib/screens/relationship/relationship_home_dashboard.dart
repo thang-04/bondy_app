@@ -58,7 +58,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
       if (mounted) {
         setState(() {
           _myDisplayName = profile.displayName;
-          _myPhotoUrl = profile.image ??
+          _myPhotoUrl =
+              profile.image ??
               (profile.photos.isNotEmpty ? profile.photos.first : null);
         });
       }
@@ -239,16 +240,18 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                     ),
                                     backgroundColor: const Color(0xFFF9FAFB),
                                     side: BorderSide(
-                                      color: HealingStitchColors.border.withValues(alpha: 0.8),
+                                      color: HealingStitchColors.border
+                                          .withValues(alpha: 0.8),
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     onPressed: () {
                                       textController.text = text;
-                                      textController.selection = TextSelection.fromPosition(
-                                        TextPosition(offset: text.length),
-                                      );
+                                      textController.selection =
+                                          TextSelection.fromPosition(
+                                            TextPosition(offset: text.length),
+                                          );
                                     },
                                   ),
                                 );
@@ -271,15 +274,22 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                             contentPadding: const EdgeInsets.all(16),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: HealingStitchColors.border),
+                              borderSide: BorderSide(
+                                color: HealingStitchColors.border,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: HealingStitchColors.border),
+                              borderSide: BorderSide(
+                                color: HealingStitchColors.border,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: HealingStitchColors.coral, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: HealingStitchColors.coral,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                           style: GoogleFonts.plusJakartaSans(
@@ -292,7 +302,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
-                              onPressed: isSending ? null : () => Navigator.pop(dialogContext),
+                              onPressed: isSending
+                                  ? null
+                                  : () => Navigator.pop(dialogContext),
                               child: Text(
                                 'Hủy',
                                 style: GoogleFonts.plusJakartaSans(
@@ -306,7 +318,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                             Container(
                               height: 40,
                               decoration: BoxDecoration(
-                                gradient: isSending ? null : HealingStitchColors.warmGradient,
+                                gradient: isSending
+                                    ? null
+                                    : HealingStitchColors.warmGradient,
                                 color: isSending ? Colors.grey.shade300 : null,
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -314,7 +328,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                 onPressed: isSending
                                     ? null
                                     : () async {
-                                        final content = textController.text.trim();
+                                        final content = textController.text
+                                            .trim();
                                         if (content.isEmpty) {
                                           BondyFeedback.showError(
                                             context,
@@ -328,12 +343,16 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                         });
 
                                         try {
-                                          final partnerId = _viewModel.dashboard?.partnerId;
+                                          final partnerId =
+                                              _viewModel.dashboard?.partnerId;
                                           if (partnerId == null) {
-                                            throw Exception('Không tìm thấy đối tác');
+                                            throw Exception(
+                                              'Không tìm thấy đối tác',
+                                            );
                                           }
 
-                                          final chats = await _chatService.listChats();
+                                          final chats = await _chatService
+                                              .listChats();
                                           final match = chats.firstWhere(
                                             (c) => c.otherUser.id == partnerId,
                                             orElse: () => throw Exception(
@@ -341,10 +360,15 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                             ),
                                           );
 
-                                          await _chatService.sendMessage(match.id, content);
+                                          await _chatService.sendMessage(
+                                            match.id,
+                                            content,
+                                          );
 
                                           await _viewModel.setDailyActionState(
-                                            status: RelationshipDailyActionStatus.skipped,
+                                            status:
+                                                RelationshipDailyActionStatus
+                                                    .skipped,
                                           );
 
                                           await _viewModel.loadDashboard();
@@ -371,7 +395,9 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
                                   minimumSize: const Size(0, 40),
                                 ),
                                 child: Text(
@@ -527,7 +553,8 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
                     children: [
                       Row(
                         children: [
-                          if (widget.showBackButton && Navigator.of(context).canPop()) ...[
+                          if (widget.showBackButton &&
+                              Navigator.of(context).canPop()) ...[
                             IconButton(
                               icon: const Icon(
                                 Icons.arrow_back_ios_new_rounded,
@@ -1003,11 +1030,15 @@ class _RelationshipHomeDashboardState extends State<RelationshipHomeDashboard> {
               child: GestureDetector(
                 onTap: myCheckin != null
                     ? null
-                    : () => Navigator.of(context).pushNamed('/relationship/checkin'),
+                    : () => Navigator.of(
+                        context,
+                      ).pushNamed('/relationship/checkin'),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: myCheckin != null ? Colors.white : const Color(0xFFFFF5F5),
+                    color: myCheckin != null
+                        ? Colors.white
+                        : const Color(0xFFFFF5F5),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: myCheckin != null

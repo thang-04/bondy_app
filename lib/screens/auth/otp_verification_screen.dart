@@ -155,7 +155,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               children: [
                 // Custom AppBar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -174,9 +177,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       children: [
                         const SizedBox(height: 12),
                         // Small glowing logo header
-                        const Center(
-                          child: BondyLogo(size: 140),
-                        ),
+                        const Center(child: BondyLogo(size: 140)),
                         const SizedBox(height: 24),
                         Text(
                           'Nhập mã xác thực',
@@ -200,7 +201,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: List.generate(6, (index) {
-                            final isFilled = _controllers[index].text.isNotEmpty;
+                            final isFilled =
+                                _controllers[index].text.isNotEmpty;
                             return SizedBox(
                               width: 48,
                               height: 58,
@@ -256,7 +258,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   ),
                                   filled: true,
                                   fillColor: isFilled
-                                      ? BondyColors.primaryLight.withValues(alpha: 0.4)
+                                      ? BondyColors.primaryLight.withValues(
+                                          alpha: 0.4,
+                                        )
                                       : Colors.white,
                                 ),
                               ),
@@ -272,10 +276,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   onPressed: isLoading
                                       ? null
                                       : () => _handleResend(
-                                            email: email,
-                                            flow: flow,
-                                            password: password,
-                                          ),
+                                          email: email,
+                                          flow: flow,
+                                          password: password,
+                                        ),
                                   child: Text(
                                     'Gửi lại mã',
                                     style: GoogleFonts.plusJakartaSans(
@@ -304,12 +308,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   final otp = _controllers
                                       .map((controller) => controller.text)
                                       .join();
-                                  context.read<AuthViewModel>().verifyOtpAndNavigate(
-                                    context,
-                                    email,
-                                    otp,
-                                    flow,
-                                  );
+                                  context
+                                      .read<AuthViewModel>()
+                                      .verifyOtpAndNavigate(
+                                        context,
+                                        email,
+                                        otp,
+                                        flow,
+                                      );
                                 }
                               : () {},
                         ),

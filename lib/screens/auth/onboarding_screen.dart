@@ -38,7 +38,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const Color _outlineVariant = BondyColors.textHint;
 
   // ─── Signature Gradient (Bondy brand) ───
-  static const LinearGradient _signatureGradient = BondyColors.signatureGradient;
+  static const LinearGradient _signatureGradient =
+      BondyColors.signatureGradient;
 
   late final PageController _pageController;
 
@@ -95,8 +96,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                   // Hiệu ứng mờ dần (opacity)
                   final double opacity = (1.0 - value.abs()).clamp(0.0, 1.0);
-                  
-                  // Hiệu ứng trượt chậm (parallax offset): giảm tốc độ dịch chuyển 
+
+                  // Hiệu ứng trượt chậm (parallax offset): giảm tốc độ dịch chuyển
                   // của trang xuống còn 45% chiều rộng màn hình để hòa quyện với hiệu ứng fade.
                   final double screenWidth = MediaQuery.of(context).size.width;
                   final double translation = value * screenWidth * 0.45;
@@ -218,7 +219,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           left: 0,
           right: 0,
           bottom: 0,
-          top: heroHeight - 80, // overlap lên hero ~80px (tương đương -mt-20 CSS)
+          top:
+              heroHeight -
+              80, // overlap lên hero ~80px (tương đương -mt-20 CSS)
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
@@ -343,12 +346,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF0066).withValues(alpha: 0.1),
+                                color: const Color(
+                                  0xFFFF0066,
+                                ).withValues(alpha: 0.1),
                                 blurRadius: 60,
                                 spreadRadius: 10,
                               ),
                               BoxShadow(
-                                color: const Color(0xFFFF0066).withValues(alpha: 0.1),
+                                color: const Color(
+                                  0xFFFF0066,
+                                ).withValues(alpha: 0.1),
                                 blurRadius: 40,
                                 offset: const Offset(0, 20),
                               ),
@@ -478,7 +485,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _buildPageIndicator(1),
                     const SizedBox(height: 24),
                     _buildPrimaryCTA('Tiếp tục'),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                    SizedBox(
+                      height: MediaQuery.of(context).padding.bottom + 16,
+                    ),
                   ],
                 ),
               ),
@@ -538,10 +547,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Image.asset(
                           'assets/images/healing_stitch/stitch_healing_14.jpg',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: _surfaceContainerLow,
-                            child: const Icon(Icons.person, size: 64, color: _outlineVariant),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: _surfaceContainerLow,
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 64,
+                                  color: _outlineVariant,
+                                ),
+                              ),
                         ),
                       ),
                     ),
@@ -574,7 +588,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     bottom: 32,
                     left: 48,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: _secondaryContainer,
                         borderRadius: BorderRadius.circular(999),
@@ -884,7 +901,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             height: 240,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFF92348E).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFF92348E,
+                              ).withValues(alpha: 0.1),
                             ),
                           ),
                         ),
@@ -905,7 +924,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF92348E).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF92348E,
+                              ).withValues(alpha: 0.2),
                             ),
                           ),
                         ),
@@ -1123,10 +1144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   /// Glass Circle (cho icon shield trên S01)
-  Widget _buildGlassCircle({
-    required IconData icon,
-    required Color iconColor,
-  }) {
+  Widget _buildGlassCircle({required IconData icon, required Color iconColor}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
@@ -1270,7 +1288,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     alignment: Alignment.centerLeft,
                     widthFactor: progressPercent,
                     child: Container(
-                      decoration: const BoxDecoration(gradient: _signatureGradient),
+                      decoration: const BoxDecoration(
+                        gradient: _signatureGradient,
+                      ),
                     ),
                   ),
                 ),
@@ -1359,10 +1379,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   /// Feature row (S03 style)
-  Widget _buildFeatureRow({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget _buildFeatureRow({required IconData icon, required String text}) {
     return Row(
       children: [
         Container(
@@ -1486,12 +1503,10 @@ class _HealingPulseState extends State<_HealingPulse>
       vsync: this,
     )..repeat(reverse: true);
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -1502,9 +1517,6 @@ class _HealingPulseState extends State<_HealingPulse>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: widget.child,
-    );
+    return ScaleTransition(scale: _scaleAnimation, child: widget.child);
   }
 }
