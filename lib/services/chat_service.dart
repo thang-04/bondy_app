@@ -10,6 +10,10 @@ class ChatMatch {
   final ChatLastMessage? lastMessage;
   final int unreadCount;
   final DateTime updatedAt;
+  final bool chatAccepted;
+  final bool isMessageRequest;
+  final bool isInitiator;
+  final DateTime? chatRequestExpiresAt;
 
   ChatMatch({
     required this.id,
@@ -18,6 +22,10 @@ class ChatMatch {
     this.lastMessage,
     this.unreadCount = 0,
     required this.updatedAt,
+    required this.chatAccepted,
+    required this.isMessageRequest,
+    required this.isInitiator,
+    this.chatRequestExpiresAt,
   });
 
   ChatMatch copyWith({
@@ -25,6 +33,10 @@ class ChatMatch {
     ChatLastMessage? lastMessage,
     int? unreadCount,
     DateTime? updatedAt,
+    bool? chatAccepted,
+    bool? isMessageRequest,
+    bool? isInitiator,
+    DateTime? chatRequestExpiresAt,
   }) {
     return ChatMatch(
       id: id,
@@ -33,6 +45,10 @@ class ChatMatch {
       lastMessage: lastMessage ?? this.lastMessage,
       unreadCount: unreadCount ?? this.unreadCount,
       updatedAt: updatedAt ?? this.updatedAt,
+      chatAccepted: chatAccepted ?? this.chatAccepted,
+      isMessageRequest: isMessageRequest ?? this.isMessageRequest,
+      isInitiator: isInitiator ?? this.isInitiator,
+      chatRequestExpiresAt: chatRequestExpiresAt ?? this.chatRequestExpiresAt,
     );
   }
 
@@ -50,6 +66,12 @@ class ChatMatch {
           : null,
       unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      chatAccepted: json['chatAccepted'] as bool? ?? true,
+      isMessageRequest: json['isMessageRequest'] as bool? ?? false,
+      isInitiator: json['isInitiator'] as bool? ?? false,
+      chatRequestExpiresAt: json['chatRequestExpiresAt'] != null
+          ? DateTime.parse(json['chatRequestExpiresAt'] as String)
+          : null,
     );
   }
 }
@@ -295,5 +317,19 @@ class ChatService {
     );
     final data = response['data'] as Map<String, dynamic>? ?? {};
     return (data['updatedCount'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<void> acceptChat(String matchId) async {
+    await _apiClient.post(
+      '/matches/$matchId/accept-chat',
+      authenticated: true,
+    );
+  }
+
+  Future<void> declineChat(String matchId) async {
+    await _apiClient.post(
+      '/matches/$matchId/decline-chat',
+      authenticated: true,
+    );
   }
 }

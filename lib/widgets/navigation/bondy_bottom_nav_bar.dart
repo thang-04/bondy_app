@@ -47,11 +47,22 @@ class BondyBottomNavBar extends StatelessWidget {
   static const double reservedHeightWithoutSafeArea =
       _barHeight + _fabElevation;
 
+  /// Lấy chiều cao dự trữ thực tế bao gồm cả Safe Area và Padding bổ sung
+  static double getReservedHeight(BuildContext context) {
+    final double bottomSafeArea = MediaQuery.paddingOf(context).bottom;
+    final double additionalPadding = bottomSafeArea == 0 ? 12.0 : 8.0;
+    return _barHeight + _fabElevation + bottomSafeArea + additionalPadding;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double bottomSafeArea = MediaQuery.paddingOf(context).bottom;
+    final double additionalPadding = bottomSafeArea == 0 ? 12.0 : 8.0;
+    final double totalBottomOffset = bottomSafeArea + additionalPadding;
+
     return SizedBox(
-      // Tổng chiều cao widget = bar + phần FAB nhô lên
-      height: _barHeight + _fabElevation,
+      // Tổng chiều cao widget = bar + phần FAB nhô lên + safe area + padding thêm
+      height: _barHeight + _fabElevation + totalBottomOffset,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -69,9 +80,11 @@ class BondyBottomNavBar extends StatelessWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: SizedBox(
-                  height: _barHeight,
-                  child: Row(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: additionalPadding),
+                  child: SizedBox(
+                    height: _barHeight,
+                    child: Row(
                     children: [
                       // Discover
                       Expanded(
@@ -126,6 +139,7 @@ class BondyBottomNavBar extends StatelessWidget {
               ),
             ),
           ),
+        ),
 
           // ──────────────────────────────────────────────
           // 2. Nút Match (FAB) lồi lên trên
@@ -134,8 +148,8 @@ class BondyBottomNavBar extends StatelessWidget {
             // Canh giữa màn hình
             left: 0,
             right: 0,
-            // Nằm ở phía trên: bottom của FAB = _barHeight - (_fabSize/2 - _fabElevation/2)
-            bottom: _barHeight - _fabSize / 2 + _fabElevation / 2 - 4,
+            // Nằm ở phía trên: bottom của FAB = _barHeight - (_fabSize/2 - _fabElevation/2) + totalBottomOffset
+            bottom: _barHeight - _fabSize / 2 + _fabElevation / 2 - 4 + totalBottomOffset,
             child: Center(
               child: GestureDetector(
                 onTap: onMatchTap ?? () {},
@@ -188,7 +202,7 @@ class BondyBottomNavBar extends StatelessWidget {
           // 3. Label "Match" bên dưới FAB, nằm trong bar
           // ──────────────────────────────────────────────
           Positioned(
-            bottom: 25,
+            bottom: 25 + totalBottomOffset,
             left: 0,
             right: 0,
             child: Center(

@@ -19,6 +19,9 @@ ChatMatch _chat(String id, DateTime updatedAt) {
     matchId: 'match-$id',
     otherUser: ChatOtherUser(id: 'other-$id', firstName: id, lastName: ''),
     updatedAt: updatedAt,
+    chatAccepted: true,
+    isMessageRequest: false,
+    isInitiator: false,
   );
 }
 

@@ -77,6 +77,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final ImagePicker _imagePicker = ImagePicker();
   StreamSubscription<ChatRealtimeEvent>? _realtimeSub;
 
+  bool _isMessageRequest = false;
+  bool _isInitiator = false;
+  bool _chatAccepted = true;
+
   @override
   void initState() {
     super.initState();
@@ -301,6 +305,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           (route) => false,
           arguments: {'name': _displayName, 'photo': _photo},
         );
+        break;
+      case ChatRealtimeEventKind.chatAccepted:
+        setState(() {
+          _chatAccepted = true;
+          _isMessageRequest = false;
+        });
+        final systemMsgData = event.data['systemMessage'];
+        if (systemMsgData is Map<String, dynamic>) {
+          final systemMsg = ChatMessage.fromJson(systemMsgData);
+          if (!_messages.any((m) => m.id == systemMsg.id)) {
+            setState(() {
+              _messages.add(systemMsg);
+            });
+            _updateChatSummary(systemMsg);
+            _scrollToBottom();
+          }
+        }
         break;
       case ChatRealtimeEventKind.relationshipInviteCanceled:
         final eventMatchId = event.data['matchId']?.toString();
@@ -1277,6 +1298,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (rawLastSeen != null) {
         _partnerLastSeenAt = DateTime.tryParse(rawLastSeen);
       }
+      _isMessageRequest = args['isMessageRequest'] as bool? ?? false;
+      _isInitiator = args['isInitiator'] as bool? ?? false;
+      if (_isMessageRequest) {
+        _chatAccepted = false;
+      }
     } else if (args is String) {
       _chatId = args;
     }
@@ -1331,16 +1357,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _hydrateChatMetadata() async {
-    if (_chatId == null || (_matchId != null && _otherUserId != null)) return;
+    if (_chatId == null) return;
 
     final chats = await _chatService.listChats();
+    if (!mounted) return;
     for (final chat in chats) {
       if (chat.id != _chatId) continue;
-      _matchId ??= chat.matchId;
-      _otherUserId ??= chat.otherUser.id;
-      final name = chat.otherUser.displayName;
-      if (name.isNotEmpty) _displayName = name;
-      _photo ??= chat.otherUser.photo;
+      setState(() {
+        _matchId = chat.matchId;
+        _otherUserId = chat.otherUser.id;
+        final name = chat.otherUser.displayName;
+        if (name.isNotEmpty) _displayName = name;
+        _photo = chat.otherUser.photo;
+        _chatAccepted = chat.chatAccepted;
+        _isMessageRequest = chat.isMessageRequest;
+        _isInitiator = chat.isInitiator;
+      });
       break;
     }
   }
@@ -1775,9 +1807,117 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         children: [
           _buildRelationshipStatusIndicator(),
           _buildCollapsedBanner(),
+          if (!_chatAccepted && _isMessageRequest) _buildMessageRequestBanner(),
+          if (!_chatAccepted && _isInitiator) _buildWaitingAcceptanceBanner(),
           Expanded(child: _buildMessagesBody()),
           _buildInputBar(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMessageRequestBanner() {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF5F3FF),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            '💌 $_displayName muốn nhắn tin cho bạn. Chấp nhận để trò chuyện nhé!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF5B21B6),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  final matchId = _matchId;
+                  if (matchId == null) return;
+                  try {
+                    await _chatService.acceptChat(matchId);
+                    setState(() {
+                      _chatAccepted = true;
+                      _isMessageRequest = false;
+                    });
+                    unawaited(context.read<ChatViewModel>().fetchChats());
+                  } catch (e) {
+                    BondyFeedback.showError(context, 'Lỗi chấp nhận: $e');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5CF6),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                child: Text(
+                  'Chấp nhận 💬',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: () async {
+                  final matchId = _matchId;
+                  if (matchId == null) return;
+                  try {
+                    await _chatService.declineChat(matchId);
+                    unawaited(context.read<ChatViewModel>().fetchChats());
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    BondyFeedback.showError(context, 'Lỗi từ chối: $e');
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFEF4444),
+                  side: const BorderSide(color: Color(0xFFEF4444)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                child: Text(
+                  'Từ chối',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaitingAcceptanceBanner() {
+    return Container(
+      width: double.infinity,
+      color: Colors.grey.shade100,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      alignment: Alignment.center,
+      child: Text(
+        '⏳ Đang chờ đối phương chấp nhận cuộc trò chuyện...',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade700,
+        ),
       ),
     );
   }
@@ -1817,6 +1957,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildInputBar() {
+    final bool isReceiverUnaccepted = _isMessageRequest && !_chatAccepted;
+    final int sentCount = _messages.where((m) => m.senderId == _currentUserId).length;
+    final bool isInitiatorLimitReached = _isInitiator && !_chatAccepted && sentCount >= 3;
+    final bool isInputBarDisabled = isReceiverUnaccepted || isInitiatorLimitReached;
+
     final coachQuota = context.watch<AiQuotaViewModel>().quotaFor(
       AiChatMode.coach,
     );
@@ -1836,7 +1981,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            if (!isInputBarDisabled)
+              SizedBox(
               height: 42,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -1993,11 +2139,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             Row(
               children: [
                 IconButton(
-                  onPressed: _isSending ? null : _pickAndSendImage,
+                  onPressed: (_isSending || isInputBarDisabled) ? null : _pickAndSendImage,
                   icon: const Icon(Icons.image_outlined),
                 ),
                 IconButton(
-                  onPressed: _isSending ? null : _toggleVoiceRecording,
+                  onPressed: (_isSending || isInputBarDisabled) ? null : _toggleVoiceRecording,
                   icon: Icon(
                     _isRecording ? Icons.stop_circle : Icons.mic_none,
                     color: _isRecording ? Colors.red : null,
@@ -2023,11 +2169,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       }
                     },
                     onSubmitted: (_) {
-                      _sendMessage();
+                      if (!isInputBarDisabled) _sendMessage();
                     },
-                    enabled: !_isSending && _chatId != null,
+                    enabled: !_isSending && _chatId != null && !isInputBarDisabled,
                     decoration: InputDecoration(
-                      hintText: 'Nhập tin nhắn...',
+                      hintText: isReceiverUnaccepted
+                          ? '🔒 Chấp nhận để trả lời'
+                          : (isInitiatorLimitReached
+                              ? '⏳ Chờ chấp nhận...'
+                              : 'Nhập tin nhắn...'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -2056,11 +2206,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               : Icons.sentiment_satisfied_alt_outlined,
                           color: BondyColors.primary,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _showEmojiKeyboard = !_showEmojiKeyboard;
-                          });
-                        },
+                        onPressed: isInputBarDisabled
+                            ? null
+                            : () {
+                                setState(() {
+                                  _showEmojiKeyboard = !_showEmojiKeyboard;
+                                });
+                              },
                       ),
                     ),
                     style: GoogleFonts.plusJakartaSans(fontSize: 14),
@@ -2069,7 +2221,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   key: const Key('send_button'),
-                  onPressed: _controller.text.trim().isEmpty || _isSending
+                  onPressed: _controller.text.trim().isEmpty || _isSending || isInputBarDisabled
                       ? null
                       : () {
                           _sendMessage();

@@ -244,8 +244,7 @@ class _HealingModeDashboardScreenState
         : 'bạn';
     final shellBottomPadding = widget.showBottomNavigation
         ? 0.0
-        : BondyBottomNavBar.reservedHeightWithoutSafeArea +
-              MediaQuery.paddingOf(context).bottom;
+        : BondyBottomNavBar.getReservedHeight(context);
 
     return Scaffold(
       backgroundColor: HealingStitchColors.creamBackground,

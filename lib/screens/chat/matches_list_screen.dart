@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../services/api_client.dart';
 import '../../services/chat_service.dart';
-import '../../services/match_service.dart';
 import '../../theme/app_theme.dart';
 import '../../core/ai_prompts_config.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
@@ -21,9 +19,6 @@ class MatchesListScreen extends StatefulWidget {
 }
 
 class _MatchesListScreenState extends State<MatchesListScreen> {
-  late final ApiClient _apiClient = ApiClient();
-  late final MatchService _matchService = MatchService(_apiClient);
-  List<PendingMatch> _pendingMatches = [];
   String? _errorMessage;
   Timer? _refreshTimer;
   final _searchController = TextEditingController();
@@ -54,17 +49,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       setState(() => _errorMessage = null);
     }
     try {
-      await Future.wait([
-        chatVM.fetchChats(),
-        _matchService.listMatches().then((matches) {
-          if (!mounted) return;
-          setState(() {
-            _pendingMatches = matches
-                .where((m) => m.needsConfirmation)
-                .toList();
-          });
-        }),
-      ]);
+      await chatVM.fetchChats();
       if (!mounted) return;
       setState(() => _errorMessage = null);
     } catch (_) {
@@ -83,6 +68,8 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
       final name = chat.otherUser.displayName.toLowerCase();
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
+    final messageRequests = filteredChats.where((c) => c.isMessageRequest).toList();
+    final normalChats = filteredChats.where((c) => !c.isMessageRequest).toList();
 
     final body = RefreshIndicator(
       onRefresh: _loadAll,
@@ -98,9 +85,9 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           const SizedBox(height: 12),
           _buildSearchField(),
           const SizedBox(height: 16),
-          if (_pendingMatches.isNotEmpty) ...[
+          if (messageRequests.isNotEmpty) ...[
             Text(
-              'Mới tương hợp',
+              'Tin nhắn chờ',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -108,7 +95,7 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            _buildHorizontalPendingList(),
+            _buildHorizontalMessageRequestsList(messageRequests),
             const SizedBox(height: 16),
           ],
           Text(
@@ -120,29 +107,29 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          if (isLoading && filteredChats.isEmpty)
+          if (isLoading && normalChats.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_errorMessage != null)
             _buildMessageState(
-              icon: Icons.error_outline,
-              title: _errorMessage!,
-              actionLabel: 'Thử lại',
-              onAction: _loadAll,
-            )
-          else if (filteredChats.isEmpty && _pendingMatches.isEmpty)
+               icon: Icons.error_outline,
+               title: _errorMessage!,
+               actionLabel: 'Thử lại',
+               onAction: _loadAll,
+             )
+          else if (normalChats.isEmpty && messageRequests.isEmpty)
             _buildMessageState(
               icon: Icons.forum_outlined,
               title: 'Chưa có cuộc trò chuyện nào',
               actionLabel: 'Khám phá',
               onAction: () => Navigator.of(context).pushNamed('/discover'),
             )
-          else if (filteredChats.isEmpty)
+          else if (normalChats.isEmpty)
             const SizedBox.shrink()
           else
-            ...filteredChats.map((chat) => _buildChatTile(context, chat)),
+            ...normalChats.map((chat) => _buildChatTile(context, chat)),
         ],
       ),
     );
@@ -227,76 +214,88 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
     );
   }
 
-  Widget _buildHorizontalPendingList() {
+  Widget _buildHorizontalMessageRequestsList(List<ChatMatch> requests) {
     return SizedBox(
       height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: _pendingMatches.length,
+        itemCount: requests.length,
         itemBuilder: (context, index) {
-          final match = _pendingMatches[index];
-          final bool hasGradient = index % 3 != 2;
-          final bool isOnline = index % 3 == 0;
-
-          final avatarContainer = Container(
-            padding: const EdgeInsets.all(2.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: hasGradient
-                  ? const LinearGradient(
-                      colors: [Color(0xFFF97316), Color(0xFFEA2A5A)],
-                    )
-                  : null,
-              color: hasGradient ? null : const Color(0xFFE2E8F0),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: CircleAvatar(
-                radius: 28,
-                backgroundImage: match.otherUserPhoto != null
-                    ? NetworkImage(match.otherUserPhoto!)
-                    : null,
-                child: match.otherUserPhoto == null
-                    ? Text(match.otherUserName[0].toUpperCase())
-                    : null,
-              ),
-            ),
-          );
+          final chat = requests[index];
+          final displayName = chat.otherUser.displayName.isEmpty
+              ? 'Bondy user'
+              : chat.otherUser.displayName;
 
           return Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
-              onTap: () => Navigator.of(context)
-                  .pushNamed('/match-confirm', arguments: {'matchId': match.id})
-                  .then((_) => _loadAll(silent: true)),
+              onTap: () => Navigator.of(context).pushNamed(
+                '/chat',
+                arguments: {
+                  'chatId': chat.id,
+                  'matchId': chat.matchId,
+                  'otherUserId': chat.otherUser.id,
+                  'name': displayName,
+                  'photo': chat.otherUser.photo,
+                  'isOnline': chat.otherUser.isOnline,
+                  'lastSeenAt': chat.otherUser.lastSeenAt,
+                  'presenceStatus': chat.otherUser.presenceStatus,
+                  'isMessageRequest': true,
+                },
+              ).then((_) => _loadAll(silent: true)),
               child: Column(
                 children: [
                   Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      avatarContainer,
-                      if (isOnline)
-                        Positioned(
-                          bottom: 2,
-                          right: 2,
-                          child: Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF22C55E),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
+                      Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundImage: chat.otherUser.photo != null
+                                ? NetworkImage(chat.otherUser.photo!)
+                                : null,
+                            child: chat.otherUser.photo == null
+                                ? Text(displayName[0].toUpperCase())
+                                : null,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Text(
+                            '💌',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    match.otherUserName,
+                    chat.otherUser.firstName,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

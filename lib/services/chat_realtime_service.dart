@@ -15,6 +15,7 @@ enum ChatRealtimeEventKind {
   relationshipInvited,
   relationshipAccepted,
   relationshipInviteCanceled,
+  chatAccepted,
 }
 
 class ChatRealtimeEvent {
@@ -41,6 +42,7 @@ class ChatRealtimeEvent {
         'relationship_accepted' => ChatRealtimeEventKind.relationshipAccepted,
         'relationship_invite_canceled' =>
           ChatRealtimeEventKind.relationshipInviteCanceled,
+        'chat_accepted' => ChatRealtimeEventKind.chatAccepted,
         _ => null,
       };
       return kind == null ? null : ChatRealtimeEvent(kind: kind, data: data);
