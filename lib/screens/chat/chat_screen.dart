@@ -1249,24 +1249,28 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final chatId = _chatId;
     if (chatId == null || _isSending) return;
 
-    // Máy thật Android 13+ cần READ_MEDIA_IMAGES, iOS cần Photos permission.
-    // image_picker không tự xin nên phải request trước, không thì pickImage
-    // trả null lặng lẽ → user tưởng app hỏng.
-    final mediaPermission = await Permission.photos.request();
-    if (!mediaPermission.isGranted && !mediaPermission.isLimited) {
+    // image_picker (gallery) dùng Photo Picker (Android 13+) / PHPicker (iOS) /
+    // <input type=file> (web) — các picker này chạy ngoài tiến trình app nên
+    // KHÔNG cần xin quyền runtime. Gọi Permission.photos.request() trước đây
+    // chặn nhầm: web không hỗ trợ, Android ≤12 không có READ_MEDIA_IMAGES, iOS
+    // báo denied/crash khi thiếu usage description → ảnh không gửi được. Bỏ
+    // gate, để chính picker quản lý quyền truy cập.
+    final XFile? picked;
+    try {
+      picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 85,
+      );
+    } catch (e) {
       if (!mounted) return;
       BondyFeedback.showError(
         context,
-        Exception('Cần quyền truy cập ảnh để gửi hình.'),
+        e,
+        fallback: 'Không mở được thư viện ảnh.',
       );
       return;
     }
-
-    final picked = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1200,
-      imageQuality: 85,
-    );
     if (picked == null) return;
     setState(() => _isSending = true);
     try {
@@ -1476,16 +1480,28 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
 
     try {
-      final dir = await getTemporaryDirectory();
-      final path =
-          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc),
-        path: path,
-      );
-      // Xác nhận recorder thật sự đang chạy — máy thật có khi start() return
-      // nhưng nhà sản xuất chặn ngầm (ví dụ Xiaomi MIUI auto-deny). Nếu không
-      // chạy thì báo lỗi rõ thay vì để user bấm stop ra file rỗng.
+      // Web không hỗ trợ ghi ra file path (path_provider không có web impl) →
+      // truyền path rỗng, plugin record sẽ ghi vào blob và trả URL khi stop().
+      String path = '';
+      if (!kIsWeb) {
+        final dir = await getTemporaryDirectory();
+        path =
+            '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      }
+      // aacLc không được hỗ trợ trên web → fallback sang opus. Trên native vẫn
+      // ưu tiên aacLc cho file .m4a gọn nhẹ, mở được ở mọi nơi.
+      var encoder = AudioEncoder.aacLc;
+      if (!await _audioRecorder.isEncoderSupported(encoder)) {
+        encoder = AudioEncoder.opus;
+      }
+      await _audioRecorder.start(RecordConfig(encoder: encoder), path: path);
+      // start() có thể return TRƯỚC khi recorder native kịp chuyển sang trạng
+      // thái recording (nhất là ngay sau hộp thoại xin quyền) → kiểm tra
+      // isRecording() ngay lập tức hay trả false → báo lỗi nhầm "không bắt được
+      // ghi âm" dù mic vẫn hoạt động. Đợi một nhịp ngắn trước khi xác nhận.
+      await Future.delayed(const Duration(milliseconds: 350));
+      // Xác nhận recorder thật sự đang chạy — bắt trường hợp nhà sản xuất chặn
+      // ngầm (ví dụ Xiaomi MIUI auto-deny) thay vì để user bấm stop ra file rỗng.
       final actuallyRecording = await _audioRecorder.isRecording();
       if (!actuallyRecording) {
         if (!mounted) return;
