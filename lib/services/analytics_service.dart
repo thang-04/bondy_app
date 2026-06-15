@@ -1,7 +1,8 @@
 import 'dart:developer' as dev;
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 /// Pluggable analytics service. No-op by default; activate by setting
-/// POSTHOG_API_KEY / MIXPANEL_TOKEN in .env and calling
+/// ANALYTICS_ENABLED=true in .env and calling
 /// [AnalyticsService.configure] at startup.
 ///
 /// Usage example:
@@ -11,6 +12,8 @@ import 'dart:developer' as dev;
 class AnalyticsService {
   AnalyticsService._();
   static final AnalyticsService instance = AnalyticsService._();
+
+  static final FirebaseAnalytics _firebaseAnalytics = FirebaseAnalytics.instance;
 
   bool _enabled = false;
   String? _userId;
@@ -24,12 +27,21 @@ class AnalyticsService {
   void identify(String userId, {Map<String, dynamic>? properties}) {
     _userId = userId;
     if (!_enabled) return;
+    
+    _firebaseAnalytics.setUserId(id: userId);
+    if (properties != null) {
+      properties.forEach((key, value) {
+        _firebaseAnalytics.setUserProperty(name: key, value: value.toString());
+      });
+    }
+    
     _send('\$identify', {'distinct_id': userId, ...?properties});
   }
 
   /// Reset identity (on logout).
   void reset() {
     _userId = null;
+    _firebaseAnalytics.setUserId(id: null);
   }
 
   // ─── Core event helpers ───────────────────────────────────────────────────
@@ -76,9 +88,12 @@ class AnalyticsService {
       return;
     }
 
-    // TODO(analytics): replace with PostHog / Mixpanel / Amplitude SDK call.
-    // Example (PostHog):
-    //   Posthog.capture(eventName: event, properties: props);
+    // Send event to Firebase Analytics
+    _firebaseAnalytics.logEvent(
+      name: event,
+      parameters: properties == null ? null : Map<String, Object>.from(properties),
+    );
+
     dev.log('[analytics] $event $props', name: 'AnalyticsService');
   }
 

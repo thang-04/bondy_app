@@ -1856,6 +1856,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   backgroundColor: const Color(0xFF8B5CF6),
                   foregroundColor: Colors.white,
                   elevation: 0,
+                  minimumSize: const Size(130, 40),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -1886,6 +1887,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFEF4444),
                   side: const BorderSide(color: Color(0xFFEF4444)),
+                  minimumSize: const Size(130, 40),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
