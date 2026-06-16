@@ -286,7 +286,19 @@ class ChatService {
 
   Future<ChatMessage> sendVoiceMessage(String chatId, String filePath) async {
     final profileService = ProfileService(apiClient: _apiClient);
-    final file = XFile(filePath, name: filePath.split(RegExp(r'[/\\]')).last);
+    // Trên web, plugin record trả về blob: URL KHÔNG có đuôi file → uploadMediaFile
+    // suy ra MIME 'application/octet-stream' và server từ chối. Nếu tên file thiếu
+    // đuôi audio hợp lệ thì gán .webm (định dạng record_web xuất ra với opus) để
+    // server nhận đúng content-type audio/*. Trên native tên đã là .m4a nên giữ nguyên.
+    final rawName = filePath.split(RegExp(r'[/\\]')).last;
+    final hasAudioExt = RegExp(
+      r'\.(m4a|mp3|aac|webm|ogg|wav)$',
+      caseSensitive: false,
+    ).hasMatch(rawName);
+    final name = hasAudioExt
+        ? rawName
+        : 'voice_${DateTime.now().millisecondsSinceEpoch}.webm';
+    final file = XFile(filePath, name: name);
     final url = await profileService.uploadMediaFile(file);
     if (url == null || url.isEmpty) {
       throw ArgumentError('Không tải được tin nhắn thoại');

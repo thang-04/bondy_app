@@ -49,6 +49,13 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   Timer? _swipeFeedbackTimer;
   String? _currentUserPhoto;
 
+  // AppinioSwiper tự quản lý index của deck. KHÔNG được xóa profile khỏi list
+  // trong lúc quẹt — nếu xóa, swiper vừa tự tăng index vừa bị thu nhỏ list nên
+  // nhảy cóc qua 1 card (bug "double card / card sau không hiện"). Chỉ tạo
+  // swiper mới (index về 0) bằng cách đổi _deckRevision khi nạp lại deck.
+  int _deckRevision = 0;
+  bool _deckEnded = false;
+
   // Queue tuần tự cho API swipe — tránh race condition khi quẹt nhanh.
   final Queue<_SwipeJob> _swipeQueue = Queue();
   bool _isProcessingSwipe = false;
@@ -67,7 +74,18 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     await _viewModel.loadFilters();
     if (!mounted) return;
     await _viewModel.loadProfiles();
+    _resetDeckView();
     _precacheNextImages();
+  }
+
+  /// Tạo lại swiper từ đầu deck (index về 0) sau khi list được nạp lại hoàn
+  /// toàn — initial load, đổi bộ lọc, hoặc hoàn tác (rewind).
+  void _resetDeckView() {
+    if (!mounted) return;
+    setState(() {
+      _deckRevision++;
+      _deckEnded = false;
+    });
   }
 
   Future<void> _loadCurrentUserPhoto() async {
@@ -136,10 +154,12 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
       return;
     }
 
-    // ── QUAN TRỌNG: Remove card NGAY LẬP TỨC bằng ID ──
-    // Giữ swiper luôn đồng bộ với cardCount, tránh trắng màn khi quẹt nhanh.
-    _viewModel.removeProfileById(profile.id);
-    _precacheNextImages();
+    // ── KHÔNG xóa card khỏi list ở đây ──
+    // AppinioSwiper đã tự tăng index sang card kế tiếp. Nếu xóa profile khỏi
+    // list nữa thì list co lại + index tăng = nhảy cóc qua 1 card (bug card sau
+    // không hiện). Để swiper tự quản lý; card đã quẹt sẽ biến mất khỏi feed ở
+    // lần nạp lại sau (server đã loại nó qua exclusion set).
+    _precacheNextImages(start: targetIndex);
 
     // Enqueue API call xử lý tuần tự ở background.
     _swipeQueue.add(_SwipeJob(profile: profile, action: action));
@@ -169,10 +189,12 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
           _viewModel.clearLastMatch();
         }
 
-        // Nếu server từ chối (quota exhausted, mạng lỗi…) thì thêm lại
-        // profile vào đầu deck để user thấy card quay lại.
+        // Nếu server từ chối (hết quota, mạng lỗi…) thì đưa card vừa quẹt trở
+        // lại bằng unswipe() — KHÔNG chèn lại vào list (sẽ làm lệch index của
+        // swiper). unswipe lùi swiper đúng 1 bước về card vừa rồi.
         if (_viewModel.lastSwipeFailed || _viewModel.quotaExceeded) {
-          _viewModel.restoreProfile(job.profile);
+          if (!mounted) break;
+          await _swiperController.unswipe();
           if (!mounted) break;
           if (_viewModel.quotaExceeded) {
             _showQuotaDialog();
@@ -185,8 +207,13 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
           }
         }
       } catch (_) {
-        // Lỗi không mong muốn — restore card.
-        if (mounted) _viewModel.restoreProfile(job.profile);
+        // Lỗi không mong muốn — báo lỗi, card sẽ xuất hiện lại ở lần nạp sau.
+        if (mounted) {
+          BondyFeedback.showError(
+            context,
+            'Không gửi được thao tác. Vui lòng thử lại.',
+          );
+        }
         break;
       }
     }
@@ -194,12 +221,14 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     _isProcessingSwipe = false;
   }
 
-  /// Precache ảnh cho 2-3 card tiếp theo để giảm lag khi scroll.
-  void _precacheNextImages() {
+  /// Precache ảnh cho 2-3 card tiếp theo (tính từ [start]) để giảm lag.
+  void _precacheNextImages({int start = 0}) {
     if (!mounted) return;
     final profiles = _viewModel.profiles;
-    final count = profiles.length.clamp(0, 3);
-    for (int i = 0; i < count; i++) {
+    if (profiles.isEmpty) return;
+    final from = start.clamp(0, profiles.length);
+    final to = (from + 3).clamp(0, profiles.length);
+    for (int i = from; i < to; i++) {
       final url = profiles[i].imageUrl;
       if (url.isNotEmpty && url.startsWith('http')) {
         precacheImage(NetworkImage(url), context).catchError((_) {});
@@ -220,8 +249,13 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     ).pushNamed('/profile-detail', arguments: profile);
     if (!mounted) return;
     if (_isProcessedSwipeResult(result)) {
-      _viewModel.removeProfileById(profile.id);
+      // Đã quẹt trong màn chi tiết → server đã loại profile này. Nạp lại deck và
+      // reset swiper về đầu thay vì xóa thủ công (tránh lệch index của swiper).
+      await _viewModel.loadProfiles();
+      if (!mounted) return;
+      _resetDeckView();
       await _viewModel.loadQuota();
+      _precacheNextImages();
     }
   }
 
@@ -246,6 +280,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     final rewound = await _viewModel.rewindLastSwipe();
     if (!mounted) return;
     if (rewound) {
+      // rewindLastSwipe đã nạp lại feed → reset swiper về đầu deck mới.
+      _resetDeckView();
+      _precacheNextImages();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đã hoàn tác thao tác vừa rồi.')),
       );
@@ -421,6 +458,8 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
               );
               if (filters != null) {
                 await _viewModel.applyFilters(filters);
+                _resetDeckView();
+                _precacheNextImages();
               }
             },
             icon: const Icon(Icons.tune),
@@ -499,23 +538,34 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: AppinioSwiper(
-                          controller: _swiperController,
-                          swipeOptions: const SwipeOptions.only(
-                            left: true,
-                            right: true,
-                            up: true,
-                          ),
-                          onSwipeBegin: _onSwipeBegin,
-                          onSwipeEnd: _onSwipeEnd,
-                          cardCount: profiles.length,
-                          cardBuilder: (BuildContext context, int index) {
-                            return DiscoverMatchingCard(
-                              profile: profiles[index],
-                              onOpenDetail: _openProfileDetail,
-                            );
-                          },
-                        ),
+                        child: _deckEnded
+                            ? _buildDeckEnded()
+                            : AppinioSwiper(
+                                // Đổi key khi nạp lại deck để swiper khởi tạo lại
+                                // từ index 0 (không có API reset index công khai).
+                                key: ValueKey(_deckRevision),
+                                controller: _swiperController,
+                                swipeOptions: const SwipeOptions.only(
+                                  left: true,
+                                  right: true,
+                                  up: true,
+                                ),
+                                onSwipeBegin: _onSwipeBegin,
+                                onSwipeEnd: _onSwipeEnd,
+                                onEnd: () {
+                                  if (mounted) {
+                                    setState(() => _deckEnded = true);
+                                  }
+                                },
+                                cardCount: profiles.length,
+                                cardBuilder:
+                                    (BuildContext context, int index) {
+                                      return DiscoverMatchingCard(
+                                        profile: profiles[index],
+                                        onOpenDetail: _openProfileDetail,
+                                      );
+                                    },
+                              ),
                       ),
                     ),
 
@@ -540,6 +590,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                             icon: Icons.close,
                             color: const Color(0xFFEF4444),
                             onTap: () {
+                              if (_deckEnded) return;
                               _showSwipeFeedback('PASS');
                               _swiperController.swipeLeft();
                             },
@@ -551,6 +602,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                             icon: Icons.star_rounded,
                             color: const Color(0xFFF59E0B),
                             onTap: () {
+                              if (_deckEnded) return;
                               _showSwipeFeedback('SUPER_LIKE');
                               _swiperController.swipeUp();
                             },
@@ -564,6 +616,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                             icon: Icons.favorite,
                             color: BondyColors.primary,
                             onTap: () {
+                              if (_deckEnded) return;
                               _showSwipeFeedback('LIKE');
                               _swiperController.swipeRight();
                             },
@@ -578,6 +631,41 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  /// Hiển thị khi đã quẹt hết deck đã nạp — cho phép tải thêm gợi ý.
+  Widget _buildDeckEnded() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.favorite_border,
+            size: 56,
+            color: BondyColors.primary,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Bạn đã xem hết gợi ý hiện có.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () async {
+              await _viewModel.loadProfiles();
+              if (!mounted) return;
+              _resetDeckView();
+              _precacheNextImages();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Tải thêm'),
+          ),
+        ],
       ),
     );
   }
