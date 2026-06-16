@@ -125,6 +125,7 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
     BuildContext context,
     AiCoachViewModel viewModel,
   ) {
+    final canRequest = viewModel.selectedIntent != null && !viewModel.isLoading;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -175,20 +176,22 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: () {
-              final selectedMatchId = matchId;
-              if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
-                viewModel.getPersonalizedSuggestions(
-                  chatId: conversationId,
-                  matchId: selectedMatchId,
-                );
-              } else {
-                viewModel.getSuggestions(
-                  conversationId: conversationId,
-                  userId: userId,
-                );
-              }
-            },
+            onPressed: canRequest
+                ? () {
+                    final selectedMatchId = matchId;
+                    if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
+                      viewModel.getPersonalizedSuggestions(
+                        chatId: conversationId,
+                        matchId: selectedMatchId,
+                      );
+                    } else {
+                      viewModel.getSuggestions(
+                        conversationId: conversationId,
+                        userId: userId,
+                      );
+                    }
+                  }
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: BondyColors.primary,
               foregroundColor: Colors.white,
@@ -321,20 +324,22 @@ class _AiSuggestionBottomSheetContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () {
-              final selectedMatchId = matchId;
-              if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
-                viewModel.getPersonalizedSuggestions(
-                  chatId: conversationId,
-                  matchId: selectedMatchId,
-                );
-              } else {
-                viewModel.getSuggestions(
-                  conversationId: conversationId,
-                  userId: userId,
-                );
-              }
-            },
+            onPressed: viewModel.selectedIntent == null
+                ? null
+                : () {
+                    final selectedMatchId = matchId;
+                    if (selectedMatchId != null && selectedMatchId.isNotEmpty) {
+                      viewModel.getPersonalizedSuggestions(
+                        chatId: conversationId,
+                        matchId: selectedMatchId,
+                      );
+                    } else {
+                      viewModel.getSuggestions(
+                        conversationId: conversationId,
+                        userId: userId,
+                      );
+                    }
+                  },
             child: Text(
               'Thử lại',
               style: GoogleFonts.plusJakartaSans(

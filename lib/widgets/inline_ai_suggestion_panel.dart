@@ -9,6 +9,7 @@ class InlineAiSuggestionPanel extends StatelessWidget {
   final String partnerName;
   final VoidCallback onClose;
   final VoidCallback onRetry;
+  final VoidCallback onGenerate;
   final ValueChanged<AiIntent> onIntentSelected;
   final ValueChanged<String> onSuggestionSelected;
 
@@ -18,6 +19,7 @@ class InlineAiSuggestionPanel extends StatelessWidget {
     required this.partnerName,
     required this.onClose,
     required this.onRetry,
+    required this.onGenerate,
     required this.onIntentSelected,
     required this.onSuggestionSelected,
   });
@@ -48,6 +50,8 @@ class InlineAiSuggestionPanel extends StatelessWidget {
           _buildHeader(),
           const SizedBox(height: 10),
           _buildIntentSelector(),
+          const SizedBox(height: 10),
+          _buildGenerateButton(),
           const SizedBox(height: 10),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 180),
@@ -184,6 +188,35 @@ class InlineAiSuggestionPanel extends StatelessWidget {
     );
   }
 
+  Widget _buildGenerateButton() {
+    final canGenerate =
+        viewModel.selectedIntent != null && !viewModel.isLoading;
+    return SizedBox(
+      width: double.infinity,
+      height: 40,
+      child: ElevatedButton.icon(
+        key: const Key('generate_ai_suggestions'),
+        onPressed: canGenerate ? onGenerate : null,
+        icon: const Icon(Icons.auto_awesome, size: 16),
+        label: const Text('Tạo gợi ý'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: BondyColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: BondyColors.primary.withValues(alpha: 0.12),
+          disabledForegroundColor: BondyColors.textHint,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildContent() {
     if (viewModel.isLoading) {
       return SizedBox(
@@ -242,7 +275,7 @@ class InlineAiSuggestionPanel extends StatelessWidget {
             ),
             TextButton(
               key: const Key('retry_ai_suggestion'),
-              onPressed: onRetry,
+              onPressed: viewModel.selectedIntent == null ? null : onRetry,
               child: const Text('Thử lại'),
             ),
           ],

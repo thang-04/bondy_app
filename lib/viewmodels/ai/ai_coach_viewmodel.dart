@@ -81,7 +81,7 @@ class AiCoachViewModel extends ChangeNotifier {
   String loadingMessage = 'Đang đọc cuộc trò chuyện...';
   List<String> suggestions = [];
   String? errorMessage;
-  AiIntent selectedIntent = AiIntent.continueChat;
+  AiIntent? selectedIntent;
   String selectedTone = 'casual';
   bool isLimitReached = false;
   String? limitType;
@@ -115,6 +115,16 @@ class AiCoachViewModel extends ChangeNotifier {
     required String conversationId,
     required String userId,
   }) async {
+    final intent = selectedIntent;
+    if (intent == null) {
+      suggestions = [];
+      errorMessage = null;
+      isLimitReached = false;
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     isLoading = true;
     errorMessage = null;
     suggestions = [];
@@ -125,7 +135,7 @@ class AiCoachViewModel extends ChangeNotifier {
       final request = AiSuggestRequest(
         conversationId: conversationId,
         userId: userId,
-        intent: selectedIntent.value,
+        intent: intent.value,
         tone: selectedTone,
         language: 'vi',
       );
@@ -169,6 +179,17 @@ class AiCoachViewModel extends ChangeNotifier {
     String? expectedPartnerId,
     String? message,
   }) async {
+    final intent = selectedIntent;
+    if (intent == null) {
+      _loadingTimer?.cancel();
+      suggestions = [];
+      errorMessage = null;
+      isLimitReached = false;
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     final requestVersion = ++_requestVersion;
     _loadingTimer?.cancel();
     isLoading = true;
@@ -197,13 +218,13 @@ class AiCoachViewModel extends ChangeNotifier {
     });
 
     try {
-      final prompt = message ?? selectedIntent.prompt;
+      final prompt = message ?? intent.prompt;
       final response = await _aiService.chatCoach(
         AiChatRequest(
           chatId: chatId,
           message: prompt,
           matchId: matchId,
-          intent: selectedIntent.chatValue,
+          intent: intent.chatValue,
           tone: selectedTone,
           count: 3,
           language: 'vi',
@@ -332,6 +353,7 @@ class AiCoachViewModel extends ChangeNotifier {
     quotaExceededData = null;
     upgradeModal = null;
     showBottomSheet = false;
+    selectedIntent = null;
     notifyListeners();
   }
 

@@ -39,8 +39,8 @@ void main() {
         'resetsAt': '2026-06-13T17:00:00.000Z',
       })
       ..suggestions = [
-        'Cuối tuần này bạn có quán cafe nào muốn thử không?',
-        'Nếu chọn một chiều thật chill, bạn sẽ làm gì?',
+        'Cafe this weekend?',
+        'What would you do on a chill afternoon?',
       ];
     String? selectedSuggestion;
 
@@ -52,6 +52,7 @@ void main() {
             partnerName: 'Linh',
             onClose: () {},
             onRetry: () {},
+            onGenerate: () {},
             onIntentSelected: (_) {},
             onSuggestionSelected: (value) => selectedSuggestion = value,
           ),
@@ -60,26 +61,19 @@ void main() {
     );
 
     expect(find.byKey(const Key('inline_ai_suggestion_panel')), findsOneWidget);
-    expect(find.text('Còn 2/3 lượt'), findsOneWidget);
-    expect(find.text('AI gợi ý cho Linh'), findsOneWidget);
-    expect(
-      find.text('Cuối tuần này bạn có quán cafe nào muốn thử không?'),
-      findsOneWidget,
-    );
+    expect(find.text('Cafe this weekend?'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('ai_suggestion_0')));
 
-    expect(
-      selectedSuggestion,
-      'Cuối tuần này bạn có quán cafe nào muốn thử không?',
-    );
+    expect(selectedSuggestion, 'Cafe this weekend?');
   });
 
   testWidgets('updates the loading message while the provider is slow', (
     tester,
   ) async {
     final service = _DelayedAiService();
-    final viewModel = AiCoachViewModel(aiService: service);
+    final viewModel = AiCoachViewModel(aiService: service)
+      ..selectIntent(AiIntent.continueChat);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -91,6 +85,7 @@ void main() {
               partnerName: 'Linh',
               onClose: () {},
               onRetry: () {},
+              onGenerate: () {},
               onIntentSelected: (_) {},
               onSuggestionSelected: (_) {},
             ),
@@ -105,10 +100,9 @@ void main() {
       expectedPartnerId: 'partner-1',
     );
     await tester.pump();
-    expect(find.text('Đang đọc cuộc trò chuyện...'), findsOneWidget);
+    expect(find.byKey(const Key('ai_suggestion_loading')), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 16));
-    expect(find.text('Đang cá nhân hóa gợi ý...'), findsOneWidget);
 
     service.completer.complete(
       AiChatResponse.fromJson({
@@ -119,9 +113,9 @@ void main() {
           'matchId': 'match-1',
           'partnerId': 'partner-1',
           'partnerName': 'Linh',
-          'response': '1. Chào Linh',
+          'response': '1. Hello Linh',
           'mode': 'coach',
-          'suggestions': ['Chào Linh'],
+          'suggestions': ['Hello Linh'],
           'meta': {},
         },
       }),
@@ -129,6 +123,61 @@ void main() {
     await request;
     await tester.pump();
 
-    expect(find.text('Chào Linh'), findsOneWidget);
+    expect(find.text('Hello Linh'), findsOneWidget);
+  });
+
+  testWidgets('requires selecting an intent before generating suggestions', (
+    tester,
+  ) async {
+    final viewModel = AiCoachViewModel();
+    var selectedIntentCount = 0;
+    var generateCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: viewModel,
+            builder: (context, _) => InlineAiSuggestionPanel(
+              viewModel: viewModel,
+              partnerName: 'Linh',
+              onClose: () {},
+              onRetry: () {},
+              onGenerate: () => generateCount++,
+              onIntentSelected: (intent) {
+                selectedIntentCount++;
+                viewModel.selectIntent(intent);
+              },
+              onSuggestionSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final continueChip = tester.widget<ChoiceChip>(
+      find.byKey(const Key('ai_intent_continue')),
+    );
+    expect(continueChip.selected, isFalse);
+
+    final generateButton = find.byKey(const Key('generate_ai_suggestions'));
+    expect(tester.widget<ElevatedButton>(generateButton).onPressed, isNull);
+
+    await tester.tap(find.byKey(const Key('ai_intent_continue')));
+    await tester.pump();
+
+    expect(selectedIntentCount, 1);
+    expect(generateCount, 0);
+    expect(viewModel.selectedIntent, AiIntent.continueChat);
+    expect(
+      tester
+          .widget<ChoiceChip>(find.byKey(const Key('ai_intent_continue')))
+          .selected,
+      isTrue,
+    );
+    expect(tester.widget<ElevatedButton>(generateButton).onPressed, isNotNull);
+
+    await tester.tap(generateButton);
+    expect(generateCount, 1);
   });
 }

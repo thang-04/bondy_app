@@ -1604,27 +1604,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       return;
     }
 
-    final quotaViewModel = context.read<AiQuotaViewModel>();
-    await quotaViewModel.loadQuota();
-    if (!mounted) return;
-    final coachQuota = quotaViewModel.quotaFor(AiChatMode.coach);
-    _aiCoachViewModel.setQuota(coachQuota);
-    if (coachQuota != null && coachQuota.remaining <= 0) {
-      await _showAiQuotaUpgradeDialog(
-        quota: coachQuota,
-        modal: _aiCoachViewModel.upgradeModal,
-      );
-      return;
-    }
-
     _aiCoachViewModel.reset();
-    _aiCoachViewModel.setQuota(coachQuota);
-    _aiCoachViewModel.selectIntent(AiIntent.continueChat);
     setState(() {
       _showAiPanel = true;
       _showEmojiKeyboard = false;
     });
-    await _loadAiSuggestions();
   }
 
   Future<void> _loadAiSuggestions({AiIntent? intent}) async {
@@ -1642,6 +1626,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     if (intent != null) {
       _aiCoachViewModel.selectIntent(intent);
+    }
+    if (_aiCoachViewModel.selectedIntent == null) {
+      return;
     }
     final quotaViewModel = context.read<AiQuotaViewModel>();
     final currentQuota = quotaViewModel.quotaFor(AiChatMode.coach);
@@ -2076,8 +2063,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   setState(() => _showAiPanel = false);
                 },
                 onRetry: _loadAiSuggestions,
-                onIntentSelected: (intent) =>
-                    _loadAiSuggestions(intent: intent),
+                onGenerate: _loadAiSuggestions,
+                onIntentSelected: _aiCoachViewModel.selectIntent,
                 onSuggestionSelected: _applyAiSuggestion,
               ),
             const SizedBox(height: 8),

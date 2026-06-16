@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeAiService extends AiService {
   final Future<AiChatResponse> Function(AiChatRequest request) handler;
   AiChatRequest? lastRequest;
+  int chatCoachCallCount = 0;
 
   _FakeAiService(AiChatResponse response)
     : handler = ((_) async => response),
@@ -17,6 +18,7 @@ class _FakeAiService extends AiService {
 
   @override
   Future<AiChatResponse> chatCoach(AiChatRequest request) async {
+    chatCoachCallCount++;
     lastRequest = request;
     return handler(request);
   }
@@ -57,11 +59,48 @@ AiChatResponse _successResponse({
 }
 
 void main() {
+  test('starts without a selected intent', () {
+    final viewModel = AiCoachViewModel();
+
+    expect(viewModel.selectedIntent, isNull);
+  });
+
+  test('reset clears the selected intent', () {
+    final viewModel = AiCoachViewModel()
+      ..selectIntent(AiIntent.continueChat)
+      ..suggestions = ['Chao Linh'];
+
+    viewModel.reset();
+
+    expect(viewModel.selectedIntent, isNull);
+    expect(viewModel.suggestions, isEmpty);
+  });
+
+  test(
+    'does not request personalized suggestions without selected intent',
+    () async {
+      final service = _FakeAiService(_successResponse());
+      final viewModel = AiCoachViewModel(aiService: service);
+
+      await viewModel.getPersonalizedSuggestions(
+        chatId: 'chat-1',
+        matchId: 'match-1',
+        expectedPartnerId: 'partner-1',
+      );
+
+      expect(service.chatCoachCallCount, 0);
+      expect(service.lastRequest, isNull);
+      expect(viewModel.isLoading, isFalse);
+      expect(viewModel.suggestions, isEmpty);
+    },
+  );
+
   test(
     'requests structured personalized suggestions for the selected match',
     () async {
       final service = _FakeAiService(_successResponse());
-      final viewModel = AiCoachViewModel(aiService: service);
+      final viewModel = AiCoachViewModel(aiService: service)
+        ..selectIntent(AiIntent.continueChat);
 
       await viewModel.getPersonalizedSuggestions(
         chatId: 'chat-1',
@@ -97,6 +136,7 @@ void main() {
       }),
     );
     final viewModel = AiCoachViewModel(aiService: service);
+    viewModel.selectIntent(AiIntent.continueChat);
 
     await viewModel.getPersonalizedSuggestions(
       chatId: 'chat-1',
@@ -113,6 +153,7 @@ void main() {
       _successResponse(partnerId: 'partner-other'),
     );
     final viewModel = AiCoachViewModel(aiService: service);
+    viewModel.selectIntent(AiIntent.continueChat);
 
     await viewModel.getPersonalizedSuggestions(
       chatId: 'chat-1',
@@ -128,6 +169,7 @@ void main() {
     final completer = Completer<AiChatResponse>();
     final service = _FakeAiService.handler((_) => completer.future);
     final viewModel = AiCoachViewModel(aiService: service);
+    viewModel.selectIntent(AiIntent.continueChat);
 
     final request = viewModel.getPersonalizedSuggestions(
       chatId: 'chat-1',
