@@ -149,23 +149,44 @@ class AuthService {
     return defaultApiBaseUrl;
   }
 
-  /// WebSocket base for chat realtime (port 3001 by default).
+  /// WebSocket endpoint for chat realtime. Defaults to the API host on `/ws`.
   static String resolveWsUrl({
     required String chatId,
     required String accessToken,
+    String? baseUrlOverride,
+    String? wsUrlOverride,
   }) {
-    String? wsPort;
+    String? envWsUrl;
     try {
-      wsPort = dotenv.env['CHAT_WS_PORT'];
+      envWsUrl = dotenv.env['CHAT_WS_URL'];
     } catch (_) {}
 
-    final apiBase = resolveBaseUrl();
+    final queryParameters = {
+      'token': accessToken,
+      'chatId': chatId,
+    };
+    final explicitWsUrl = wsUrlOverride ?? envWsUrl;
+    if (explicitWsUrl != null && explicitWsUrl.trim().isNotEmpty) {
+      final uri = Uri.parse(explicitWsUrl.trim());
+      return uri
+          .replace(
+            queryParameters: {
+              ...uri.queryParameters,
+              ...queryParameters,
+            },
+          )
+          .toString();
+    }
+
+    final apiBase = resolveBaseUrl(baseUrlOverride: baseUrlOverride);
     final apiUri = Uri.parse(apiBase);
-    final host = apiUri.host;
-    final port = wsPort ?? '3001';
-    final encodedToken = Uri.encodeComponent(accessToken);
-    final encodedChat = Uri.encodeComponent(chatId);
-    return 'ws://$host:$port?token=$encodedToken&chatId=$encodedChat';
+    return Uri(
+      scheme: apiUri.scheme == 'https' ? 'wss' : 'ws',
+      host: apiUri.host,
+      port: apiUri.hasPort ? apiUri.port : null,
+      path: '/ws',
+      queryParameters: queryParameters,
+    ).toString();
   }
 
   Future<SendOtpResult> sendOtp(String email) async {

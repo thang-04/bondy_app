@@ -717,6 +717,7 @@ class _CommunityTabState extends State<_CommunityTab> {
                       'photo': profile.imageUrl.isNotEmpty
                           ? profile.imageUrl
                           : null,
+                      'chatAccepted': false,
                       'isInitiator': true,
                       'isMessageRequest': false,
                     },

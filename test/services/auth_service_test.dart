@@ -519,4 +519,37 @@ void main() {
       throwsA(isA<AuthRequiredException>()),
     );
   });
+
+  test('resolves chat websocket URL from the API host on /ws', () {
+    final url = AuthService.resolveWsUrl(
+      chatId: 'chat 1',
+      accessToken: 'token value',
+      baseUrlOverride: 'https://api.example.com:8443/api',
+      wsUrlOverride: '',
+    );
+
+    final uri = Uri.parse(url);
+    expect(uri.scheme, 'wss');
+    expect(uri.host, 'api.example.com');
+    expect(uri.port, 8443);
+    expect(uri.path, '/ws');
+    expect(uri.queryParameters['chatId'], 'chat 1');
+    expect(uri.queryParameters['token'], 'token value');
+  });
+
+  test('resolves chat websocket URL from explicit override', () {
+    final url = AuthService.resolveWsUrl(
+      chatId: 'chat-1',
+      accessToken: 'token',
+      wsUrlOverride: 'ws://localhost:3000/ws',
+    );
+
+    final uri = Uri.parse(url);
+    expect(uri.scheme, 'ws');
+    expect(uri.host, 'localhost');
+    expect(uri.port, 3000);
+    expect(uri.path, '/ws');
+    expect(uri.queryParameters['chatId'], 'chat-1');
+    expect(uri.queryParameters['token'], 'token');
+  });
 }

@@ -341,6 +341,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                 'otherUserId': otherUserId,
                 'name': otherUserName,
                 'photo': otherUserPhoto,
+                'chatAccepted': false,
+                'isInitiator': true,
+                'isMessageRequest': false,
               },
             );
           } else {

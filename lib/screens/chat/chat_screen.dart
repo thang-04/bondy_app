@@ -1264,6 +1264,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
     } catch (e) {
       if (!mounted) return;
+      if (_isChatNotAcceptedError(e)) {
+        await _hydrateChatMetadata();
+        if (!mounted) return;
+      }
       BondyFeedback.showError(
         context,
         e,
@@ -1304,9 +1308,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
       _isMessageRequest = args['isMessageRequest'] as bool? ?? false;
       _isInitiator = args['isInitiator'] as bool? ?? false;
-      if (_isMessageRequest) {
-        _chatAccepted = false;
-      }
+      _chatAccepted =
+          args['chatAccepted'] as bool? ?? !(_isMessageRequest || _isInitiator);
     } else if (args is String) {
       _chatId = args;
     }
@@ -1559,6 +1562,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() => _isSending = false);
       }
     }
+  }
+
+  bool _isChatNotAcceptedError(Object error) {
+    final message = error is ApiClientException
+        ? error.message
+        : BondyErrorMapper.message(error);
+    final lower = message.toLowerCase();
+    return lower.contains('chưa được chấp nhận') ||
+        lower.contains('chua duoc chap nhan');
   }
 
   void _updateChatSummary(ChatMessage message) {

@@ -71,6 +71,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
               'otherUserId': otherUserId,
               'name': otherUserName,
               'photo': otherUserPhoto,
+              'chatAccepted': false,
+              'isInitiator': true,
+              'isMessageRequest': false,
             },
           );
         } else {
