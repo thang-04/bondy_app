@@ -178,25 +178,29 @@ class _DiscoverMatchingCardState extends State<DiscoverMatchingCard> {
 
                       const SizedBox(height: 6),
 
-                      // Distance
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            color: Colors.white70,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.profile.distance,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                      if (widget.profile.distance.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
                               color: Colors.white70,
+                              size: 16,
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                widget.profile.distance,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
 
                       if (widget.profile.datingGoal != null &&
                           widget.profile.datingGoal!.isNotEmpty) ...[

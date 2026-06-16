@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/location_display.dart';
 import '../../services/onboarding_router.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
@@ -323,6 +324,14 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     setState(() => _isSaving = true);
 
     final address = await _resolveAddress();
+    if (address == null) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      _showMessage(
+        'Khong xac dinh duoc khu vuc. Hay tim hoac nhap ten quan/huyen, tinh/thanh.',
+      );
+      return;
+    }
 
     if (widget.isPicking) {
       if (mounted) {
@@ -354,7 +363,7 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     }
   }
 
-  Future<String> _resolveAddress() async {
+  Future<String?> _resolveAddress() async {
     final manualAddress = _searchController.text.trim();
     try {
       final placemarks = await placemarkFromCoordinates(
@@ -362,19 +371,21 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
         _currentPosition.longitude,
       );
       if (placemarks.isNotEmpty) {
-        final p = placemarks.first;
-        final parts = [
-          p.street,
-          p.subAdministrativeArea,
-          p.administrativeArea,
-        ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
-        if (parts.isNotEmpty) return parts;
+        for (final p in placemarks) {
+          final readable = buildReadableLocationName(
+            street: p.street,
+            subLocality: p.subLocality,
+            locality: p.locality,
+            subAdministrativeArea: p.subAdministrativeArea,
+            administrativeArea: p.administrativeArea,
+          );
+          if (readable != null) return readable;
+        }
       }
     } catch (e) {
       debugPrint('Error reverse geocoding: $e');
     }
 
-    if (manualAddress.isNotEmpty) return manualAddress;
-    return '${_currentPosition.latitude.toStringAsFixed(6)}, ${_currentPosition.longitude.toStringAsFixed(6)}';
+    return normalizeReadableLocation(manualAddress);
   }
 }

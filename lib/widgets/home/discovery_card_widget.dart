@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/location_display.dart';
+
 class DiscoveryCardWidget extends StatelessWidget {
   final Map<String, dynamic> data;
 
@@ -57,7 +59,13 @@ class _ProfileChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = profile['name'] as String? ?? 'Ẩn danh';
-    final city = profile['city'] as String? ?? '';
+    final distanceKm = (profile['distanceKm'] as num?)?.toDouble();
+    final locationLabel =
+        formatLocationLabel(
+          distanceKm: distanceKm,
+          city: profile['city']?.toString(),
+        ) ??
+        '';
     final interests = (profile['common_interests'] as List<dynamic>?) ?? [];
 
     return GestureDetector(
@@ -114,10 +122,10 @@ class _ProfileChip extends StatelessWidget {
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            if (city.isNotEmpty) ...[
+            if (locationLabel.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
-                city,
+                locationLabel,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   color: const Color(0xFF6B7280),

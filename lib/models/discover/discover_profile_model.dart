@@ -1,3 +1,4 @@
+import '../../core/location_display.dart';
 import '../../core/media_url.dart';
 
 class DiscoverPrompt {
@@ -120,17 +121,10 @@ class DiscoverProfile {
         ? (json['distanceKm'] as num).toDouble()
         : null;
 
-    final String city = json['city']?.toString() ?? '';
-    final String distanceLabel = distanceKm != null
-        ? (distanceKm % 1 == 0
-              ? 'Cách bạn ${distanceKm.toInt()} km'
-              : 'Cách bạn ${distanceKm.toStringAsFixed(1)} km')
-        : '';
-
-    final String finalDistance = [
-      if (distanceLabel.isNotEmpty) distanceLabel,
-      if (city.isNotEmpty) city,
-    ].join(' • ');
+    final String? locationLabel = formatLocationLabel(
+      distanceKm: distanceKm,
+      city: json['city']?.toString(),
+    );
 
     final deepMatchRaw = json['deepMatch'] as Map<String, dynamic>?;
     final deepMatch = deepMatchRaw != null
@@ -153,7 +147,7 @@ class DiscoverProfile {
       id: json['userId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Ẩn danh',
       age: (json['age'] as num?)?.toInt() ?? 0,
-      distance: finalDistance.isNotEmpty ? finalDistance : city,
+      distance: locationLabel ?? '',
       bio: json['bio']?.toString() ?? '',
       vibe: json['vibe']?.toString(),
       prompts: promptsRaw
