@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bondy - Relationship Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#FF8A65",
+                        "primary-dark": "#E64A19",
+                        "secondary": "#FFB74D",
+                        "background-warm": "#FFF8F3",
+                        "surface-warm": "#FFFFFF",
+                        "text-main": "#2D2420",
+                        "text-secondary": "#79685F",
+                        "accent-teal": "#4DB6AC",
+                        "accent-pink": "#F06292"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                    boxShadow: {
+                        'soft': '0 8px 30px -4px rgba(255, 138, 101, 0.08)',
+                        'card': '0 2px 12px rgba(45, 36, 32, 0.04)',
+                        'nav': '0 -4px 20px rgba(0,0,0,0.03)'
+                    },
+                    backgroundImage: {
+                        'brand-gradient': 'linear-gradient(135deg, #FF8A65 0%, #FFB74D 100%)',
+                        'card-tint': 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,248,243,1) 100%)'
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+        .bottom-nav-shadow {
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-warm font-display antialiased min-h-screen pb-28 text-text-main transition-colors duration-200">
+<header class="sticky top-0 z-50 bg-background-warm/90 backdrop-blur-md px-5 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="relative flex items-center w-14">
+<div class="h-11 w-11 rounded-full border-2 border-surface-warm bg-gray-200 bg-cover bg-center z-10 shadow-sm" data-alt="Partner 1 avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDSa0c0d0T2OE46lFzunH6XHNW8UNsFORVQaPf-GsEpQthnQk_SPA7nMERIhMA2_V51F8hp6xU3m4VMcityZpaN_KowR5bv3-hygZphT4d18kNSyV1p_emL4FsiNpHNWI5G4EzMp1nwmLs_MZVP82K6oa6ZlV5-tQ8sNODbERzhm5Q7kWaykdMgtUBMzXiEDvDxSODyY6V1GXW04JqEjd42Fc04AWSBGr9ry4XTmRq_Y8OHHiy_GgXV4r47JVVgHTjPW0BKbTVji9LG');"></div>
+<div class="h-11 w-11 rounded-full border-2 border-surface-warm bg-gray-200 bg-cover bg-center -ml-5 z-0 shadow-sm" data-alt="Partner 2 avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC1RoptVEItPmeimi_cLxajl0Wya8ciTtVYzsX31d98J8YFUO3MQoD80AOMrjhAAU-BinpP90zv8tfiUrlHVGEvvfvOqyYoA0Ihz40EjwvBjwjXRupT-wvgYm6CkN3zgJQm2hp5X5zTsuvFxd0_TbqM0GN1tSOkgS5bjNBCgLFzH61nJMIy-Oxdr1dnEcoO1xTUPDqCZ7oCb1vD20L9bvO-I_PMLhrqP6wS0J89Z_TanYbqcTjT3u7EZ_6ZyUiF8mu6BLJRQkccHNz9');"></div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 text-primary-dark bg-white px-3 py-1 rounded-full shadow-sm border border-stone-100">
+<span class="material-symbols-outlined text-sm filled text-orange-500" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="text-xs font-bold">42 ngày</span>
+</div>
+</div>
+</div>
+<button class="relative p-2.5 rounded-full bg-white hover:bg-stone-50 transition-colors text-text-main shadow-sm border border-stone-100">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
+</button>
+</header>
+<main class="px-5 space-y-6 pt-2">
+<div>
+<h1 class="text-[28px] font-extrabold tracking-tight text-text-main leading-tight">Chào buổi sáng,<br/><span class="text-primary">Nam &amp; Linh</span> 👋</h1>
+</div>
+<section class="@container">
+<div class="bg-surface-warm rounded-3xl shadow-soft overflow-hidden border border-orange-100/50 relative group">
+<div class="absolute inset-0 bg-gradient-to-br from-orange-50 to-rose-50 opacity-50"></div>
+<div class="relative h-52 w-full">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Cozy coffee cups morning sunlight" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCfAdLeVU7m-Fg2qVh-06r1ZHHk6gF7AzYHjetwE4B3NZTWrOSrzjBJQxU3KxWThxfDN1xCDOj0GFBq8rq12UhR3lSdyMotKT0mfDdvqDIqFKvBn_dYv2EyhYi6_qE73OYBry4e_E2VtyBvWPduBB04i8IIc7YZisG-Ld-XJBxXq5z6QoyKJvrmKIXkui2dVFIeYKWEJ_a6zX1s0SqWxeFBSEdyKcMxDozNNoVr7Gi9WSDIU8r_LmGM-lDNg7wUeJWDRCvmQoFeHlGa');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
+<div class="absolute bottom-5 left-5 right-5 text-white">
+<div class="inline-flex items-center gap-1.5 bg-white/25 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold mb-3 text-white border border-white/40 shadow-sm">
+<span class="material-symbols-outlined text-sm filled" style="font-variation-settings: 'FILL' 1;">wb_sunny</span>
+                        Hành động nhỏ hôm nay
+                    </div>
+<h2 class="text-2xl font-bold leading-snug drop-shadow-sm">Hôm nay hãy gửi một lời cảm ơn chân thành</h2>
+</div>
+</div>
+<div class="relative p-5 space-y-5 bg-surface-warm">
+<div class="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-surface-warm to-transparent"></div>
+<p class="text-text-secondary text-[15px] leading-relaxed font-medium">
+                    Một lời cảm ơn nhỏ bé có thể thắp sáng cả một ngày dài. Hãy nghĩ về điều gì đó đối phương đã làm gần đây nhé.
+                </p>
+<div class="flex flex-wrap gap-2.5">
+<button class="flex-1 bg-brand-gradient text-white h-12 px-5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/20 active:scale-95">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+                        Thực hiện
+                    </button>
+<button class="bg-stone-50 hover:bg-stone-100 text-text-main border border-stone-200 h-12 px-5 rounded-2xl text-sm font-bold flex items-center justify-center transition-colors active:scale-95">
+                        Nhắc tôi
+                    </button>
+<button class="bg-transparent hover:bg-stone-50 text-text-secondary h-12 px-4 rounded-2xl text-sm font-medium flex items-center justify-center transition-colors">
+                        Để sau
+                    </button>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-text-main">Cảm xúc của chúng mình</h3>
+<button class="text-primary-dark text-sm font-semibold flex items-center hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors">
+                Lịch sử <span class="material-symbols-outlined text-lg ml-0.5">chevron_right</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 rounded-2xl border border-stone-100 shadow-card flex items-center gap-3.5">
+<div class="h-11 w-11 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-xl shrink-0">
+                    😄
+                </div>
+<div class="flex flex-col">
+<span class="text-xs text-text-secondary font-medium mb-0.5">Bạn</span>
+<span class="text-base font-bold text-text-main">Vui vẻ</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-2xl border border-stone-100 shadow-card flex items-center gap-3.5 relative overflow-hidden group">
+<div class="absolute top-3 right-3 h-2.5 w-2.5 rounded-full bg-accent-pink border-2 border-white"></div>
+<div class="h-11 w-11 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-xl shrink-0">
+                    😌
+                </div>
+<div class="flex flex-col">
+<span class="text-xs text-text-secondary font-medium mb-0.5">Linh</span>
+<span class="text-base font-bold text-text-main">Bình yên</span>
+</div>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-2 gap-4">
+<button class="bg-[#FFF4E6] p-5 rounded-[20px] flex flex-col items-start gap-3 hover:bg-[#ffeacc] transition-colors text-left relative overflow-hidden group border border-orange-100">
+<div class="absolute right-0 top-0 opacity-[0.08] transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[100px] text-orange-600">history_edu</span>
+</div>
+<div class="bg-white h-11 w-11 rounded-xl flex items-center justify-center shadow-sm text-orange-500">
+<span class="material-symbols-outlined">photo_library</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-bold text-text-main text-base">Dòng thời gian</h4>
+<p class="text-xs text-text-secondary mt-1 font-medium">Kỷ niệm 2 ngày trước</p>
+</div>
+</button>
+<button class="bg-[#E0F2F1] p-5 rounded-[20px] flex flex-col items-start gap-3 hover:bg-[#d1eeec] transition-colors text-left relative overflow-hidden group border border-teal-100">
+<div class="absolute right-0 top-0 opacity-[0.08] transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[100px] text-teal-600">handshake</span>
+</div>
+<div class="bg-white h-11 w-11 rounded-xl flex items-center justify-center shadow-sm text-teal-600">
+<span class="material-symbols-outlined">favorite_border</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-bold text-text-main text-base">Gỡ rối</h4>
+<p class="text-xs text-text-secondary mt-1 font-medium">Cùng lắng nghe nhau</p>
+</div>
+</button>
+</section>
+<section>
+<div class="bg-white rounded-2xl p-4 border border-stone-100 shadow-card flex items-center justify-between group cursor-pointer hover:border-orange-100 transition-colors">
+<div class="flex items-center gap-4">
+<div class="flex flex-col items-center justify-center bg-stone-50 border border-stone-100 h-[60px] w-[60px] rounded-2xl text-center">
+<span class="text-[10px] font-bold text-red-500 uppercase tracking-wide">Thứ 6</span>
+<span class="text-xl font-bold text-text-main">14</span>
+</div>
+<div>
+<h4 class="font-bold text-text-main text-base">Hẹn hò tối thứ 6</h4>
+<div class="flex items-center gap-1.5 text-xs text-text-secondary mt-1.5 font-medium">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                        19:00 • Nhà hàng Sen
+                    </div>
+</div>
+</div>
+<button class="h-9 w-9 rounded-full bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</section>
+<section>
+<div class="relative bg-brand-gradient rounded-3xl p-6 text-white overflow-hidden shadow-lg shadow-orange-500/20">
+<div class="absolute -top-12 -right-12 h-40 w-40 bg-white/20 rounded-full blur-3xl"></div>
+<div class="absolute bottom-0 left-0 h-32 w-32 bg-yellow-400/20 rounded-full blur-2xl"></div>
+<div class="relative z-10 flex items-start gap-4">
+<div class="h-14 w-14 shrink-0 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40 shadow-inner">
+<span class="material-symbols-outlined text-3xl text-white">psychology_alt</span>
+</div>
+<div class="flex-1 pt-1">
+<div class="flex items-center gap-2 mb-1.5">
+<h4 class="font-bold text-lg">Bondy Coach</h4>
+<span class="bg-white/25 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-white border border-white/20">Mẹo hay</span>
+</div>
+<p class="text-white/90 text-sm leading-relaxed font-medium mb-4">Lắng nghe chủ động giúp tăng sự thấu hiểu và giảm mâu thuẫn tới 50%.</p>
+<button class="bg-white text-orange-600 px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm hover:bg-stone-50 transition-colors flex items-center gap-1.5">
+                        Tìm hiểu thêm
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<div class="h-12"></div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-100 pb-safe pt-3 px-6 pb-6 z-50 bottom-nav-shadow rounded-t-3xl">
+<div class="flex justify-between items-end max-w-md mx-auto relative">
+<button class="flex flex-col items-center gap-1.5 text-text-secondary hover:text-primary transition-colors w-16 group">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-semibold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1.5 text-text-secondary hover:text-primary transition-colors w-16 group">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">calendar_month</span>
+<span class="text-[10px] font-semibold">Lịch</span>
+</button>
+<div class="relative -top-8 mx-2">
+<button class="h-[68px] w-[68px] rounded-full bg-white flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.12)] transform active:scale-95 transition-all p-1.5">
+<div class="h-full w-full rounded-full bg-brand-gradient flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[32px] filled" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1.5 text-text-secondary hover:text-primary transition-colors w-16 group">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">chat_bubble</span>
+<span class="text-[10px] font-semibold">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1.5 text-text-secondary hover:text-primary transition-colors w-16 group">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">person</span>
+<span class="text-[10px] font-semibold">Cá nhân</span>
+</button>
+</div>
+</nav>
+
+</body></html>

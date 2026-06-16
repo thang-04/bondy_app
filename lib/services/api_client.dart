@@ -124,7 +124,7 @@ class ApiClient {
     try {
       var response = await request(
         await _headers(authenticated: authenticated),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (authenticated && response.statusCode == 401) {
         try {

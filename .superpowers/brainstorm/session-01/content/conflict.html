@@ -1,0 +1,73 @@
+<h2>Thiết kế 1: Conflict Resolution Tool (Gỡ rối mâu thuẫn)</h2>
+<p class="subtitle">Màn hình gỡ rối mâu thuẫn hiện tại chỉ là một danh sách tĩnh các bước hướng dẫn. Thiết kế mới trong Stitch đề xuất luồng gửi báo cáo mâu thuẫn tương tác.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Giao diện Hiện tại</div>
+    <div class="mockup-body" style="padding: 15px; font-family: sans-serif;">
+      <h3 style="margin: 0 0 5px 0;">Cùng nhau vượt qua khó khăn</h3>
+      <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Mâu thuẫn là cơ hội để thấu hiểu nhau sâu sắc hơn.</p>
+      <div style="background: #FFF; border: 1px solid #EEE; padding: 12px; border-radius: 12px; margin-bottom: 8px; font-size: 13px;">
+        <strong>Bước 1: Dành 15 phút hạ hỏa</strong><br/>
+        <span style="font-size: 11px; color: #777;">Cả hai hãy dành thời gian để tâm trí bình tĩnh lại.</span>
+      </div>
+      <div style="background: #FFF; border: 1px solid #EEE; padding: 12px; border-radius: 12px; margin-bottom: 8px; font-size: 13px;">
+        <strong>Bước 2: Chia sẻ cảm xúc của bạn</strong><br/>
+        <span style="font-size: 11px; color: #777;">Dùng cấu trúc "Anh/Em thấy..."</span>
+      </div>
+      <div style="background: #FFF; border: 1px solid #EEE; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px;">
+        <strong>... và thêm 2 bước nữa</strong>
+      </div>
+      <button style="width: 100%; background: #FF8A65; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px;">Bắt đầu phiên kết nối</button>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Thiết kế Stitch (Đề xuất)</div>
+    <div class="mockup-body" style="padding: 15px; font-family: sans-serif; background: #FDFDFD;">
+      <div style="background: linear-gradient(135deg, #FF8C61, #FF6B95, #9F6BFF); color: white; padding: 15px; border-radius: 16px; margin-bottom: 15px;">
+        <h4 style="margin: 0 0 5px 0; font-size: 15px;">Chúng mình đang có vấn đề?</h4>
+        <p style="font-size: 11px; opacity: 0.9; margin: 0 0 10px 0;">Hãy bình tĩnh chia sẻ cảm xúc để cùng nhau giải quyết.</p>
+        <button style="background: white; color: #FF6B95; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 11px;">Chúng mình đang có vấn đề 💔</button>
+      </div>
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px;">1. Vấn đề nằm ở đâu?</div>
+      <div style="display: flex; gap: 5px; overflow-x: auto; margin-bottom: 12px;">
+        <span style="background: #FFF0F5; border: 1px solid #FF6B95; color: #FF6B95; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold;">Giao tiếp</span>
+        <span style="background: #F3F4F6; color: #6B7280; padding: 4px 8px; border-radius: 8px; font-size: 10px;">Tài chính</span>
+        <span style="background: #F3F4F6; color: #6B7280; padding: 4px 8px; border-radius: 8px; font-size: 10px;">Việc nhà</span>
+      </div>
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px;">2. Mức độ nghiêm trọng?</div>
+      <div style="background: white; border: 1px solid #EEE; padding: 10px; border-radius: 12px; font-size: 11px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px;">
+          <span>MỨC ĐỘ</span>
+          <span style="color: #FF6B95;">6 / 10</span>
+        </div>
+        <div style="height: 6px; background: #F3F4F6; border-radius: 3px; position: relative;">
+          <div style="width: 60%; height: 100%; background: linear-gradient(90deg, #FF8C61, #FF6B95); border-radius: 3px;"></div>
+          <div style="position: absolute; left: 60%; top: -4px; width: 14px; height: 14px; background: white; border: 2px solid #FF6B95; border-radius: 50%;"></div>
+        </div>
+      </div>
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px;">3. Chi tiết vấn đề</div>
+      <textarea placeholder="Hãy kể lại ngắn gọn..." style="width: 100%; height: 50px; font-size: 11px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 6px; resize: none; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+      <button style="width: 100%; background: #F9FAFB; border: 1px solid #E5E7EB; color: #4B5563; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 11px;">Gửi thông tin cho đối phương ✉️</button>
+    </div>
+  </div>
+</div>
+
+<h3>Đề xuất thay đổi cho màn hình Conflict Resolution Tool:</h3>
+<div class="options">
+  <div class="option" data-choice="full-conflict" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>(Khuyên dùng) Nâng cấp thành luồng tương tác đầy đủ</h3>
+      <p>Viết lại UI Flutter với Banner mâu thuẫn, thanh trượt mức độ (Slider), chọn danh mục mâu thuẫn, ghi chú chi tiết và các card gợi ý hạ nhiệt.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="simple-conflict" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Chỉ cập nhật Style thẩm mỹ</h3>
+      <p>Giữ nguyên danh sách các bước tĩnh hiện tại nhưng làm mới màu sắc gradient, icon và font chữ Plus Jakarta Sans cho giống Stitch.</p>
+    </div>
+  </div>
+</div>

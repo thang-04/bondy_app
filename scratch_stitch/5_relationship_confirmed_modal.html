@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relationship Confirmed Modal - Light Mode</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#FF6B6B","secondary": "#FFA07A",
+                        "background-light": "#FFF9F5","background-dark": "#2D2A26",
+                        "text-main": "#2D2A26",
+                        "text-sub": "#6B6661",
+                    },
+                    backgroundImage: {
+                        'brand-gradient': 'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)',
+                        'button-gradient': 'linear-gradient(90deg, #FF8C42 0%, #FF4B7D 100%)',},
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffd300;
+            top: -10%;
+            opacity: 0;
+            border-radius: 4px;}.confetti-piece:nth-child(3n+1) { background-color: #FFB7B2; }
+        .confetti-piece:nth-child(3n+2) { background-color: #FFDAC1; }
+        .confetti-piece:nth-child(3n+3) { background-color: #E2F0CB; }
+        .confetti-piece:nth-child(4n) { background-color: #B5EAD7; }
+        .confetti-piece:nth-child(1) { left: 7%; transform: rotate(-40deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 182ms; animation-duration: 1116ms; }
+        .confetti-piece:nth-child(2) { left: 14%; transform: rotate(4deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 161ms; animation-duration: 1076ms; }
+        .confetti-piece:nth-child(3) { left: 21%; transform: rotate(-51deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 481ms; animation-duration: 1103ms; }
+        .confetti-piece:nth-child(4) { left: 28%; transform: rotate(61deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 334ms; animation-duration: 708ms; }
+        .confetti-piece:nth-child(5) { left: 35%; transform: rotate(-52deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 302ms; animation-duration: 776ms; }
+        .confetti-piece:nth-child(6) { left: 42%; transform: rotate(38deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 180ms; animation-duration: 1168ms; }
+        .confetti-piece:nth-child(7) { left: 49%; transform: rotate(11deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 395ms; animation-duration: 1200ms; }
+        .confetti-piece:nth-child(8) { left: 56%; transform: rotate(49deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 14ms; animation-duration: 887ms; }
+        .confetti-piece:nth-child(9) { left: 63%; transform: rotate(-72deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 149ms; animation-duration: 805ms; }
+        .confetti-piece:nth-child(10) { left: 70%; transform: rotate(10deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 351ms; animation-duration: 1059ms; }
+        .confetti-piece:nth-child(11) { left: 77%; transform: rotate(4deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 307ms; animation-duration: 1132ms; }
+        .confetti-piece:nth-child(12) { left: 84%; transform: rotate(42deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 464ms; animation-duration: 776ms; }
+        .confetti-piece:nth-child(13) { left: 91%; transform: rotate(-72deg); animation: makeItRain 1000ms infinite ease-out; animation-delay: 429ms; animation-duration: 818ms; }
+        @keyframes makeItRain {
+            from {opacity: 0;}
+            50% {opacity: 1;}
+            to {transform: translateY(350px);}
+        }.glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light text-text-main overflow-hidden selection:bg-primary selection:text-white">
+<div class="relative flex h-screen w-full flex-col items-center justify-between overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-b from-[#FFF5F0] via-[#FFF0EB] to-[#FFF9F5]"></div>
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[30%] bg-[#FFDEE9] rounded-full blur-[100px] opacity-40"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FFDAC1] rounded-full blur-[100px] opacity-40"></div>
+</div>
+<div class="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+<div class="confetti-piece"></div>
+</div>
+<div class="relative z-20 flex flex-1 w-full flex-col items-center justify-center px-6 pt-20 pb-10">
+<div class="relative mb-8">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-white rounded-full shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] z-0"></div>
+<div class="relative z-10 group animate-[bounce_3s_infinite]">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-20 bg-pink-200/40 blur-xl rounded-full"></div>
+<div class="flex items-center justify-center -space-x-6">
+<div class="relative z-10 transform -rotate-6 transition-transform hover:-rotate-12 duration-500">
+<div class="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-gray-100">
+<img alt="Young woman portrait smiling" class="w-full h-full object-cover" data-alt="Portrait of a young woman smiling brightly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsgnYy8VW20CiYCVCqg8zVPiFE7qcVqSprT2bF4XVJHKShNuiZH4QvrSimg7ny5ofI1wWBMphBWGyCJiUUlCrwbfAHTcSo8XxION3MupzLDXLWzecVzCoTZGh3diOCqobJDjMkUh9Al1LTTSC4Ykd1BYxeDdHKqf-tzCT6SBTKAph-g5f0YldSABwVsW37Rmpz-oeeu8wgBttoAfisoCHmhmxONpBBjdzprzcIs2s3LZD_eJ7rgUtTBw6EqgyC9nHAdhSSKTmjAdd6"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 z-20 shadow-md">
+<div class="bg-gradient-to-br from-[#FF8C42] to-[#FF4B7D] text-white rounded-full p-1.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] leading-none block">favorite</span>
+</div>
+</div>
+</div>
+<div class="relative z-0 transform rotate-6 transition-transform hover:rotate-12 duration-500">
+<div class="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-gray-100">
+<img alt="Young man portrait smiling" class="w-full h-full object-cover" data-alt="Portrait of a young man looking confident" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="text-center space-y-3 max-w-sm mx-auto mt-6">
+<h1 class="text-text-main text-3xl sm:text-4xl font-display font-extrabold leading-tight tracking-tight">
+<span class="inline-block animate-[pulse_2s_infinite] text-4xl mb-2">🎉</span><br/>
+                    Hai bạn đã chính thức chung đôi
+                </h1>
+<p class="text-text-sub text-base sm:text-lg font-medium leading-relaxed">
+                    Bắt đầu hành trình của hai bạn ngay bây giờ.
+                </p>
+</div>
+</div>
+<div class="relative z-20 w-full px-6 pb-12 safe-area-pb">
+<div class="mb-8 glass-panel rounded-2xl p-4 flex justify-between items-center text-sm text-text-sub max-w-sm mx-auto w-full shadow-sm">
+<div class="flex items-center gap-2.5">
+<div class="p-2 rounded-full bg-pink-50 text-[#FF4B7D]">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+</div>
+<span class="font-semibold text-text-main">Ngày kỷ niệm</span>
+</div>
+<div class="font-bold text-[#FF4B7D] bg-pink-50 px-3 py-1 rounded-full">Hôm nay</div>
+</div>
+<button class="w-full max-w-md mx-auto group relative flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-button-gradient h-14 px-8 text-white transition-all active:scale-95 shadow-[0_8px_20px_rgba(255,75,125,0.25)] hover:shadow-[0_12px_28px_rgba(255,75,125,0.35)]">
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+<span class="relative text-lg font-bold tracking-wide">Đi tới Góc Mối quan hệ</span>
+<span class="material-symbols-outlined relative transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+
+</body></html>

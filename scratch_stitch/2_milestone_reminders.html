@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upcoming Milestone - Bondy</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#eede2b",
+                        "brand-orange": "#f59e0b", 
+                        "background-light": "#fdfbf7","surface-light": "#ffffff",
+                        "text-main": "#1f2937",
+                        "text-sub": "#6b7280",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                    backgroundImage: {
+                        'brand-gradient': 'linear-gradient(135deg, #eede2b 0%, #f59e0b 100%)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }.no-scrollbar {
+            -ms-overflow-style: none;scrollbar-width: none;}
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light font-display antialiased min-h-screen flex flex-col text-text-main">
+<header class="flex items-center justify-between p-4 sticky top-0 z-10 bg-background-light/90 backdrop-blur-md">
+<button class="flex size-10 items-center justify-center rounded-full text-text-main hover:bg-black/5 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-text-main text-lg font-bold">Upcoming Milestone</h1>
+<button class="flex size-10 items-center justify-center rounded-full text-text-main hover:bg-black/5 transition-colors">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col px-4 pb-28 overflow-x-hidden">
+<section class="mt-2 mb-8">
+<div class="relative w-full h-[400px] rounded-[32px] overflow-hidden group shadow-2xl shadow-orange-100">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Romantic couple holding hands at sunset" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCUj7G5ofM-bxrbtBl061wYGbExbsLjexEkxeFC0V2XuhekUIb-54LC8QMoj0KzbA2rTOM-bKD0-h1szZawjaqwNoQhmTJpSf7m7eFUDyi8X3inu06rGkSPrwVxKwzUvYz7LKbYytk_d9lUDI3seFD98ZOQyis9UWpVkvGI4dwjDptAOyUxVguVDsLil5rnJXz0fLr_gChNbqBpBwplk4I5uQFUohw3s0uK-Qrb4JwxqnHOd3vdQvNJWThBq88vU8pUkgZdUybazSh3');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+<div class="inline-flex items-center gap-2 mb-3">
+<span class="bg-primary text-black px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg shadow-black/10">
+                            Sắp diễn ra
+                        </span>
+</div>
+<h2 class="text-white text-4xl font-bold leading-tight mb-2 drop-shadow-sm">
+                    Kỷ niệm 2 năm
+                </h2>
+<div class="flex flex-col gap-1">
+<p class="text-white/95 text-lg font-medium">Kỷ niệm của hai bạn sắp đến</p>
+<div class="flex items-center gap-2 text-primary mt-1">
+<span class="material-symbols-outlined text-xl">event</span>
+<span class="text-base font-bold text-white">Oct 24, 2023</span>
+</div>
+</div>
+<div class="flex gap-3 mt-6">
+<div class="flex flex-col items-center bg-white/90 backdrop-blur-md rounded-xl p-2 min-w-[60px] shadow-lg">
+<span class="text-slate-900 font-bold text-xl">05</span>
+<span class="text-slate-600 text-xs font-medium">Days</span>
+</div>
+<div class="flex flex-col items-center bg-white/90 backdrop-blur-md rounded-xl p-2 min-w-[60px] shadow-lg">
+<span class="text-slate-900 font-bold text-xl">12</span>
+<span class="text-slate-600 text-xs font-medium">Hours</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<h3 class="text-text-main text-2xl font-bold mb-4 px-1">Gợi ý cho bạn</h3>
+<div class="flex gap-3 mb-6 overflow-x-auto no-scrollbar pb-2 pl-1">
+<button class="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-brand-orange font-bold shadow-md shadow-orange-100 whitespace-nowrap transition-transform active:scale-95 ring-1 ring-orange-100">
+<span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+            Tin nhắn
+        </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 text-slate-500 font-semibold whitespace-nowrap hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+            Hẹn hò
+        </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 text-slate-500 font-semibold whitespace-nowrap hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-[20px]">card_giftcard</span>
+            Quà tặng
+        </button>
+</div>
+<div class="flex overflow-x-auto no-scrollbar gap-4 -mx-4 px-4 pb-4">
+<div class="min-w-[280px] w-[280px] flex flex-col bg-surface-light rounded-[24px] p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative group transition-all duration-300 hover:-translate-y-1">
+<div class="h-40 w-full rounded-2xl bg-cover bg-center mb-4 relative overflow-hidden" data-alt="Soft pink envelope with flowers" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB4szYs--ewRLixQ5ukPYkgWZCNhkOboC-xBurl8MTgysSiI3uMpgxXq68rTgCo2_wkvcJcCEihQLbeLs6GXbYXb09ruEIh64r5y5SYofJpc12qSo8x-zpvle_O5vXufNOiy4ZadpsSXGtfqX--ur5ZHNkjrLbef_Amrq97B9QZtFglNjtz68YhPrSVGgtj56zBVGkNNlhfO4ibrp0f_J4JMDnWkm5BfriHn_SY0ciaUxbzlbob61X7EkJtWfOnYVLgdxWxXX0BmzYS');">
+<div class="absolute inset-0 bg-black/5"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-purple-50 text-purple-600 text-xs font-bold px-2 py-1 rounded-lg">Short &amp; Sweet</span>
+</div>
+<h4 class="text-text-main text-lg font-bold mb-1">Thinking of you</h4>
+<p class="text-text-sub text-sm leading-relaxed mb-4 line-clamp-2">
+                    Happy anniversary to my better half. Every moment with you is a treasure.
+                </p>
+<button class="mt-auto w-full py-3 rounded-xl bg-slate-50 text-text-main font-semibold hover:bg-brand-gradient hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-md">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                    Copy Text
+                </button>
+</div>
+</div>
+<div class="min-w-[280px] w-[280px] flex flex-col bg-surface-light rounded-[24px] p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative group transition-all duration-300 hover:-translate-y-1">
+<div class="h-40 w-full rounded-2xl bg-cover bg-center mb-4 relative overflow-hidden" data-alt="Beautiful bouquet of wildflowers" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA458BkfR-18-Den4MbtJwenku-e1Xd3GEZFHHEaVGB2f54hzoAjT0OovtaEfmNo6Oezun-Tw0PCr08qVki-n85z6MaT2mVvvRnKzVrIRGcjmVlSIgji7sIP69BOkuCe8-ZtozmQQXr8JFqv50sf9ACMwQnoBORpXqrzK-Yv3aJ8r1mr1oVwA_8RZ3RqMUB7fgn2sBF2b0KMZsnNWH6KjC6WrgC6pFiPrLFIDHG0vg8FrJ-DH99lby_A6RVgywUHu1gSYsjhznLv1u6');">
+<div class="absolute inset-0 bg-black/5"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-amber-50 text-amber-600 text-xs font-bold px-2 py-1 rounded-lg">Classic</span>
+</div>
+<h4 class="text-text-main text-lg font-bold mb-1">Happy Anniversary</h4>
+<p class="text-text-sub text-sm leading-relaxed mb-4 line-clamp-2">
+                    Cheers to another year of love, laughter, and happiness. I love you!
+                </p>
+<button class="mt-auto w-full py-3 rounded-xl bg-slate-50 text-text-main font-semibold hover:bg-brand-gradient hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-md">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                    Copy Text
+                </button>
+</div>
+</div>
+<div class="min-w-[280px] w-[280px] flex flex-col bg-surface-light rounded-[24px] p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative group transition-all duration-300 hover:-translate-y-1">
+<div class="h-40 w-full rounded-2xl bg-cover bg-center mb-4 relative overflow-hidden" data-alt="Heart shaped hands silhouette against sky" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmDlgQ_fpgoLI71VCwpJf1brWlUVxoIbvHXSS9fAYuVzJFy6_fobrXmN-YeIMySXP8tWw569m1FKHpoDFTQDsqFn_Clz3ag-E2Vd-k67bp2XO3jYE_EHoB25KXnelUtfy-rJ1vkB-vYnGkSuAaZbvKrrdmlV-tEsXQy5R6RxU22zst-f_B-nwDLcDNSAbRs93IFfmfllxnXP2efthCDg1k3fHHy5V2Cw3qq-qj0ZuZNkHs7fT0J68YevJn8nrtf6yarTPyNKVPVEZm');">
+<div class="absolute inset-0 bg-black/5"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-rose-50 text-rose-600 text-xs font-bold px-2 py-1 rounded-lg">Emotional</span>
+</div>
+<h4 class="text-text-main text-lg font-bold mb-1">My Love</h4>
+<p class="text-text-sub text-sm leading-relaxed mb-4 line-clamp-2">
+                    You are my rock, my love, and my best friend. Here's to us forever.
+                </p>
+<button class="mt-auto w-full py-3 rounded-xl bg-slate-50 text-text-main font-semibold hover:bg-brand-gradient hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-md">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                    Copy Text
+                </button>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-slate-100 p-4 z-20 pb-8 safe-area-bottom">
+<button class="w-full bg-brand-gradient text-white font-bold text-lg h-14 rounded-xl shadow-lg shadow-orange-300/50 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined">edit_calendar</span>
+        Plan This Event
+    </button>
+</div>
+
+</body></html>

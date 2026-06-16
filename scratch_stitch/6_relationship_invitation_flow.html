@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bondy - Relationship Invitation Flow</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee2b5b",
+                        "primary-gradient-start": "#ee2b5b",
+                        "primary-gradient-end": "#ff6b6b",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#181113",
+                        "surface-dark": "#2a1d21",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px" },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        /* Custom scrollbar for chat area */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex justify-center items-start pt-0 md:pt-10 overflow-x-hidden">
+<!-- Mobile Frame Container -->
+<div class="relative w-full max-w-[414px] h-[896px] bg-background-light dark:bg-background-dark shadow-2xl md:rounded-[3rem] overflow-hidden border-4 border-gray-900 flex flex-col">
+<!-- Status Bar Area (Simulated) -->
+<div class="h-12 w-full bg-background-light dark:bg-background-dark flex items-end justify-between px-6 pb-2 z-20 sticky top-0">
+<span class="text-sm font-semibold text-gray-900 dark:text-white">9:41</span>
+<div class="flex gap-1.5 items-center">
+<span class="material-symbols-outlined text-[18px] text-gray-900 dark:text-white">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[18px] text-gray-900 dark:text-white">wifi</span>
+<span class="material-symbols-outlined text-[18px] text-gray-900 dark:text-white">battery_full</span>
+</div>
+</div>
+<!-- Chat Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between z-10 border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center gap-3">
+<button class="text-gray-900 dark:text-white p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border-2 border-primary" data-alt="Profile picture of a young woman with a smile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCV9w3VkHTwqqHgxgyZnU3525M96FdnUejtfn_R8a1twddXrfE6QPZDfVEOXWSaFDlse9n4NXMkm6oQGj4W6p4JyfSkPk7yRuKw2Jhf6uuOgS5duzse0kLO5wvfAMktsAZP-xD7Zq1efpbDqzR_apEEiII_T_fk67bQYfUaw3NFpEy5Zl-CtgY4gYUsKE6plgAqYwbVbS7SSK1EdFvNCXOGu1d9ySwI00__SevvJluTIE3hpkJaQ6naoMOH9msVtYeSHXCBOD-A0XUA");'></div>
+<div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-background-light dark:border-background-dark"></div>
+</div>
+<div class="flex flex-col">
+<h2 class="text-gray-900 dark:text-white text-base font-bold leading-tight">Minh Anh</h2>
+<span class="text-primary text-xs font-medium">Online</span>
+</div>
+</div>
+<button class="flex items-center justify-center rounded-xl size-10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Relationship Status Indicator (Entry Point) -->
+<div class="w-full bg-background-light dark:bg-background-dark px-4 py-2 z-10 flex justify-center">
+<button class="group flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-surface-dark/10 dark:bg-surface-dark border border-transparent hover:border-primary/30 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[18px]">favorite</span>
+<p class="text-gray-700 dark:text-gray-200 text-sm font-medium">Chúng mình đang hẹn hò</p>
+<span class="material-symbols-outlined text-gray-500 text-[16px] group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</button>
+</div>
+<!-- Chat Content Area -->
+<div class="flex-1 overflow-y-auto no-scrollbar bg-background-light dark:bg-background-dark p-4 flex flex-col gap-4">
+<!-- Timestamp -->
+<div class="flex justify-center py-2">
+<span class="text-xs font-medium text-gray-400">Hôm nay, 10:23</span>
+</div>
+<!-- Message received -->
+<div class="flex items-end gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 self-end mb-1" data-alt="Avatar of Minh Anh" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBBBICYxfIwBo_wLChGf3ntR-G-dH__f_BHnbfBn521sD01bkN5ZCOoDQBdCgunLMYUvKgplVofrg7lxQXoF7KyAI9tZSAwAbc-Xxu0j49fAn4muHsWGdlDYHhCpv2utODjGN6z43MenqHpF8_67v1LJeGCTA_tGLaUDHRu0j4tk9WKjG8zmMa1S0E7tfiu7dASh5DMSR5bxO5KPkiIaxSGpi1zd84rCr79qGf1WAHzixajslJm_pQmQpeVp2HLqEYjnd-bHjH6Ojcz");'></div>
+<div class="flex flex-col gap-1 items-start max-w-[70%]">
+<div class="px-4 py-3 bg-surface-dark/10 dark:bg-surface-dark rounded-2xl rounded-bl-none text-gray-800 dark:text-gray-100 text-[15px]">
+                        Đi xem phim không em? 🎬
+                    </div>
+</div>
+</div>
+<!-- Message sent -->
+<div class="flex items-end gap-3 justify-end">
+<div class="flex flex-col gap-1 items-end max-w-[70%]">
+<div class="px-4 py-3 bg-primary text-white rounded-2xl rounded-br-none text-[15px]">
+                        Oki, tối nay nhé! ❤️
+                    </div>
+<span class="text-[10px] text-gray-400 flex items-center gap-1">
+                        10:25 <span class="material-symbols-outlined text-[12px]">done_all</span>
+</span>
+</div>
+</div>
+<!-- Message received -->
+<div class="flex items-end gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 self-end mb-1" data-alt="Avatar of Minh Anh" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC8ibnvhGVRF6A1zVMkXZqw0Rgk5_L_1F5Kudw_TIKo8pw5hokx8uMNOyf8VJWCOy5C9i_V2Q9kdpyXQ5A79oVRlk2z0MJ31G6ipcN-7DQcJFCpwq-G4noqI1B-W6iDlRlObue_X10aAMkkZvS5-cdguMBG6wX5emFaqTGm0mKW9xUTqWJjLUnEqA0zOoIBR4RBGrXx1i7eXoyb93VEj6i5veXFUXqVOOs9j_5V8oq74VM0GcZmaOb4fhETGNZFlUZX9yLKw8-FmB7l");'></div>
+<div class="flex flex-col gap-1 items-start max-w-[70%]">
+<div class="px-4 py-3 bg-surface-dark/10 dark:bg-surface-dark rounded-2xl rounded-bl-none text-gray-800 dark:text-gray-100 text-[15px]">
+                        Em thích xem phim gì?
+                    </div>
+</div>
+</div>
+<!-- Message received typing indicator -->
+<div class="flex items-end gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 self-end mb-1" data-alt="Avatar of Minh Anh" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7vv8qw6UarCZhtbpiGV-syFzTeil4iIGqv3Sn-raaDrXXdstqswjV8xwHBv0i2dnBNCfdzVywK9YkeOOA3KaAv14TaPXZOnrPJE9kn4yqYE2fuj4IN-nKgf4kFifFgX8nAxNBfx9ZmIGueYEzuYUPWNuqucgPi5POyPiyYIxoiLUzDpnmpNdyR5rqid4E51ziDyP24q9valNcIc-QfVNhsQGSfs2xN6efKBdb-f4VZ3lf4EwH9SVxMtIIrYj5DT0JdrUIn6AaVBA7");'></div>
+<div class="px-4 py-3 bg-surface-dark/10 dark:bg-surface-dark rounded-2xl rounded-bl-none w-16 flex items-center justify-center gap-1">
+<div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+<div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+<div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+</div>
+</div>
+</div>
+<!-- Chat Input Area -->
+<div class="px-4 py-3 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800">
+<div class="flex items-end gap-2">
+<button class="p-2 text-primary rounded-full hover:bg-gray-100 dark:hover:bg-white/10 shrink-0">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<div class="flex-1 bg-surface-dark/5 dark:bg-surface-dark rounded-[24px] min-h-[44px] flex items-center px-4 py-2">
+<input class="w-full bg-transparent border-none focus:ring-0 p-0 text-gray-900 dark:text-white placeholder-gray-500 text-[15px]" placeholder="Nhắn tin..." type="text"/>
+<button class="ml-2 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+</button>
+</div>
+<button class="p-2 text-gray-500 dark:text-gray-400 hover:text-primary rounded-full hover:bg-gray-100 dark:hover:bg-white/10 shrink-0">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+</div>
+<!-- OVERLAY: Invitation Screen (Screen 2) -->
+<!-- This simulates the overlay appearing over the chat interface -->
+<div class="absolute inset-0 z-50 flex flex-col justify-end">
+<!-- Blurred Backdrop -->
+<div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+<!-- Bottom Sheet / Modal Content -->
+<div class="relative w-full p-4 pb-24 animate-[slideUp_0.4s_ease-out]">
+<!-- Main Invitation Card -->
+<div class="bg-white dark:bg-[#231a1d] rounded-2xl p-6 shadow-2xl relative overflow-hidden border border-white/10">
+<!-- Decorative background glow -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-primary/20 blur-[60px] rounded-full pointer-events-none"></div>
+<!-- Close Button -->
+<button class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+<div class="flex flex-col items-center text-center relative z-10 pt-2">
+<!-- Avatars -->
+<div class="flex items-center justify-center mb-6">
+<div class="relative flex -space-x-4">
+<div class="w-16 h-16 rounded-full border-4 border-white dark:border-[#231a1d] bg-cover bg-center z-10" data-alt="User avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDInAZwnSNVRwz8hWRXBe_kF11MF2sY2i4V0XK-HLasZjJFZOTHYl9K11t4_GsFIwVu2-hgMJGoSMPn-hjLfU-rRy1fWgO-gpDcI7cP2k26ZXWQtbFBjVEiaBPmSCtv5zS5bQzONktZoz6W0BsxQidJw1z00ZL4Y_4l7Tur219BcZZM5ApY-LLFUth5x714BwU5d0U7pqTBQRsb9xIdqoMI8nm6ELV9AaRBiit2vr7nGfJeLksPe7eMvv-QfWKs-0Uw59zJThHgrBkY");'></div>
+<div class="w-16 h-16 rounded-full border-4 border-white dark:border-[#231a1d] bg-cover bg-center z-20" data-alt="Partner avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAsiexlGMA3rY0_h3GMg4Lw0LstHaRZxxBr1beeNfRAMVb8tk4ikf0tEQfOrSrATNg6tvIJsbjVWRzVKuz66gapLwyDcuxLxdKR_SJUnL2MBy3G0qT85vZF1lBBYN6Dyajv_0cs6Q5KK36SAq_wh2899UhCRXERKBjRSofmpOeDZPhQiDJT6zEjTkxuVPiKsG4Gg1K3ffd3LFlUNZ53wHhUjv5ljqbRcaQEuadAgmTiV8vwTqmr4zviCTUI2r_ztPPJw6Gvnad-5qec");'></div>
+<!-- Heart icon connecting them -->
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end text-white rounded-full p-1 border-2 border-white dark:border-[#231a1d] shadow-sm">
+<span class="material-symbols-outlined text-[16px] block">favorite</span>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">
+                            Bạn muốn xác nhận<br/>mối quan hệ này?
+                        </h3>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-8 px-4 leading-relaxed">
+                            Gửi lời mời đến <span class="font-semibold text-gray-800 dark:text-gray-200">Minh Anh</span> để chính thức xác nhận và mở khóa các tính năng dành riêng cho cặp đôi trên Bondy.
+                        </p>
+<!-- Actions -->
+<button class="w-full bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end hover:shadow-lg hover:shadow-primary/30 text-white font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] mb-4">
+<span class="material-symbols-outlined">send</span>
+                            Gửi lời mời
+                        </button>
+<button class="text-gray-500 dark:text-gray-400 text-sm font-medium hover:text-gray-800 dark:hover:text-white transition-colors">
+                            Để sau nhé
+                        </button>
+</div>
+</div>
+<!-- Feature Pill (Optional Polish) -->
+<div class="mt-4 flex justify-center">
+<div class="bg-black/40 backdrop-blur-md border border-white/5 rounded-full px-4 py-1.5 flex items-center gap-2">
+<span class="material-symbols-outlined text-yellow-400 text-[16px]">lock_open</span>
+<span class="text-white/80 text-xs font-medium">Mở khóa Bondy Love Space</span>
+</div>
+</div>
+</div>
+<!-- Global Bottom Nav (Visible under overlay) -->
+<div class="absolute bottom-0 w-full h-[88px] bg-white/90 dark:bg-[#181113]/90 backdrop-blur-md border-t border-gray-200 dark:border-white/5 flex justify-around items-start pt-4 pb-8 z-50">
+<button class="flex flex-col items-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-medium text-gray-400 group-hover:text-primary">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">explore</span>
+<span class="text-[10px] font-medium text-gray-400 group-hover:text-primary">Discover</span>
+</button>
+<!-- Central Action Button -->
+<div class="relative -top-6">
+<button class="size-14 bg-gradient-to-br from-primary-gradient-start to-primary-gradient-end rounded-full shadow-lg shadow-primary/40 flex items-center justify-center transform transition-transform hover:scale-110">
+<span class="material-symbols-outlined text-white text-[28px] fill-current">favorite</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-primary transition-colors">chat_bubble</span>
+<span class="text-[10px] font-medium text-primary">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">person</span>
+<span class="text-[10px] font-medium text-gray-400 group-hover:text-primary">Profile</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Tailwind Keyframes for simple animation -->
+<style>
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body></html>

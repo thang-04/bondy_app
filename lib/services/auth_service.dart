@@ -429,7 +429,7 @@ class AuthService {
       Uri.parse('$_baseUrl/auth/refresh'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refreshToken': refreshToken}),
-    );
+    ).timeout(_timeout);
 
     final body = _decodeBody(response);
     if (response.statusCode != 200 || body['success'] != true) {
@@ -505,7 +505,7 @@ class AuthService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
-    );
+    ).timeout(_timeout);
 
     final body = _decodeBody(response);
     if (response.statusCode != 200 || body['success'] != true) {

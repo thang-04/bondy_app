@@ -1,0 +1,60 @@
+<h2>Thiết kế 4: Couples Emotions Check-in (Check-in cảm xúc cặp đôi)</h2>
+<p class="subtitle">Màn hình check-in hiện tại có lưới 8 cảm xúc cơ bản. Thiết kế Stitch đề xuất tích hợp thêm hộp gợi ý thông minh từ Bondy Coach dựa trên cảm xúc đã chọn để gắn kết cặp đôi tốt hơn.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Giao diện Hiện tại</div>
+    <div class="mockup-body" style="padding: 15px; font-family: sans-serif; background: #FFF9F5;">
+      <h3 style="margin: 0 0 10px 0; font-size: 14px;">Hiện tại bạn cảm thấy thế nào?</h3>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+        <div style="background: white; border: 1px solid #EEE; padding: 6px; border-radius: 8px; text-align: center; font-size: 10px;">😊 Hạnh phúc</div>
+        <div style="background: white; border: 1px solid #EEE; padding: 6px; border-radius: 8px; text-align: center; font-size: 10px;">😌 Bình yên</div>
+        <div style="background: white; border: 1px solid #EEE; padding: 6px; border-radius: 8px; text-align: center; font-size: 10px;">🥰 Yêu thương</div>
+        <div style="background: #FFE5E5; border: 2px solid #FF5252; padding: 6px; border-radius: 8px; text-align: center; font-size: 10px; font-weight: bold; color: #FF5252;">😰 Lo lắng</div>
+      </div>
+      <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px;">Để lại lời nhắn</div>
+      <textarea placeholder="Hôm nay tớ thấy..." style="width: 100%; height: 40px; font-size: 11px; border: 1px solid #EEE; border-radius: 8px; padding: 5px; resize: none;"></textarea>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Thiết kế Stitch (Đề xuất)</div>
+    <div class="mockup-body" style="padding: 12px; font-family: sans-serif; background: #FDFBF7;">
+      <!-- Title -->
+      <h3 style="margin: 0 0 5px 0; font-size: 14px; text-align: center;">Hôm nay bạn cảm thấy thế nào?</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+        <div style="background: white; border: 1px solid #EEE; padding: 10px; border-radius: 12px; text-align: center; font-size: 10px;">😊 Hạnh phúc</div>
+        <div style="background: white; border: 2px solid #FF6B6B; padding: 10px; border-radius: 12px; text-align: center; font-size: 10px; font-weight: bold; position: relative;">
+          😰 Áp lực
+          <span style="position: absolute; top: 2px; right: 2px; color: #FF6B6B; font-size: 12px;">✔️</span>
+        </div>
+      </div>
+      <!-- Coach Panel -->
+      <div style="background: white; border: 1px solid #F3E8FF; padding: 10px; border-radius: 12px; font-size: 10px; margin-bottom: 10px; border-left: 4px solid #A855F7;">
+        <strong style="color: #A855F7; display: block; margin-bottom: 2px;">Bondy Coach 🤖</strong>
+        Thấy bạn đang áp lực, Bondy gợi ý một lời hỏi thăm nhẹ nhàng để gửi đi.
+        <button style="margin-top: 5px; background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; padding: 2px 8px; border-radius: 6px; font-size: 8px; font-weight: bold; cursor: pointer;">Xem gợi ý ✨</button>
+      </div>
+      <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px;">Ghi chú thêm</div>
+      <textarea placeholder="Có chuyện gì cụ thể..." style="width: 100%; height: 35px; font-size: 10px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 4px; resize: none;"></textarea>
+    </div>
+  </div>
+</div>
+
+<h3>Đề xuất thay đổi cho màn hình Check-in Cảm xúc:</h3>
+<div class="options">
+  <div class="option" data-choice="full-emotions" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>(Khuyên dùng) Tích hợp hộp gợi ý từ Bondy Coach dưới lưới cảm xúc</h3>
+      <p>Giữ lưới cảm xúc, nhưng khi người dùng chọn một cảm xúc (đặc biệt là cảm xúc tiêu cực như Áp lực, Buồn), hiển thị một hộp gợi ý động từ Coach khuyên dùng lời hỏi thăm, hỗ trợ gửi lời nhắn mẫu.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="simple-emotions" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Chỉ thiết kế lại lưới cảm xúc</h3>
+      <p>Chỉ thay đổi bố cục lưới thành 2 cột với các card lớn bo tròn góc, có viền active dày và icon check_circle ở góc, không thêm hộp gợi ý của Coach.</p>
+    </div>
+  </div>
+</div>

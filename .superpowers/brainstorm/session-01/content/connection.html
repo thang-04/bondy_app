@@ -1,0 +1,65 @@
+<h2>Thiết kế 5 & 6: Luồng kết nối Tri kỷ (Invitation & Confirmed Celebration)</h2>
+<p class="subtitle">Đây là luồng cốt lõi để hai người dùng match nhau xác nhận mối quan hệ đặc biệt. Thiết kế Stitch đề xuất Bottom Sheet mời trực quan và màn hình kỷ niệm kết nối thành công với hiệu ứng confetti và nghiêng avatar đặc biệt.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Stitch 6: Bottom Sheet Lời mời</div>
+    <div class="mockup-body" style="padding: 15px; font-family: sans-serif; background: #FFF9F5; display: flex; flex-direction: column; justify-content: flex-end; min-height: 250px; box-sizing: border-box;">
+      <div style="background: white; border: 1px solid #EEE; padding: 15px; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;">
+        <!-- Close -->
+        <span style="position: absolute; right: 10px; top: 10px; color: #888; font-size: 14px;">✕</span>
+        <!-- Dual avatar overlapping with heart -->
+        <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 12px;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; border: 3px solid white; z-index: 2; background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDInAZwnSNVRwz8hWRXBe_kF11MF2sY2i4V0XK-HLasZjJFZOTHYl9K11t4_GsFIwVu2-hgMJGoSMPn-hjLfU-rRy1fWgO-gpDcI7cP2k26ZXWQtbFBjVEiaBPmSCtv5zS5bQzONktZoz6W0BsxQidJw1z00ZL4Y_4l7Tur219BcZZM5ApY-LLFUth5x714BwU5d0U7pqTBQRsb9xIdqoMI8nm6ELV9AaRBiit2vr7nGfJeLksPe7eMvv-QfWKs-0Uw59zJThHgrBkY'); background-size: cover;"></div>
+          <div style="width: 48px; height: 48px; border-radius: 50%; border: 3px solid white; margin-left: -12px; z-index: 1; background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAsiexlGMA3rY0_h3GMg4Lw0LstHaRZxxBr1beeNfRAMVb8tk4ikf0tEQfOrSrATNg6tvIJsbjVWRzVKuz66gapLwyDcuxLxdKR_SJUnL2MBy3G0qT85vZF1lBBYN6Dyajv_0cs6Q5KK36SAq_wh2899UhCRXERKBjRSofmpOeDZPhQiDJT6zEjTkxuVPiKsG4Gg1K3ffd3LFlUNZ53wHhUjv5ljqbRcaQEuadAgmTiV8vwTqmr4zviCTUI2r_ztPPJw6Gvnad-5qec'); background-size: cover;"></div>
+          <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); background: #ee2b5b; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center; z-index: 3;">❤️</div>
+        </div>
+        <h4 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 800;">Bạn muốn xác nhận mối quan hệ?</h4>
+        <p style="font-size: 10px; color: #666; margin: 0 0 15px 0;">Gửi lời mời đến Minh Anh để chính thức xác nhận và mở khóa các tính năng cặp đôi.</p>
+        <button style="width: 100%; background: linear-gradient(90deg, #FF8C42, #FF4B7D); color: white; border: none; padding: 10px; border-radius: 99px; font-weight: bold; font-size: 12px; margin-bottom: 8px;">Gửi lời mời ✉️</button>
+        <span style="font-size: 11px; color: #888; cursor: pointer;">Để sau nhé</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Stitch 5: Màn hình Kỷ niệm Thành công</div>
+    <div class="mockup-body" style="padding: 15px; font-family: sans-serif; background: linear-gradient(to bottom, #FFF5F0, #FFF9F5); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; text-align: center; position: relative;">
+      <!-- Confetti simulated -->
+      <div style="font-size: 24px; margin-bottom: 5px;">🎉</div>
+      <!-- Tilted avatars -->
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
+        <div style="width: 54px; height: 54px; border-radius: 50%; border: 3px solid white; transform: rotate(-8deg); box-shadow: 0 4px 10px rgba(0,0,0,0.1); background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCsgnYy8VW20CiYCVCqg8zVPiFE7qcVqSprT2bF4XVJHKShNuiZH4QvrSimg7ny5ofI1wWBMphBWGyCJiUUlCrwbfAHTcSo8XxION3MupzLDXLWzecVzCoTZGh3diOCqobJDjMkUh9Al1LTTSC4Ykd1BYxeDdHKqf-tzCT6SBTKAph-g5f0YldSABwVsW37Rmpz-oeeu8wgBttoAfisoCHmhmxONpBBjdzprzcIs2s3LZD_eJ7rgUtTBw6EqgyC9nHAdhSSKTmjAdd6'); background-size: cover; z-index: 2; position: relative;">
+          <div style="position: absolute; bottom: -2px; right: -2px; background: #FF4B7D; color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; display: flex; align-items: center; justify-content: center;">❤️</div>
+        </div>
+        <div style="width: 54px; height: 54px; border-radius: 50%; border: 3px solid white; transform: rotate(8deg); margin-left: -12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDLFtkpJawOulzk07g6ONeRHHCNIyJrGyaF73PQyJrva98w8x4CgZE-4Aa_AA82hxzO6qpGwV7PsXoeQr4K_gJFP9dBMogVYmjiEULvLdcJQpdWXh-02TVqgontL8ili4xvUIFWYv3XK8qpqJGA76NzO2P2SsaRg09JtfRhFcPS3feVxEGf6F-Xd_vTs18RC4bDkD9a1-LV-TLRR7IGYuoLHu58h3JV3Qf7CtQwkPmVLOJa1UGXTizsnldFaC7dVqxAzb8eCWvTa9lx'); background-size: cover; z-index: 1;"></div>
+      </div>
+      <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 800;">Hai bạn đã chính thức chung đôi</h4>
+      <p style="font-size: 10px; color: #666; margin: 0 0 15px 0;">Bắt đầu hành trình của hai bạn ngay bây giờ.</p>
+      <!-- Date Panel glass -->
+      <div style="background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 10px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 80%; margin-bottom: 12px; box-sizing: border-box;">
+        <span>📅 Ngày kỷ niệm</span>
+        <strong style="color: #FF4B7D;">Hôm nay</strong>
+      </div>
+      <button style="width: 90%; background: linear-gradient(90deg, #FF8C42, #FF4B7D); color: white; border: none; padding: 10px; border-radius: 12px; font-weight: bold; font-size: 11px;">Đi tới Góc Mối quan hệ ➔</button>
+    </div>
+  </div>
+</div>
+
+<h3>Đề xuất cấu trúc Route và màn hình mới:</h3>
+<div class="options">
+  <div class="option" data-choice="new-established-route" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>(Khuyên dùng) Tạo Route mới `/relationship/established` cho màn kỷ niệm thành công</h3>
+      <p>Giữ nguyên route `/relationship/confirmed` cho xác nhận check-in cảm xúc. Tạo thêm một màn hình mới `RelationshipConnectedScreen` và route `/relationship/established` cho luồng kết nối thành công này.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="reuse-confirmed-route" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tái sử dụng route `/relationship/confirmed` cũ và phân nhánh bằng tham số</h3>
+      <p>Sử dụng chung một file và route, nhưng truyền thêm tham số `isCheckin` hoặc `isConnection` để phân nhánh hiển thị UI khác nhau.</p>
+    </div>
+  </div>
+</div>

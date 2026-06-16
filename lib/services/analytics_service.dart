@@ -1,4 +1,5 @@
 import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 /// Pluggable analytics service. No-op by default; activate by setting
@@ -13,7 +14,15 @@ class AnalyticsService {
   AnalyticsService._();
   static final AnalyticsService instance = AnalyticsService._();
 
-  static final FirebaseAnalytics _firebaseAnalytics = FirebaseAnalytics.instance;
+  FirebaseAnalytics? get _firebaseAnalytics {
+    if (kIsWeb) return null; // Firebase Analytics not supported on web build
+    try {
+      return FirebaseAnalytics.instance;
+    } catch (e) {
+      dev.log('Failed to get FirebaseAnalytics instance: $e', name: 'AnalyticsService');
+      return null;
+    }
+  }
 
   bool _enabled = false;
   String? _userId;
@@ -28,11 +37,15 @@ class AnalyticsService {
     _userId = userId;
     if (!_enabled) return;
     
-    _firebaseAnalytics.setUserId(id: userId);
-    if (properties != null) {
-      properties.forEach((key, value) {
-        _firebaseAnalytics.setUserProperty(name: key, value: value.toString());
-      });
+    try {
+      _firebaseAnalytics?.setUserId(id: userId);
+      if (properties != null) {
+        properties.forEach((key, value) {
+          _firebaseAnalytics?.setUserProperty(name: key, value: value.toString());
+        });
+      }
+    } catch (e) {
+      dev.log('Error in FirebaseAnalytics identify: $e', name: 'AnalyticsService');
     }
     
     _send('\$identify', {'distinct_id': userId, ...?properties});
@@ -41,7 +54,11 @@ class AnalyticsService {
   /// Reset identity (on logout).
   void reset() {
     _userId = null;
-    _firebaseAnalytics.setUserId(id: null);
+    try {
+      _firebaseAnalytics?.setUserId(id: null);
+    } catch (e) {
+      dev.log('Error in FirebaseAnalytics reset: $e', name: 'AnalyticsService');
+    }
   }
 
   // ─── Core event helpers ───────────────────────────────────────────────────
@@ -88,11 +105,15 @@ class AnalyticsService {
       return;
     }
 
-    // Send event to Firebase Analytics
-    _firebaseAnalytics.logEvent(
-      name: event,
-      parameters: properties == null ? null : Map<String, Object>.from(properties),
-    );
+    try {
+      // Send event to Firebase Analytics
+      _firebaseAnalytics?.logEvent(
+        name: event,
+        parameters: properties == null ? null : Map<String, Object>.from(properties),
+      );
+    } catch (e) {
+      dev.log('Error in FirebaseAnalytics logEvent: $e', name: 'AnalyticsService');
+    }
 
     dev.log('[analytics] $event $props', name: 'AnalyticsService');
   }
