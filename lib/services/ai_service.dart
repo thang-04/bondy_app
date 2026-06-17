@@ -539,7 +539,7 @@ class AiService {
           body: request.toJson(),
           authenticated: true,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 50));
     return AiSuggestResponse.fromJson(response);
   }
 
