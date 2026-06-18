@@ -7,7 +7,7 @@ import '../../core/bondy_error_mapper.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/profile_service.dart';
-import '../../widgets/location/shopee_location_picker.dart';
+import '../auth/google_map_location_screen.dart';
 import '../../widgets/profile/prompts_editor_section.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -26,6 +26,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isLoadingData = true; // đang fetch dữ liệu từ server
   bool _isSaving = false; // đang lưu
   String? _errorMessage;
+
+  // Toạ độ user chọn lại từ bản đồ (nếu có). Khi đổi vị trí phải gửi kèm
+  // lat/lng để server tính lại khoảng cách — nếu chỉ gửi tên thành phố thì
+  // toạ độ cũ vẫn còn → khoảng cách trên màn khám phá bị lệch với chỗ ở.
+  double? _pickedLat;
+  double? _pickedLng;
 
   UserProfileModel? _profile;
 
@@ -181,12 +187,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // 3. Gửi toàn bộ dữ liệu kèm bộ link ảnh tổng hợp lên /profile/me
       final fullName = _fullNameController.text.trim();
+      final city = _cityController.text.trim();
       await _profileService.updateProfile(
         fullName: fullName.isNotEmpty ? fullName : null,
         bio: _bioController.text.trim(),
-        city: _cityController.text.trim(),
+        city: city,
         photos: finalPhotos.isNotEmpty ? finalPhotos : null,
       );
+
+      // Nếu user chọn lại vị trí trên bản đồ thì cập nhật cả toạ độ để server
+      // tính lại khoảng cách trên màn khám phá (khớp với chỗ ở mới).
+      if (_pickedLat != null && _pickedLng != null && city.isNotEmpty) {
+        await _profileService.updateLocation(
+          city: city,
+          latitude: _pickedLat!,
+          longitude: _pickedLng!,
+        );
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -279,22 +296,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  Future<void> _pickLocation() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (_) => const GoogleMapLocationScreen(isPicking: true),
+      ),
+    );
+    if (!mounted || result == null) return;
+    final address = result['address']?.toString();
+    final lat = (result['lat'] as num?)?.toDouble();
+    final lng = (result['lng'] as num?)?.toDouble();
+    setState(() {
+      if (address != null && address.isNotEmpty) {
+        _cityController.text = address;
+      }
+      _pickedLat = lat;
+      _pickedLng = lng;
+    });
+  }
+
   Widget _buildLocationSelector() {
     return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => ShopeeLocationPicker(
-            onSelected: (addr, lat, lng) {
-              setState(() {
-                _cityController.text = addr;
-              });
-            },
-          ),
-        );
-      },
+      onTap: _pickLocation,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),

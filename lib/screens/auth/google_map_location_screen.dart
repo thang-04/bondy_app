@@ -166,10 +166,12 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
             options: MapOptions(
               initialCenter: _initialPosition,
               initialZoom: 14.5,
+              // Luôn đồng bộ _currentPosition với tâm bản đồ đang hiển thị (cả
+              // khi di chuyển bằng cử chỉ lẫn lập trình: GPS/tìm kiếm). Trước
+              // đây chỉ cập nhật khi hasGesture nên toạ độ lưu lại bị lệch với
+              // vị trí ghim (pin) mà user nhìn thấy ở giữa màn hình.
               onPositionChanged: (position, hasGesture) {
-                if (hasGesture) {
-                  _currentPosition = position.center;
-                }
+                _currentPosition = position.center;
               },
             ),
             children: [
@@ -319,11 +321,25 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     );
   }
 
+  /// Toạ độ chính xác đang nằm dưới ghim = tâm bản đồ hiện tại. Đọc thẳng từ
+  /// controller để đảm bảo "nhìn thấy đâu lưu đó"; fallback về _currentPosition
+  /// nếu camera chưa sẵn sàng.
+  LatLng _resolveCenter() {
+    try {
+      return _mapController.camera.center;
+    } catch (_) {
+      return _currentPosition;
+    }
+  }
+
   Future<void> _handleSaveLocation() async {
     if (_isSaving) return;
     setState(() => _isSaving = true);
 
-    final address = await _resolveAddress();
+    // Chốt toạ độ ngay tại thời điểm bấm lưu để địa chỉ và lat/lng luôn khớp
+    // với nhau và khớp với ghim user nhìn thấy.
+    final center = _resolveCenter();
+    final address = await _resolveAddress(center);
     if (address == null) {
       if (!mounted) return;
       setState(() => _isSaving = false);
@@ -338,8 +354,8 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
         setState(() => _isSaving = false);
         Navigator.pop(context, {
           'address': address,
-          'lat': _currentPosition.latitude,
-          'lng': _currentPosition.longitude,
+          'lat': center.latitude,
+          'lng': center.longitude,
         });
       }
       return;
@@ -348,8 +364,8 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     try {
       await _profileService.updateLocation(
         city: address,
-        latitude: _currentPosition.latitude,
-        longitude: _currentPosition.longitude,
+        latitude: center.latitude,
+        longitude: center.longitude,
       );
 
       if (!mounted) return;
@@ -363,12 +379,12 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     }
   }
 
-  Future<String?> _resolveAddress() async {
+  Future<String?> _resolveAddress(LatLng center) async {
     final manualAddress = _searchController.text.trim();
     try {
       final placemarks = await placemarkFromCoordinates(
-        _currentPosition.latitude,
-        _currentPosition.longitude,
+        center.latitude,
+        center.longitude,
       );
       if (placemarks.isNotEmpty) {
         for (final p in placemarks) {

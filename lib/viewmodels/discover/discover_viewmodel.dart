@@ -15,6 +15,12 @@ class DiscoverViewModel extends ChangeNotifier {
   List<DiscoverProfile> profiles = [];
   bool isLoading = false;
   String? errorMessage;
+  // Tránh crash "A DiscoverViewModel was used after being disposed": khi user
+  // nhấn back lúc deck đang tải/đang xử lý swipe, màn hình dispose viewmodel
+  // trong khi request mạng vẫn đang chạy. Khi request hoàn tất, các hàm async
+  // gọi notifyListeners() trên viewmodel đã dispose → assert fail (crash ở chế
+  // độ debug). Cờ này chặn mọi notify sau khi dispose.
+  bool _disposed = false;
   bool _quotaExceeded = false;
   bool _profileIncomplete = false;
   String? _profileIncompleteNextAction;
@@ -26,6 +32,18 @@ class DiscoverViewModel extends ChangeNotifier {
   bool _lastSwipeFailed = false;
   LikeQuotaInfo? quota;
   DiscoverFilters? activeFilters;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
+  }
 
   bool get isEmpty => !isLoading && profiles.isEmpty && errorMessage == null;
   bool get quotaExceeded => _quotaExceeded;

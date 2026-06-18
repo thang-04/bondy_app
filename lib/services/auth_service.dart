@@ -66,7 +66,7 @@ class RefreshTokenResult {
   });
 }
 
-enum SessionRestoreStatus { unauthenticated, authenticated, expired }
+enum SessionRestoreStatus { unauthenticated, authenticated, expired, networkError }
 
 class SessionRestoreResult {
   final SessionRestoreStatus status;
@@ -81,6 +81,11 @@ class SessionRestoreResult {
     : this._(SessionRestoreStatus.authenticated, user);
 
   const SessionRestoreResult.expired() : this._(SessionRestoreStatus.expired);
+
+  /// Không xác minh được phiên do lỗi mạng/máy chủ tạm thời. Token vẫn còn
+  /// nguyên — KHÔNG đăng xuất, cho phép thử lại.
+  const SessionRestoreResult.networkError()
+    : this._(SessionRestoreStatus.networkError);
 }
 
 class LoginResult {
@@ -440,23 +445,59 @@ class AuthService {
     }
   }
 
-  Future<RefreshTokenResult> refreshAccessToken() async {
+  /// Gộp các lần refresh chạy đồng thời vào CÙNG một request. Server xoay vòng
+  /// (rotate) refresh token mỗi lần refresh: nếu nhiều request cùng dính 401 và
+  /// mỗi cái tự gọi refresh, cái thứ hai sẽ gửi token đã bị xoay vòng → server
+  /// trả 401 → app đăng xuất nhầm. Static để dùng chung cho mọi instance
+  /// AuthService (mỗi service tạo ApiClient + AuthService riêng).
+  static Future<RefreshTokenResult>? _refreshInFlight;
+
+  Future<RefreshTokenResult> refreshAccessToken() {
+    return _refreshInFlight ??= _performRefresh().whenComplete(() {
+      _refreshInFlight = null;
+    });
+  }
+
+  Future<RefreshTokenResult> _performRefresh() async {
     final refreshToken = await getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
       throw const SessionExpiredException();
     }
 
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/auth/refresh'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refreshToken': refreshToken}),
-    ).timeout(_timeout);
+    final http.Response response;
+    try {
+      response = await _client
+          .post(
+            Uri.parse('$_baseUrl/auth/refresh'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(_timeout);
+    } on TimeoutException {
+      // Lỗi tạm thời — KHÔNG coi là hết phiên (tránh đăng xuất nhầm).
+      throw const AuthServiceException(
+        'Máy chủ không phản hồi. Kiểm tra kết nối và thử lại.',
+      );
+    } catch (e) {
+      // Mất mạng / không kết nối được máy chủ — lỗi tạm thời, giữ nguyên phiên.
+      throw AuthServiceException('Không thể kết nối máy chủ: $e');
+    }
 
     final body = _decodeBody(response);
-    if (response.statusCode != 200 || body['success'] != true) {
+
+    // Chỉ coi là HẾT PHIÊN khi server từ chối refresh token (401/403). Các mã
+    // lỗi khác (5xx, phản hồi hỏng) là tạm thời → ném AuthServiceException để
+    // KHÔNG xoá session.
+    if (response.statusCode == 401 || response.statusCode == 403) {
       throw SessionExpiredException(
         body['error']?.toString() ??
             'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
+      );
+    }
+    if (response.statusCode != 200 || body['success'] != true) {
+      throw AuthServiceException(
+        body['error']?.toString() ??
+            'Không thể làm mới phiên. Vui lòng thử lại.',
       );
     }
 
@@ -492,10 +533,10 @@ class AuthService {
         );
         return SessionRestoreResult.authenticated(user);
       } on SessionExpiredException {
-        // Continue to refresh flow below.
+        // Access token hết hạn → thử refresh ở dưới.
       } catch (_) {
-        await clearSession();
-        return const SessionRestoreResult.expired();
+        // Lỗi mạng/máy chủ tạm thời — GIỮ token, không đăng xuất.
+        return const SessionRestoreResult.networkError();
       }
     }
 
@@ -506,9 +547,13 @@ class AuthService {
         sessionExpiredOnUnauthorized: true,
       );
       return SessionRestoreResult.authenticated(user);
-    } catch (_) {
+    } on SessionExpiredException {
+      // Refresh token thật sự hết hạn / bị thu hồi → đăng xuất.
       await clearSession();
       return const SessionRestoreResult.expired();
+    } catch (_) {
+      // Lỗi tạm thời (mạng, máy chủ bận) — GIỮ token để thử lại sau.
+      return const SessionRestoreResult.networkError();
     }
   }
 

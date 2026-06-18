@@ -130,7 +130,8 @@ class ApiClient {
         try {
           await _authService.refreshAccessToken();
           response = await request(await _headers(authenticated: true));
-        } catch (_) {
+        } on SessionExpiredException {
+          // Refresh token thật sự hết hạn / bị thu hồi → đăng xuất.
           await _authService.clearSession();
           throw const ApiClientException(
             'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
@@ -138,6 +139,9 @@ class ApiClient {
             code: 'UNAUTHORIZED',
           );
         }
+        // Lỗi tạm thời khi refresh (mạng/timeout/máy chủ bận) sẽ lan ra ngoài
+        // và được map thành lỗi mạng bên dưới — KHÔNG xoá session, KHÔNG đăng
+        // xuất user vì một sự cố mạng thoáng qua.
       }
 
       return _decodeResponse(response);
