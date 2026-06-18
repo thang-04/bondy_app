@@ -442,9 +442,15 @@ void main() {
             request.url.toString(),
             'https://api.example.com/api/auth/refresh',
           );
-          return http.Response(
-            jsonEncode({'success': false, 'error': 'Refresh token hết hạn'}),
+          // Phải khai báo charset=utf-8 để body tiếng Việt giải mã đúng (giống
+          // NextResponse.json của server). Nếu không, http dùng latin1 và ném
+          // lỗi mã hoá — không phản ánh hành vi thật của server.
+          return http.Response.bytes(
+            utf8.encode(
+              jsonEncode({'success': false, 'error': 'Refresh token hết hạn'}),
+            ),
             401,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       );

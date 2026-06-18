@@ -573,7 +573,8 @@ class AiService {
         response = await _httpClient.send(
           _buildStreamRequest(chatRequest, refreshed.accessToken),
         );
-      } catch (_) {
+      } on SessionExpiredException {
+        // Refresh token thật sự hết hạn / bị thu hồi → đăng xuất.
         await _authService.clearSession();
         throw const ApiClientException(
           'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
@@ -581,6 +582,7 @@ class AiService {
           code: 'UNAUTHORIZED',
         );
       }
+      // Lỗi tạm thời khi refresh (mạng/timeout) lan ra ngoài, KHÔNG đăng xuất.
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

@@ -251,31 +251,36 @@ void main() {
       await storage.write(key: 'accessToken', value: 'old-access-token');
       await storage.write(key: 'refreshToken', value: 'expired-refresh-token');
       await storage.write(key: 'userId', value: 'user-id');
+      // Cùng một handler cho cả ApiClient lẫn AuthService — refresh token bị
+      // server từ chối (401) phải đi qua đúng đường refresh của AuthService.
+      Future<http.Response> handler(http.Request request) async {
+        if (request.url.path == '/api/auth/refresh') {
+          return http.Response.bytes(
+            utf8.encode(
+              jsonEncode({
+                'success': false,
+                'error': 'Refresh token hết hạn',
+              }),
+            ),
+            401,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response(
+          jsonEncode({'success': false, 'error': 'Unauthorized'}),
+          401,
+        );
+      }
+
       final authService = AuthService(
         baseUrlOverride: 'https://api.example.com/api',
         storage: storage,
+        client: MockClient(handler),
       );
       final client = ApiClient(
         baseUrlOverride: 'https://api.example.com/api',
         authService: authService,
-        client: MockClient((request) async {
-          if (request.url.path == '/api/auth/refresh') {
-            return http.Response.bytes(
-              utf8.encode(
-                jsonEncode({
-                  'success': false,
-                  'error': 'Refresh token hết hạn',
-                }),
-              ),
-              401,
-              headers: {'content-type': 'application/json; charset=utf-8'},
-            );
-          }
-          return http.Response(
-            jsonEncode({'success': false, 'error': 'Unauthorized'}),
-            401,
-          );
-        }),
+        client: MockClient(handler),
       );
 
       await expectLater(

@@ -52,12 +52,24 @@ class _AuthGateScreenState extends State<AuthGateScreen>
     super.dispose();
   }
 
+  bool _networkError = false;
+
   Future<void> _restoreSession() async {
+    if (_networkError && mounted) {
+      setState(() => _networkError = false);
+    }
     final result = await _authService.restoreSession().timeout(
       const Duration(seconds: 30),
-      onTimeout: () => const SessionRestoreResult.unauthenticated(),
+      onTimeout: () => const SessionRestoreResult.networkError(),
     );
     if (!mounted) return;
+
+    // Lỗi mạng/máy chủ tạm thời: token vẫn còn, KHÔNG đẩy user về onboarding —
+    // hiển thị nút thử lại để tránh "tự đăng xuất" khi mạng chập chờn.
+    if (result.status == SessionRestoreStatus.networkError) {
+      setState(() => _networkError = true);
+      return;
+    }
 
     if (result.status == SessionRestoreStatus.authenticated) {
       final user = result.user ?? const {};
@@ -141,24 +153,48 @@ class _AuthGateScreenState extends State<AuthGateScreen>
                     ),
                   ),
                   const SizedBox(height: 48),
-                  const SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      color: BondyColors.primary,
-                      strokeWidth: 2,
+                  if (_networkError) ...[
+                    Icon(
+                      Icons.wifi_off_rounded,
+                      size: 32,
+                      color: BondyColors.textSecondary.withValues(alpha: 0.7),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Đang khôi phục phiên...',
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BondyColors.textSecondary,
-                      letterSpacing: 0.2,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Không kết nối được máy chủ.',
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: BondyColors.textSecondary,
+                        letterSpacing: 0.2,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _restoreSession,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Thử lại'),
+                    ),
+                  ] else ...[
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        color: BondyColors.primary,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Đang khôi phục phiên...',
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: BondyColors.textSecondary,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
