@@ -687,7 +687,7 @@ class _CommunityTabState extends State<_CommunityTab> {
               const Icon(Icons.favorite, size: 56, color: BondyColors.primary),
               const SizedBox(height: 16),
               Text(
-                'Co ket noi moi!',
+                'Có kết nối mới!',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -696,7 +696,7 @@ class _CommunityTabState extends State<_CommunityTab> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ban va ${profile.name} da thich nhau. Chat da san sang.',
+                'Bạn và ${profile.name} đã thích nhau. Chat đã sẵn sàng.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 15,
                   color: BondyColors.textSecondary,
@@ -723,13 +723,13 @@ class _CommunityTabState extends State<_CommunityTab> {
                     },
                   );
                 },
-                child: const Text('Nhan tin ngay'),
+                child: const Text('Nhắn tin ngay'),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
                 child: Text(
-                  'De sau',
+                  'Để sau',
                   style: GoogleFonts.plusJakartaSans(
                     color: BondyColors.textSecondary,
                   ),

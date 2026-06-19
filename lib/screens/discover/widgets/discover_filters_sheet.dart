@@ -16,27 +16,27 @@ class DiscoverFiltersSheet extends StatefulWidget {
 }
 
 const _targetGenders = [
-  ('FEMALE', 'Nu'),
+  ('FEMALE', 'Nữ'),
   ('MALE', 'Nam'),
-  ('OTHER', 'Khac'),
+  ('OTHER', 'Khác'),
   ('NON_BINARY', 'Non-binary'),
 ];
 
 const _goalOptions = [
-  ('DATING', 'Hen ho'),
-  ('LONG_TERM', 'Lau dai'),
-  ('MARRIAGE', 'Hon nhan'),
-  ('FRIENDSHIP', 'Ban be'),
-  ('NOT_SURE', 'Chua ro'),
+  ('DATING', 'Hẹn hò'),
+  ('LONG_TERM', 'Lâu dài'),
+  ('MARRIAGE', 'Hôn nhân'),
+  ('FRIENDSHIP', 'Bạn bè'),
+  ('NOT_SURE', 'Chưa rõ'),
 ];
 
 const _allVibes = [
-  ('chill', 'Nhe nhang'),
-  ('serious', 'Nghiem tuc'),
-  ('adventurous', 'Nang dong'),
-  ('creative', 'Sang tao'),
-  ('intellectual', 'Tri tue'),
-  ('playful', 'Vui ve'),
+  ('chill', 'Nhẹ nhàng'),
+  ('serious', 'Nghiêm túc'),
+  ('adventurous', 'Năng động'),
+  ('creative', 'Sáng tạo'),
+  ('intellectual', 'Trí tuệ'),
+  ('playful', 'Vui vẻ'),
 ];
 
 class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
@@ -64,7 +64,7 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
   Future<void> _save() async {
     if (_selectedGenders.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hay chon gioi tinh ban muon match.')),
+        const SnackBar(content: Text('Hãy chọn giới tính bạn muốn match.')),
       );
       return;
     }
@@ -89,7 +89,7 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Khong luu duoc bo loc: $e')));
+      ).showSnackBar(SnackBar(content: Text('Không lưu được bộ lọc: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -120,7 +120,7 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bo loc kham pha',
+              'Bộ lọc khám phá',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -128,13 +128,13 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
             ),
             const SizedBox(height: 20),
             _buildChipSection(
-              title: 'Muon thay ai',
+              title: 'Muốn thấy ai',
               values: _targetGenders,
               selected: _selectedGenders,
               keyPrefix: 'discover_filter_gender',
             ),
             const SizedBox(height: 20),
-            Text('Do tuoi: $_minAge - $_maxAge', style: _labelStyle()),
+            Text('Độ tuổi: $_minAge - $_maxAge', style: _labelStyle()),
             RangeSlider(
               values: RangeValues(_minAge.toDouble(), _maxAge.toDouble()),
               min: 18,
@@ -147,7 +147,7 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
               }),
             ),
             Text(
-              'Khoang cach toi da: ${_maxDistance.round()} km',
+              'Khoảng cách tối đa: ${_maxDistance.round()} km',
               style: _labelStyle(),
             ),
             Slider(
@@ -159,14 +159,14 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
               onChanged: (v) => setState(() => _maxDistance = v),
             ),
             _buildChipSection(
-              title: 'Muc tieu hen ho',
+              title: 'Mục tiêu hẹn hò',
               values: _goalOptions,
               selected: _selectedGoals,
               keyPrefix: 'discover_filter_goal',
             ),
             const SizedBox(height: 20),
             _buildChipSection(
-              title: 'Vibe / Phong cach',
+              title: 'Vibe / Phong cách',
               values: _allVibes,
               selected: _selectedVibes,
               keyPrefix: 'discover_filter_vibe',
@@ -174,8 +174,8 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
             const SizedBox(height: 20),
             Text(
               _minCompatibility <= 0
-                  ? 'Tuong thich toi thieu: Bat ky'
-                  : 'Tuong thich toi thieu: ${_minCompatibility.round()}%',
+                  ? 'Tương thích tối thiểu: Bất kỳ'
+                  : 'Tương thích tối thiểu: ${_minCompatibility.round()}%',
               style: _labelStyle(),
             ),
             Slider(
@@ -198,7 +198,7 @@ class _DiscoverFiltersSheetState extends State<DiscoverFiltersSheet> {
                         height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Ap dung'),
+                    : const Text('Áp dụng'),
               ),
             ),
           ],

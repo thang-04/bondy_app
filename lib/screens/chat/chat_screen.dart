@@ -2540,7 +2540,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ).pushNamedAndRemoveUntil('/matches', (route) => false);
     } catch (_) {
       if (!mounted) return;
-      _showSnackBar('Khong the thuc hien thao tac. Vui long thu lai.');
+      _showSnackBar('Không thể thực hiện thao tác. Vui lòng thử lại.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

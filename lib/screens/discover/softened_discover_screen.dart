@@ -35,7 +35,7 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Kham pha nhe nhang'),
+        title: const Text('Khám phá nhẹ nhàng'),
       ),
       body: SafeArea(
         child: AnimatedBuilder(
@@ -49,7 +49,7 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
                   _buildIntro(),
                   const SizedBox(height: 24),
                   Text(
-                    'Goi y hom nay',
+                    'Gợi ý hôm nay',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -66,14 +66,14 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
                     _buildStateMessage(
                       icon: Icons.error_outline,
                       message: _viewModel.errorMessage!,
-                      actionLabel: 'Thu lai',
+                      actionLabel: 'Thử lại',
                       onAction: () => _viewModel.loadProfiles(),
                     )
                   else if (_viewModel.profiles.isEmpty)
                     _buildStateMessage(
                       icon: Icons.spa_outlined,
-                      message: 'Chua co goi y phu hop. Hay quay lai sau nhe.',
-                      actionLabel: 'Tai lai',
+                      message: 'Chưa có gợi ý phù hợp. Hãy quay lại sau nhé.',
+                      actionLabel: 'Tải lại',
                       onAction: () => _viewModel.loadProfiles(),
                     )
                   else
@@ -100,7 +100,7 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
           const Icon(Icons.spa_outlined, size: 40, color: BondyColors.primary),
           const SizedBox(height: 12),
           Text(
-            'Khong voi vang',
+            'Không vội vàng',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -109,7 +109,7 @@ class _SoftenedDiscoverScreenState extends State<SoftenedDiscoverScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Bondy hien thi cung hang doi Discover, nhung theo cach de doc va cham hon.',
+            'Bondy hiển thị cùng hàng đợi Discover, nhưng theo cách dễ đọc và chậm hơn.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: BondyColors.textSecondary,

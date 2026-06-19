@@ -719,10 +719,10 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
         ? Icons.star_rounded
         : Icons.favorite;
     final label = isPass
-        ? 'Da bo qua'
+        ? 'Đã bỏ qua'
         : isSuper
         ? 'Super Like'
-        : 'Da thich';
+        : 'Đã thích';
 
     return Positioned(
       left: 0,

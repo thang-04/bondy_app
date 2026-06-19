@@ -24,9 +24,9 @@ class _MatchPreferencesSetupScreenState
   bool _isSubmitting = false;
 
   static const _genderOptions = [
-    ('FEMALE', 'Nu'),
+    ('FEMALE', 'Nữ'),
     ('MALE', 'Nam'),
-    ('OTHER', 'Khac'),
+    ('OTHER', 'Khác'),
     ('NON_BINARY', 'Non-binary'),
   ];
 
@@ -54,7 +54,7 @@ class _MatchPreferencesSetupScreenState
   Future<void> _submit() async {
     if (_selectedGenders.isEmpty || _isSubmitting) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hay chon gioi tinh ban muon match.')),
+        const SnackBar(content: Text('Hãy chọn giới tính bạn muốn match.')),
       );
       return;
     }
@@ -80,7 +80,7 @@ class _MatchPreferencesSetupScreenState
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Khong luu duoc lua chon: $error')),
+        SnackBar(content: Text('Không lưu được lựa chọn: $error')),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -101,7 +101,7 @@ class _MatchPreferencesSetupScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BondyColors.background,
-      appBar: AppBar(title: const Text('Tuy chon match')),
+      appBar: AppBar(title: const Text('Tùy chọn match')),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -111,7 +111,7 @@ class _MatchPreferencesSetupScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ban muon match voi ai?',
+                      'Bạn muốn match với ai?',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -120,7 +120,7 @@ class _MatchPreferencesSetupScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Lua chon nay quyet dinh nhung ho so xuat hien trong Swipe.',
+                      'Lựa chọn này quyết định những hồ sơ xuất hiện trong Swipe.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: BondyColors.textSecondary,
@@ -148,7 +148,7 @@ class _MatchPreferencesSetupScreenState
                     const Spacer(),
                     BondyButton(
                       key: const Key('match_pref_continue_button'),
-                      text: _isSubmitting ? 'Dang luu...' : 'Tiep tuc',
+                      text: _isSubmitting ? 'Đang lưu...' : 'Tiếp tục',
                       isLoading: _isSubmitting,
                       onPressed: _selectedGenders.isEmpty
                           ? null
