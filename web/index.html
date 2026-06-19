@@ -576,12 +576,12 @@
       }
     });
 
-    // Fallback: if Flutter hasn't loaded after 20 seconds, show error
+    // Fallback: if Flutter hasn't loaded after 120 seconds, show error
     setTimeout(function() {
       if (!flutterLoaded && !errorShown) {
-        showError(new Error('Flutter initialization timed out after 20 seconds.'));
+        showError(new Error('Flutter initialization timed out after 120 seconds.'));
       }
-    }, 20000);
+    }, 120000);
 
     function showError(err) {
       errorShown = true;

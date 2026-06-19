@@ -219,6 +219,7 @@ class AiCoachViewModel extends ChangeNotifier {
 
     try {
       final prompt = message ?? intent.prompt;
+      debugPrint('[AiCoach] calling chatCoach for chat=$chatId match=$matchId');
       final response = await _aiService.chatCoach(
         AiChatRequest(
           chatId: chatId,
@@ -231,20 +232,33 @@ class AiCoachViewModel extends ChangeNotifier {
         ),
       );
 
-      if (requestVersion != _requestVersion) return;
+      if (requestVersion != _requestVersion) {
+        debugPrint('[AiCoach] stale response (v$requestVersion != v$_requestVersion), discarding');
+        return;
+      }
+
+      debugPrint('[AiCoach] response received: success=${response.success}, '
+          'hasData=${response.data != null}, error=${response.error}');
 
       if (response.success &&
           response.data != null &&
           !response.data!.meta.failed) {
         final data = response.data!;
-        final responseMatchesRequest =
-            data.flowVersion == 'coach-v2' &&
-            data.chatId == chatId &&
-            data.matchId == matchId &&
+        final flowVersionMatches = data.flowVersion == 'coach-v2' ||
+            data.flowVersion == '1' ||
+            data.flowVersion == '1.0' ||
+            data.flowVersion.isEmpty;
+        final responseMatchesRequest = flowVersionMatches &&
+            (data.chatId.isEmpty || chatId.isEmpty || data.chatId == chatId) &&
+            (data.matchId.isEmpty || matchId.isEmpty || data.matchId == matchId) &&
             (expectedPartnerId == null ||
                 expectedPartnerId.isEmpty ||
+                data.partnerId.isEmpty ||
                 data.partnerId == expectedPartnerId);
         if (!responseMatchesRequest) {
+          debugPrint('[AiCoach] response mismatch: flow=${data.flowVersion} '
+              'responseChatId=${data.chatId} responseMatchId=${data.matchId} '
+              'responsePartnerId=${data.partnerId}');
           errorMessage =
               'Kết quả AI không khớp với cuộc trò chuyện hiện tại. Vui lòng thử lại.';
           return;
@@ -256,6 +270,7 @@ class AiCoachViewModel extends ChangeNotifier {
         suggestions = metaSuggestions.isNotEmpty
             ? metaSuggestions
             : _extractSuggestions(response.data!.response);
+        debugPrint('[AiCoach] got ${suggestions.length} suggestions');
         if (suggestions.isEmpty ||
             suggestions.every((suggestion) => suggestion.trim().isEmpty)) {
           suggestions = [];
@@ -264,6 +279,7 @@ class AiCoachViewModel extends ChangeNotifier {
           errorMessage = null;
         }
       } else if (response.data?.meta.failed == true) {
+        debugPrint('[AiCoach] meta.failed is true');
         errorMessage = 'AI tạm thời chưa thể tạo gợi ý. Vui lòng thử lại.';
       } else if (response.error != null &&
           response.error!.contains('LIMIT_REACHED')) {
@@ -271,14 +287,17 @@ class AiCoachViewModel extends ChangeNotifier {
         _parseLimitError(response.error!);
         errorMessage = null;
       } else {
+        debugPrint('[AiCoach] unexpected response state: error=${response.error}');
         errorMessage = response.error ?? 'Có lỗi xảy ra';
       }
     } on TimeoutException {
+      debugPrint('[AiCoach] TimeoutException caught');
       if (requestVersion == _requestVersion) {
         errorMessage =
             'AI cần nhiều thời gian hơn dự kiến. Vui lòng nhấn Thử lại.';
       }
     } on ApiClientException catch (e) {
+      debugPrint('[AiCoach] ApiClientException: code=${e.code} msg=${e.message} status=${e.statusCode}');
       if (requestVersion == _requestVersion) {
         if (e.code == 'AI_DAILY_QUOTA_EXCEEDED' && e.data != null) {
           quotaExceededData = AiQuotaExceededData.fromJson(e.data!);
@@ -287,11 +306,17 @@ class AiCoachViewModel extends ChangeNotifier {
           remaining = quota?.remaining;
           isLimitReached = true;
           errorMessage = null;
+        } else if (e.message.contains('quá lâu') || e.message.contains('timeout')) {
+          // ApiClient wraps TimeoutException as ApiClientException —
+          // show an AI-specific message instead of the generic network one.
+          errorMessage =
+              'AI cần nhiều thời gian hơn dự kiến. Vui lòng nhấn Thử lại.';
         } else {
           errorMessage = BondyErrorMapper.message(e);
         }
       }
     } catch (e) {
+      debugPrint('[AiCoach] unexpected error: ${e.runtimeType}: $e');
       if (requestVersion == _requestVersion) {
         errorMessage = BondyErrorMapper.message(e);
       }
