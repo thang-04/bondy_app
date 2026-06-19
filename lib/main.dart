@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -110,16 +109,14 @@ import 'screens/profile/edit_profile_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (skip on Web — Firebase JS SDK causes crashes on
-  // some mobile browsers due to ad-blockers / content-blockers / missing CDN)
-  if (!kIsWeb) {
-    try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } catch (e) {
-      debugPrint("Firebase initialization failed: $e");
-    }
+  // Initialize Firebase on all platforms (incl. Web). Failures are caught and
+  // logged so a missing CDN / ad-blocker on web can't crash app startup.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase initialization failed: $e");
   }
 
   // Hide Android gesture bar
