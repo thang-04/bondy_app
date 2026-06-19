@@ -24,11 +24,17 @@ class _MatchPreferencesSetupScreenState
   bool _isSubmitting = false;
 
   static const _genderOptions = [
-    ('FEMALE', 'Nữ'),
-    ('MALE', 'Nam'),
-    ('OTHER', 'Khác'),
-    ('NON_BINARY', 'Non-binary'),
+    ('MALE', 'Nam', '👨'),
+    ('FEMALE', 'Nữ', '👩'),
+    ('TRANS_MALE', 'Chuyển giới Nam', '🏳️‍⚧️'),
+    ('TRANS_FEMALE', 'Chuyển giới Nữ', '🏳️‍⚧️'),
+    ('NON_BINARY', 'Non-binary', '⚧️'),
+    ('GENDERQUEER', 'Genderqueer', '🌈'),
+    ('AGENDER', 'Vô tính', '⚪'),
+    ('OTHER', 'Khác', '🔮'),
   ];
+
+  bool get _isAllSelected => _selectedGenders.length == _genderOptions.length;
 
   @override
   void initState() {
@@ -87,14 +93,92 @@ class _MatchPreferencesSetupScreenState
     }
   }
 
-  void _toggleGender(String code, bool selected) {
+  void _toggleAll() {
     setState(() {
-      if (selected) {
-        _selectedGenders.add(code);
+      if (_isAllSelected) {
+        _selectedGenders.clear();
       } else {
-        _selectedGenders.remove(code);
+        _selectedGenders.addAll(_genderOptions.map((o) => o.$1));
       }
     });
+  }
+
+  void _toggleGender(String code) {
+    setState(() {
+      if (_selectedGenders.contains(code)) {
+        _selectedGenders.remove(code);
+      } else {
+        _selectedGenders.add(code);
+      }
+    });
+  }
+
+  Widget _buildGenderCard({
+    required String code,
+    required String label,
+    required String emoji,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? BondyColors.primary.withValues(alpha: 0.08)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? BondyColors.primary : BondyColors.cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: BondyColors.primary.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? BondyColors.primary : BondyColors.textPrimary,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: BondyColors.primary,
+                size: 18,
+              )
+            else
+              Icon(
+                Icons.circle_outlined,
+                color: BondyColors.textHint.withValues(alpha: 0.3),
+                size: 18,
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -105,48 +189,70 @@ class _MatchPreferencesSetupScreenState
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bạn muốn match với ai?',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: BondyColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Lựa chọn này quyết định những hồ sơ xuất hiện trong Swipe.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: BondyColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _genderOptions.map((option) {
-                        final selected = _selectedGenders.contains(option.$1);
-                        return FilterChip(
-                          key: Key('match_pref_gender_${option.$1}'),
-                          label: Text(option.$2),
-                          selected: selected,
-                          selectedColor: BondyColors.primary.withValues(
-                            alpha: 0.15,
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bạn muốn match với ai?',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: BondyColors.textPrimary,
+                            ),
                           ),
-                          checkmarkColor: BondyColors.primary,
-                          onSelected: (value) =>
-                              _toggleGender(option.$1, value),
-                        );
-                      }).toList(),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Lựa chọn này quyết định những hồ sơ xuất hiện trong Swipe.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: BondyColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 2.1,
+                            ),
+                            itemCount: _genderOptions.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return _buildGenderCard(
+                                  code: 'ALL',
+                                  label: 'Tất cả mọi người',
+                                  emoji: '👥',
+                                  isSelected: _isAllSelected,
+                                  onTap: _toggleAll,
+                                );
+                              }
+                              final option = _genderOptions[index - 1];
+                              final isSelected =
+                                  _selectedGenders.contains(option.$1);
+                              return _buildGenderCard(
+                                code: option.$1,
+                                label: option.$2,
+                                emoji: option.$3,
+                                isSelected: isSelected,
+                                onTap: () => _toggleGender(option.$1),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
-                    BondyButton(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: BondyButton(
                       key: const Key('match_pref_continue_button'),
                       text: _isSubmitting ? 'Đang lưu...' : 'Tiếp tục',
                       isLoading: _isSubmitting,
@@ -154,8 +260,8 @@ class _MatchPreferencesSetupScreenState
                           ? null
                           : () => _submit(),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
       ),
     );
