@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/bondy_error_mapper.dart';
 import '../../services/auth_service.dart';
 import '../../services/google_sign_in_service.dart';
+import '../../services/analytics_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   static const int minimumAge = 18;
@@ -570,6 +571,12 @@ class AuthViewModel extends ChangeNotifier {
       final userData = await _authService.getCurrentUser();
       if (!context.mounted) return;
 
+      final userId = userData['id']?.toString() ?? userData['userId']?.toString();
+      if (userId != null) {
+        // Identify user in analytics system
+        analytics.identify(userId);
+      }
+
       // Check email verification status
       final emailVerified = userData['emailVerified'] != null;
 
@@ -586,6 +593,9 @@ class AuthViewModel extends ChangeNotifier {
           profile['gender'] != null &&
           profile['birthDate'] != null;
       if (hasCompletedProfile) {
+        if (userId != null) {
+          analytics.signupComplete(userId);
+        }
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
         Navigator.of(context).pushReplacementNamed('/profile-setup');

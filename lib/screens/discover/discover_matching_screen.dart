@@ -19,6 +19,7 @@ import '../../widgets/discover/like_quota_exceeded_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
+import '../../services/analytics_service.dart';
 
 String discoverSwipeActionForDirection(AxisDirection direction) {
   switch (direction) {
@@ -160,6 +161,15 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     // không hiện). Để swiper tự quản lý; card đã quẹt sẽ biến mất khỏi feed ở
     // lần nạp lại sau (server đã loại nó qua exclusion set).
     _precacheNextImages(start: targetIndex);
+
+    // Track swipe event
+    if (action == 'LIKE') {
+      analytics.swipeLike(profile.id);
+    } else if (action == 'PASS') {
+      analytics.swipePass(profile.id);
+    } else if (action == 'SUPER_LIKE') {
+      analytics.track('swipe_super_like', {'targetUserId': profile.id});
+    }
 
     // Enqueue API call xử lý tuần tự ở background.
     _swipeQueue.add(_SwipeJob(profile: profile, action: action));

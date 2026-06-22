@@ -5,6 +5,7 @@ import '../healing/healing_stitch_style.dart';
 import '../../services/ai_service.dart';
 import '../../viewmodels/ai/ai_quota_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
+import '../../services/analytics_service.dart';
 
 class PaywallFeature {
   final String title;
@@ -76,6 +77,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
       try {
         context.read<AiQuotaViewModel>().loadQuota();
       } catch (_) {}
+      
+      // Log the paywall view event
+      analytics.subscriptionPaywallView();
     });
   }
 
@@ -84,6 +88,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     final success = await viewModel.upgradeSubscription(_selectedTier);
     if (!mounted) return;
     if (success) {
+      // Track purchase success
+      analytics.track('subscription_purchase_success', {'tier': _selectedTier});
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(

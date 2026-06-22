@@ -1,6 +1,8 @@
 import 'dart:developer' as dev;
+import 'dart:js' as js;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Pluggable analytics service. No-op by default; activate by setting
 /// ANALYTICS_ENABLED=true in .env and calling
@@ -27,6 +29,13 @@ class AnalyticsService {
   bool _enabled = false;
   String? _userId;
 
+  String get _webMeasurementId {
+    if (dotenv.isInitialized) {
+      return dotenv.env['GA_MEASUREMENT_ID'] ?? 'G-XXXXXXXXXX';
+    }
+    return 'G-XXXXXXXXXX';
+  }
+
   /// Call once after login / at app start.
   void configure({bool enabled = true}) {
     _enabled = enabled;
@@ -37,15 +46,27 @@ class AnalyticsService {
     _userId = userId;
     if (!_enabled) return;
     
-    try {
-      _firebaseAnalytics?.setUserId(id: userId);
-      if (properties != null) {
-        properties.forEach((key, value) {
-          _firebaseAnalytics?.setUserProperty(name: key, value: value.toString());
-        });
+    if (kIsWeb) {
+      try {
+        js.context.callMethod('gtag', [
+          'config',
+          _webMeasurementId,
+          js.JsObject.jsify({'user_id': userId})
+        ]);
+      } catch (e) {
+        dev.log('Error identifying user on web: $e', name: 'AnalyticsService');
       }
-    } catch (e) {
-      dev.log('Error in FirebaseAnalytics identify: $e', name: 'AnalyticsService');
+    } else {
+      try {
+        _firebaseAnalytics?.setUserId(id: userId);
+        if (properties != null) {
+          properties.forEach((key, value) {
+            _firebaseAnalytics?.setUserProperty(name: key, value: value.toString());
+          });
+        }
+      } catch (e) {
+        dev.log('Error in FirebaseAnalytics identify: $e', name: 'AnalyticsService');
+      }
     }
     
     _send('\$identify', {'distinct_id': userId, ...?properties});
@@ -105,14 +126,26 @@ class AnalyticsService {
       return;
     }
 
-    try {
-      // Send event to Firebase Analytics
-      _firebaseAnalytics?.logEvent(
-        name: event,
-        parameters: properties == null ? null : Map<String, Object>.from(properties),
-      );
-    } catch (e) {
-      dev.log('Error in FirebaseAnalytics logEvent: $e', name: 'AnalyticsService');
+    if (kIsWeb) {
+      try {
+        js.context.callMethod('gtag', [
+          'event',
+          event,
+          if (properties != null) js.JsObject.jsify(properties)
+        ]);
+      } catch (e) {
+        dev.log('Error calling gtag on web: $e', name: 'AnalyticsService');
+      }
+    } else {
+      try {
+        // Send event to Firebase Analytics
+        _firebaseAnalytics?.logEvent(
+          name: event,
+          parameters: properties == null ? null : Map<String, Object>.from(properties),
+        );
+      } catch (e) {
+        dev.log('Error in FirebaseAnalytics logEvent: $e', name: 'AnalyticsService');
+      }
     }
 
     dev.log('[analytics] $event $props', name: 'AnalyticsService');
