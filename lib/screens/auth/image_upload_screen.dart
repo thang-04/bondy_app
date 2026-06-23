@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
+import '../../core/image_converter.dart';
 import '../../core/mime_detector.dart';
 import 'package:http/http.dart' as http_client;
 import '../../services/auth_service.dart';
@@ -90,23 +91,31 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
 
         // Trên web, image_picker trả XFile không có extension
         // → dùng magic bytes để detect MIME type chính xác
-        final String mimeType;
-        if (MimeDetector.hasValidExtension(fileName)) {
-          final ext = fileName.split('.').last.toLowerCase();
-          mimeType = ext == 'png'
+        final String initialMimeType;
+        String initialFileName = fileName;
+        if (MimeDetector.hasValidExtension(initialFileName)) {
+          final ext = initialFileName.split('.').last.toLowerCase();
+          initialMimeType = ext == 'png'
               ? 'image/png'
               : (ext == 'webp'
                     ? 'image/webp'
                     : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
         } else {
           final detected = MimeDetector.detect(bytes);
-          mimeType = detected.mimeType;
-          fileName = MimeDetector.ensureExtension(fileName, detected.extension);
-          debugPrint(
-            '[IMG-DBG] Onboarding upload: no extension, '
-            'magic bytes → mimeType=$mimeType, fileName=$fileName',
-          );
+          initialMimeType = detected.mimeType;
+          initialFileName = MimeDetector.ensureExtension(initialFileName, detected.extension);
         }
+
+        // Chuyển đổi định dạng ảnh nếu chạy trên Web (ví dụ HEIC -> JPEG)
+        final converted = await convertImageIfNeed(
+          bytes: bytes,
+          fileName: initialFileName,
+          mimeType: initialMimeType,
+        );
+
+        final finalBytes = converted.bytes;
+        final finalFileName = converted.fileName;
+        final mimeType = converted.mimeType;
 
         // Use the native http package MultipartRequest to upload files,
         // which avoids the Safari iOS type conversion InvalidAccessError Blob bug!
@@ -119,8 +128,8 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         request.files.add(
           http_client.MultipartFile.fromBytes(
             'file',
-            bytes,
-            filename: fileName,
+            finalBytes,
+            filename: finalFileName,
             contentType: MediaType.parse(mimeType),
           ),
         );
