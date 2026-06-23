@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -166,6 +167,15 @@ Future<void> main() async {
   }
 }
 
+List<NavigatorObserver> buildAnalyticsObservers() {
+  try {
+    return [FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance)];
+  } catch (e) {
+    debugPrint('Firebase Analytics observer unavailable: $e');
+    return const <NavigatorObserver>[];
+  }
+}
+
 class BondyApp extends StatelessWidget {
   const BondyApp({super.key});
 
@@ -186,6 +196,7 @@ class BondyApp extends StatelessWidget {
         title: 'Bondy',
         debugShowCheckedModeBanner: false,
         theme: BondyTheme.lightTheme,
+        navigatorObservers: buildAnalyticsObservers(),
         builder: (context, child) {
           final mediaQuery = MediaQuery.of(context);
           final isWebLarge = mediaQuery.size.width > 500;

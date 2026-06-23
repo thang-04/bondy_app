@@ -1,8 +1,43 @@
+import 'dart:async';
 import 'dart:developer' as dev;
-import 'dart:js' as js;
-import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+abstract class AnalyticsClient {
+  Future<void> setUserId(String? userId);
+
+  Future<void> setUserProperty({required String name, required String? value});
+
+  Future<void> logEvent({
+    required String name,
+    Map<String, Object>? parameters,
+  });
+}
+
+class FirebaseAnalyticsClient implements AnalyticsClient {
+  FirebaseAnalyticsClient({FirebaseAnalytics? analytics})
+    : _analytics = analytics ?? FirebaseAnalytics.instance;
+
+  final FirebaseAnalytics _analytics;
+
+  @override
+  Future<void> setUserId(String? userId) {
+    return _analytics.setUserId(id: userId);
+  }
+
+  @override
+  Future<void> setUserProperty({required String name, required String? value}) {
+    return _analytics.setUserProperty(name: name, value: value);
+  }
+
+  @override
+  Future<void> logEvent({
+    required String name,
+    Map<String, Object>? parameters,
+  }) {
+    return _analytics.logEvent(name: name, parameters: parameters);
+  }
+}
 
 /// Pluggable analytics service. No-op by default; activate by setting
 /// ANALYTICS_ENABLED=true in .env and calling
@@ -13,28 +48,31 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// analytics.track('swipe_like', {'targetUserId': id});
 /// ```
 class AnalyticsService {
-  AnalyticsService._();
-  static final AnalyticsService instance = AnalyticsService._();
+  AnalyticsService({AnalyticsClient? client}) : _client = client;
 
-  FirebaseAnalytics? get _firebaseAnalytics {
-    if (kIsWeb) return null; // Firebase Analytics not supported on web build
+  static final AnalyticsService instance = AnalyticsService();
+
+  AnalyticsClient? _client;
+
+  AnalyticsClient get _analyticsClient => _client ??= FirebaseAnalyticsClient();
+
+  void _call(String action, Future<void> Function() operation) {
     try {
-      return FirebaseAnalytics.instance;
-    } catch (e) {
-      dev.log('Failed to get FirebaseAnalytics instance: $e', name: 'AnalyticsService');
-      return null;
+      unawaited(
+        operation().catchError((Object error) {
+          dev.log(
+            'Error in analytics $action: $error',
+            name: 'AnalyticsService',
+          );
+        }),
+      );
+    } catch (error) {
+      dev.log('Error in analytics $action: $error', name: 'AnalyticsService');
     }
   }
 
   bool _enabled = false;
   String? _userId;
-
-  String get _webMeasurementId {
-    if (dotenv.isInitialized) {
-      return dotenv.env['GA_MEASUREMENT_ID'] ?? 'G-XXXXXXXXXX';
-    }
-    return 'G-XXXXXXXXXX';
-  }
 
   /// Call once after login / at app start.
   void configure({bool enabled = true}) {
@@ -45,41 +83,29 @@ class AnalyticsService {
   void identify(String userId, {Map<String, dynamic>? properties}) {
     _userId = userId;
     if (!_enabled) return;
-    
-    if (kIsWeb) {
-      try {
-        js.context.callMethod('gtag', [
-          'config',
-          _webMeasurementId,
-          js.JsObject.jsify({'user_id': userId})
-        ]);
-      } catch (e) {
-        dev.log('Error identifying user on web: $e', name: 'AnalyticsService');
-      }
-    } else {
-      try {
-        _firebaseAnalytics?.setUserId(id: userId);
-        if (properties != null) {
-          properties.forEach((key, value) {
-            _firebaseAnalytics?.setUserProperty(name: key, value: value.toString());
-          });
-        }
-      } catch (e) {
-        dev.log('Error in FirebaseAnalytics identify: $e', name: 'AnalyticsService');
+
+    _call('set user id', () => _analyticsClient.setUserId(userId));
+    if (properties != null) {
+      for (final entry in properties.entries) {
+        _call(
+          'set user property ${entry.key}',
+          () => _analyticsClient.setUserProperty(
+            name: entry.key,
+            value: entry.value?.toString(),
+          ),
+        );
       }
     }
-    
+
     _send('\$identify', {'distinct_id': userId, ...?properties});
   }
 
   /// Reset identity (on logout).
   void reset() {
     _userId = null;
-    try {
-      _firebaseAnalytics?.setUserId(id: null);
-    } catch (e) {
-      dev.log('Error in FirebaseAnalytics reset: $e', name: 'AnalyticsService');
-    }
+    if (!_enabled) return;
+
+    _call('reset user id', () => _analyticsClient.setUserId(null));
   }
 
   // ─── Core event helpers ───────────────────────────────────────────────────
@@ -113,8 +139,7 @@ class AnalyticsService {
 
   // ─── Low-level ────────────────────────────────────────────────────────────
 
-  /// Generic event tracking. When a real analytics provider is configured,
-  /// replace the log statement with the provider SDK call.
+  /// Generic event tracking through Firebase Analytics.
   void track(String event, [Map<String, dynamic>? properties]) {
     final props = <String, dynamic>{
       if (_userId != null) 'userId': _userId,
@@ -126,33 +151,36 @@ class AnalyticsService {
       return;
     }
 
-    if (kIsWeb) {
-      try {
-        js.context.callMethod('gtag', [
-          'event',
-          event,
-          if (properties != null) js.JsObject.jsify(properties)
-        ]);
-      } catch (e) {
-        dev.log('Error calling gtag on web: $e', name: 'AnalyticsService');
-      }
-    } else {
-      try {
-        // Send event to Firebase Analytics
-        _firebaseAnalytics?.logEvent(
-          name: event,
-          parameters: properties == null ? null : Map<String, Object>.from(properties),
-        );
-      } catch (e) {
-        dev.log('Error in FirebaseAnalytics logEvent: $e', name: 'AnalyticsService');
-      }
-    }
+    _call(
+      'log event $event',
+      () => _analyticsClient.logEvent(
+        name: event,
+        parameters: _analyticsParameters(properties),
+      ),
+    );
 
     dev.log('[analytics] $event $props', name: 'AnalyticsService');
   }
 
   void _send(String event, Map<String, dynamic> props) {
     dev.log('[analytics] $event $props', name: 'AnalyticsService');
+  }
+
+  Map<String, Object>? _analyticsParameters(Map<String, dynamic>? properties) {
+    if (properties == null || properties.isEmpty) return null;
+
+    final parameters = <String, Object>{};
+    for (final entry in properties.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      if (value is String || value is num || value is bool) {
+        parameters[entry.key] = value;
+      } else {
+        parameters[entry.key] = value.toString();
+      }
+    }
+
+    return parameters.isEmpty ? null : parameters;
   }
 }
 
