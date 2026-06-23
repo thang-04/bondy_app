@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
+import '../../core/mime_detector.dart';
 import 'package:http/http.dart' as http_client;
 import '../../services/auth_service.dart';
 import '../../services/onboarding_router.dart';
@@ -86,12 +87,26 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       for (var img in validImages) {
         String fileName = img!.name;
         final bytes = await img.readAsBytes();
-        final ext = fileName.split('.').last.toLowerCase();
-        final mimeType = ext == 'png'
-            ? 'image/png'
-            : (ext == 'webp'
-                  ? 'image/webp'
-                  : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+
+        // Trên web, image_picker trả XFile không có extension
+        // → dùng magic bytes để detect MIME type chính xác
+        final String mimeType;
+        if (MimeDetector.hasValidExtension(fileName)) {
+          final ext = fileName.split('.').last.toLowerCase();
+          mimeType = ext == 'png'
+              ? 'image/png'
+              : (ext == 'webp'
+                    ? 'image/webp'
+                    : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+        } else {
+          final detected = MimeDetector.detect(bytes);
+          mimeType = detected.mimeType;
+          fileName = MimeDetector.ensureExtension(fileName, detected.extension);
+          debugPrint(
+            '[IMG-DBG] Onboarding upload: no extension, '
+            'magic bytes → mimeType=$mimeType, fileName=$fileName',
+          );
+        }
 
         // Use the native http package MultipartRequest to upload files,
         // which avoids the Safari iOS type conversion InvalidAccessError Blob bug!

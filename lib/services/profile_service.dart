@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http_client;
 
+import '../core/mime_detector.dart';
 import '../models/user_profile_model.dart';
 import './api_client.dart';
 import './auth_service.dart';
@@ -42,30 +43,47 @@ class ProfileService {
 
   Future<String?> uploadMediaFile(XFile file) async {
     try {
-      final fileName = file.name;
       final bytes = await file.readAsBytes();
-      final ext = fileName.split('.').last.toLowerCase();
+
+      // Ưu tiên detect MIME type từ magic bytes (file signature) vì trên web
+      // image_picker trả về XFile với name dạng 'image_picker_web_xxxxx'
+      // KHÔNG có extension → nếu dựa vào extension sẽ ra octet-stream → reject.
+      final detected = MimeDetector.detect(bytes);
+      String fileName = file.name;
       final String mimeType;
-      if (ext == 'png') {
-        mimeType = 'image/png';
-      } else if (ext == 'webp') {
-        mimeType = 'image/webp';
-      } else if (ext == 'gif') {
-        mimeType = 'image/gif';
-      } else if (ext == 'jpg' || ext == 'jpeg') {
-        mimeType = 'image/jpeg';
-      } else if (ext == 'm4a') {
-        mimeType = 'audio/m4a';
-      } else if (ext == 'mp3') {
-        mimeType = 'audio/mpeg';
-      } else if (ext == 'aac') {
-        mimeType = 'audio/aac';
-      } else if (ext == 'webm') {
-        mimeType = 'audio/webm';
-      } else if (ext == 'ogg') {
-        mimeType = 'audio/ogg';
+
+      if (MimeDetector.hasValidExtension(fileName)) {
+        // Có extension hợp lệ → dùng logic cũ để xác định MIME type
+        final ext = fileName.split('.').last.toLowerCase();
+        if (ext == 'png') {
+          mimeType = 'image/png';
+        } else if (ext == 'webp') {
+          mimeType = 'image/webp';
+        } else if (ext == 'gif') {
+          mimeType = 'image/gif';
+        } else if (ext == 'jpg' || ext == 'jpeg') {
+          mimeType = 'image/jpeg';
+        } else if (ext == 'm4a') {
+          mimeType = 'audio/m4a';
+        } else if (ext == 'mp3') {
+          mimeType = 'audio/mpeg';
+        } else if (ext == 'aac') {
+          mimeType = 'audio/aac';
+        } else if (ext == 'webm') {
+          mimeType = 'audio/webm';
+        } else if (ext == 'ogg') {
+          mimeType = 'audio/ogg';
+        } else {
+          mimeType = detected.mimeType;
+        }
       } else {
-        mimeType = 'application/octet-stream';
+        // Không có extension hợp lệ → dùng magic bytes
+        mimeType = detected.mimeType;
+        fileName = MimeDetector.ensureExtension(fileName, detected.extension);
+        debugPrint(
+          '[IMG-DBG] Web upload: no extension detected, '
+          'using magic bytes → mimeType=$mimeType, fileName=$fileName',
+        );
       }
 
       final token = await AuthService().getToken();
