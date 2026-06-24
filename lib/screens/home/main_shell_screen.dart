@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/profile_service.dart';
@@ -22,6 +23,8 @@ import '../../services/discover_service.dart';
 import '../auth/interests_setup_screen.dart';
 import 'home_dashboard_screen.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
+import '../../widgets/onboarding/showcase_step.dart';
+import '../../widgets/onboarding/onboarding_overlay.dart';
 
 class MainShellScreen extends StatefulWidget {
   final ProfileService? profileService;
@@ -41,6 +44,8 @@ class _MainShellScreenState extends State<MainShellScreen>
     with WidgetsBindingObserver {
   late int _currentIndex;
   late final ProfileService _profileService;
+  final GlobalKey _matchKey = GlobalKey();
+  final GlobalKey _healingKey = GlobalKey();
 
   @override
   void initState() {
@@ -52,7 +57,44 @@ class _MainShellScreenState extends State<MainShellScreen>
       if (!mounted) return;
       context.read<ChatViewModel>().fetchChats();
       context.read<RelationshipViewModel>().loadDashboard();
+      _checkAndShowOnboarding();
     });
+  }
+
+  Future<void> _checkAndShowOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeen = prefs.getBool('has_seen_main_onboarding') ?? false;
+    if (!hasSeen && mounted) {
+      // Đợi 800ms để đảm bảo UI render xong và BottomNav ổn định vị trí
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+
+      final steps = [
+        ShowcaseStep(
+          targetKey: _matchKey,
+          title: 'Quẹt Tìm Bạn 🔥',
+          content: 'Bấm vào nút Trái Tim này để bắt đầu khám phá và quẹt chọn một nửa phù hợp của bạn.',
+          icon: '❤️',
+          position: ShowcasePosition.top,
+        ),
+        ShowcaseStep(
+          targetKey: _healingKey,
+          title: 'Hành Trình Chữa Lành 💖',
+          content: 'Khám phá không gian chữa lành tâm hồn, nơi bạn và đối tác cùng tham gia các thử thách cặp đôi.',
+          icon: '🩺',
+          position: ShowcasePosition.top,
+        ),
+      ];
+
+      OnboardingOverlay.show(
+        context,
+        steps: steps,
+        onCompleted: () async {
+          final p = await SharedPreferences.getInstance();
+          await p.setBool('has_seen_main_onboarding', true);
+        },
+      );
+    }
   }
 
   @override
@@ -111,6 +153,8 @@ class _MainShellScreenState extends State<MainShellScreen>
         onTabSelected: _selectTab,
         onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
         hasMatchBadge: totalUnread > 0,
+        matchKey: _matchKey,
+        healingKey: _healingKey,
       ),
     );
   }

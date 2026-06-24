@@ -12,6 +12,8 @@ class BondyBottomNavBar extends StatelessWidget {
   final ValueChanged<int>? onTabSelected;
   final VoidCallback? onMatchTap;
   final bool hasMatchBadge;
+  final GlobalKey? matchKey;
+  final GlobalKey? healingKey;
 
   const BondyBottomNavBar({
     super.key,
@@ -19,6 +21,8 @@ class BondyBottomNavBar extends StatelessWidget {
     this.onTabSelected,
     this.onMatchTap,
     this.hasMatchBadge = false,
+    this.matchKey,
+    this.healingKey,
   });
 
   // Bảng màu
@@ -100,6 +104,7 @@ class BondyBottomNavBar extends StatelessWidget {
                       // Healing
                       Expanded(
                         child: _NavItem(
+                          key: healingKey,
                           index: 1,
                           currentIndex: currentIndex,
                           icon: Icons.monitor_heart_outlined,
@@ -152,6 +157,7 @@ class BondyBottomNavBar extends StatelessWidget {
             bottom: _barHeight - _fabSize / 2 + _fabElevation / 2 - 4 + totalBottomOffset,
             child: Center(
               child: GestureDetector(
+                key: matchKey,
                 onTap: onMatchTap ?? () {},
                 behavior: HitTestBehavior.opaque,
                 child: Container(
