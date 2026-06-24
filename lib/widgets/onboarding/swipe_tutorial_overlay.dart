@@ -93,7 +93,7 @@ class _SwipeTutorialOverlayState extends State<SwipeTutorialOverlay>
             left: 20,
             right: 20,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.between,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Trái (Bỏ qua)
                 _buildDirectionIndicator(

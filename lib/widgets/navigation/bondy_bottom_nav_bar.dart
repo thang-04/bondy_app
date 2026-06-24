@@ -245,6 +245,7 @@ class _NavItem extends StatelessWidget {
   final bool showBadge;
 
   const _NavItem({
+    super.key,
     required this.index,
     required this.currentIndex,
     required this.icon,
