@@ -61,3 +61,6 @@ windows/flutter/ephemeral/
 linux/flutter/ephemeral/
 macos/Flutter/ephemeral/
 macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Superpowers temporary brainstorm files
+.superpowers/
