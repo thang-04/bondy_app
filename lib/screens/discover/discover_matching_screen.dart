@@ -52,6 +52,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   Timer? _swipeFeedbackTimer;
   String? _currentUserPhoto;
   
+  final GlobalKey _cardAreaKey = GlobalKey();
   final GlobalKey _bottomButtonsKey = GlobalKey();
   bool _showSwipeTutorial = false;
 
@@ -91,6 +92,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     final prefs = await SharedPreferences.getInstance();
     final hasSeen = prefs.getBool('has_seen_swipe_tutorial') ?? false;
     if (!hasSeen && mounted) {
+      // Đợi UI render xong để GlobalKey có RenderObject
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
       setState(() => _showSwipeTutorial = true);
     }
   }
@@ -573,6 +577,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
 
                     // Expanded area for the Swiper
                     Expanded(
+                      key: _cardAreaKey,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: _deckEnded
@@ -668,6 +673,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                 if (_showSwipeTutorial)
                   Positioned.fill(
                     child: SwipeTutorialOverlay(
+                      cardAreaKey: _cardAreaKey,
                       bottomButtonsKey: _bottomButtonsKey,
                       onDismiss: _dismissSwipeTutorial,
                     ),
