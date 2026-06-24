@@ -13,9 +13,31 @@ import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
 
+typedef LocationAddressResolver =
+    Future<String?> Function(LatLng center, String manualAddress);
+typedef LocationSavedNavigator = Future<void> Function(BuildContext context);
+
 class GoogleMapLocationScreen extends StatefulWidget {
   final bool isPicking;
-  const GoogleMapLocationScreen({super.key, this.isPicking = false});
+  final ProfileService? profileService;
+  final LatLng initialPosition;
+  final bool loadCurrentPositionOnStart;
+  final bool showMapTiles;
+  final LocationAddressResolver? resolveAddress;
+  final LocationSavedNavigator? onLocationSaved;
+
+  static const LatLng defaultInitialPosition = LatLng(10.762622, 106.660172);
+
+  const GoogleMapLocationScreen({
+    super.key,
+    this.isPicking = false,
+    this.profileService,
+    this.initialPosition = defaultInitialPosition,
+    this.loadCurrentPositionOnStart = true,
+    this.showMapTiles = true,
+    this.resolveAddress,
+    this.onLocationSaved,
+  });
 
   @override
   State<GoogleMapLocationScreen> createState() =>
@@ -25,11 +47,9 @@ class GoogleMapLocationScreen extends StatefulWidget {
 class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
-  final ProfileService _profileService = ProfileService();
+  late final ProfileService _profileService;
 
-  static const LatLng _initialPosition = LatLng(10.762622, 106.660172);
-
-  LatLng _currentPosition = _initialPosition;
+  late LatLng _currentPosition;
   bool _isLoading = true;
   bool _isSearching = false;
   bool _isSaving = false;
@@ -38,7 +58,13 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
   @override
   void initState() {
     super.initState();
-    _determinePosition();
+    _profileService = widget.profileService ?? ProfileService();
+    _currentPosition = widget.initialPosition;
+    if (widget.loadCurrentPositionOnStart) {
+      _determinePosition();
+    } else {
+      _isLoading = false;
+    }
   }
 
   @override
@@ -164,7 +190,7 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _initialPosition,
+              initialCenter: widget.initialPosition,
               initialZoom: 14.5,
               // Luôn đồng bộ _currentPosition với tâm bản đồ đang hiển thị (cả
               // khi di chuyển bằng cử chỉ lẫn lập trình: GPS/tìm kiếm). Trước
@@ -175,10 +201,11 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
               },
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.exe.bondy_app',
-              ),
+              if (widget.showMapTiles)
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.exe.bondy_app',
+                ),
             ],
           ),
           Positioned(
@@ -215,6 +242,7 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
                 _buildHelpCard(),
                 const SizedBox(height: 16),
                 BondyButton(
+                  key: const Key('location_confirm_button'),
                   text: _isSaving ? 'Đang lưu...' : 'Xác nhận vị trí',
                   onPressed: _isSaving ? () {} : _handleSaveLocation,
                 ),
@@ -340,14 +368,6 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
     // với nhau và khớp với ghim user nhìn thấy.
     final center = _resolveCenter();
     final address = await _resolveAddress(center);
-    if (address == null) {
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-      _showMessage(
-        'Khong xac dinh duoc khu vuc. Hay tim hoac nhap ten quan/huyen, tinh/thanh.',
-      );
-      return;
-    }
 
     if (widget.isPicking) {
       if (mounted) {
@@ -370,7 +390,12 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
 
       if (!mounted) return;
       setState(() => _isSaving = false);
-      await OnboardingRouter.navigateToNextStep(context);
+      final onLocationSaved = widget.onLocationSaved;
+      if (onLocationSaved != null) {
+        await onLocationSaved(context);
+      } else {
+        await OnboardingRouter.navigateToNextStep(context);
+      }
     } catch (e) {
       debugPrint('Save location error: $e');
       if (!mounted) return;
@@ -381,6 +406,11 @@ class _GoogleMapLocationScreenState extends State<GoogleMapLocationScreen> {
 
   Future<String?> _resolveAddress(LatLng center) async {
     final manualAddress = _searchController.text.trim();
+    final injectedResolver = widget.resolveAddress;
+    if (injectedResolver != null) {
+      return injectedResolver(center, manualAddress);
+    }
+
     try {
       final placemarks = await placemarkFromCoordinates(
         center.latitude,

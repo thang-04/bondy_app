@@ -96,6 +96,40 @@ void main() {
     expect(result['city'], 'Ho Chi Minh');
   });
 
+  test('updates authenticated GPS location without readable city', () async {
+    final apiClient = await authenticatedClient(
+      MockClient((request) async {
+        expect(request.method, 'PATCH');
+        expect(
+          request.url.toString(),
+          'https://api.example.com/api/profile/location',
+        );
+        expect(request.headers['authorization'], 'Bearer access-token');
+        expect(jsonDecode(request.body), {
+          'latitude': 21.0278,
+          'longitude': 105.8342,
+        });
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': {'id': 'profile-id', 'city': null},
+          }),
+          200,
+        );
+      }),
+    );
+    final service = ProfileService(apiClient: apiClient);
+
+    final result = await service.updateLocation(
+      city: null,
+      latitude: 21.0278,
+      longitude: 105.8342,
+    );
+
+    expect(result['id'], 'profile-id');
+    expect(result['city'], isNull);
+  });
+
   test('surfaces profile validation failures', () async {
     final apiClient = await authenticatedClient(
       MockClient((request) async {

@@ -76,7 +76,10 @@ class ProfileService {
         }
       } else {
         initialMimeType = detected.mimeType;
-        initialFileName = MimeDetector.ensureExtension(initialFileName, detected.extension);
+        initialFileName = MimeDetector.ensureExtension(
+          initialFileName,
+          detected.extension,
+        );
       }
 
       // 2. Chuyển đổi định dạng ảnh nếu chạy trên Web (ví dụ HEIC -> JPEG)
@@ -157,13 +160,19 @@ class ProfileService {
   }
 
   Future<Map<String, dynamic>> updateLocation({
-    required String city,
+    String? city,
     required double latitude,
     required double longitude,
   }) async {
+    final data = <String, dynamic>{
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+    if (city != null) data['city'] = city;
+
     final body = await _apiClient.patch(
       '/profile/location',
-      body: {'city': city, 'latitude': latitude, 'longitude': longitude},
+      body: data,
       authenticated: true,
     );
 
