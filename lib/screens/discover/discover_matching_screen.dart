@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../services/discover_service.dart';
@@ -13,6 +14,7 @@ import '../../services/onboarding_router.dart';
 import '../../viewmodels/discover/discover_viewmodel.dart';
 import '../../widgets/match/new_match_receipt_sheet.dart';
 import '../../widgets/common/bondy_feedback.dart';
+import '../../widgets/onboarding/swipe_tutorial_overlay.dart';
 import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
@@ -49,6 +51,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   bool _swipeFeedbackVisible = false;
   Timer? _swipeFeedbackTimer;
   String? _currentUserPhoto;
+  
+  final GlobalKey _bottomButtonsKey = GlobalKey();
+  bool _showSwipeTutorial = false;
 
   // AppinioSwiper tự quản lý index của deck. KHÔNG được xóa profile khỏi list
   // trong lúc quẹt — nếu xóa, swiper vừa tự tăng index vừa bị thu nhỏ list nên
@@ -77,6 +82,25 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     await _viewModel.loadProfiles();
     _resetDeckView();
     _precacheNextImages();
+    if (_viewModel.profiles.isNotEmpty) {
+      _checkSwipeTutorial();
+    }
+  }
+
+  Future<void> _checkSwipeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeen = prefs.getBool('has_seen_swipe_tutorial') ?? false;
+    if (!hasSeen && mounted) {
+      setState(() => _showSwipeTutorial = true);
+    }
+  }
+
+  Future<void> _dismissSwipeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_swipe_tutorial', true);
+    if (mounted) {
+      setState(() => _showSwipeTutorial = false);
+    }
   }
 
   /// Tạo lại swiper từ đầu deck (index về 0) sau khi list được nạp lại hoàn
@@ -578,12 +602,13 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                                         onOpenDetail: _openProfileDetail,
                                       );
                                     },
-                              ),
+                                ),
                       ),
                     ),
 
                     // Bottom Action buttons
                     Padding(
+                      key: _bottomButtonsKey,
                       padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -640,6 +665,13 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                   ],
                 ),
                 _buildSwipeFeedback(),
+                if (_showSwipeTutorial)
+                  Positioned.fill(
+                    child: SwipeTutorialOverlay(
+                      bottomButtonsKey: _bottomButtonsKey,
+                      onDismiss: _dismissSwipeTutorial,
+                    ),
+                  ),
               ],
             );
           },
