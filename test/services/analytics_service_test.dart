@@ -4,9 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bondy/services/analytics_service.dart';
 
 class RecordingAnalyticsClient implements AnalyticsClient {
+  final collectionSettings = <bool>[];
   final userIds = <String?>[];
   final userProperties = <({String name, String? value})>[];
   final events = <({String name, Map<String, Object>? parameters})>[];
+
+  @override
+  Future<void> setAnalyticsCollectionEnabled(bool enabled) async {
+    collectionSettings.add(enabled);
+  }
 
   @override
   Future<void> setUserId(String? userId) async {
@@ -39,6 +45,7 @@ void main() {
     service.identify('user-1', properties: {'tier': 'premium'});
     service.track('swipe_like', {'targetUserId': 'target-1'});
 
+    expect(client.collectionSettings, [true]);
     expect(client.userIds, ['user-1']);
     expect(client.userProperties, [(name: 'tier', value: 'premium')]);
     expect(client.events, hasLength(1));
@@ -55,9 +62,46 @@ void main() {
     service.track('app_open');
     service.reset();
 
+    expect(client.collectionSettings, [false]);
     expect(client.userIds, isEmpty);
     expect(client.userProperties, isEmpty);
     expect(client.events, isEmpty);
+  });
+
+  test('analytics config prefers dart define over runtime env', () {
+    expect(
+      resolveAnalyticsEnabled(
+        dartDefineValue: 'true',
+        environment: {'ANALYTICS_ENABLED': 'false'},
+        environmentLoaded: true,
+        isWeb: true,
+        isRelease: true,
+      ),
+      isTrue,
+    );
+  });
+
+  test('analytics config reads runtime env when no dart define is set', () {
+    expect(
+      resolveAnalyticsEnabled(
+        environment: {'ANALYTICS_ENABLED': 'true'},
+        environmentLoaded: true,
+        isWeb: false,
+        isRelease: true,
+      ),
+      isTrue,
+    );
+  });
+
+  test('analytics config defaults on for web release without env asset', () {
+    expect(
+      resolveAnalyticsEnabled(
+        environmentLoaded: false,
+        isWeb: true,
+        isRelease: true,
+      ),
+      isTrue,
+    );
   });
 
   test('web index does not contain placeholder measurement IDs', () {

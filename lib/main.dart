@@ -130,23 +130,21 @@ Future<void> main() async {
     ),
   );
 
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (_) {
-    // .env not bundled — will use fallback URLs
-  }
+  await loadRuntimeEnvironment();
 
-  bool analyticsEnabled = false;
+  bool analyticsEnabled = resolveAnalyticsEnabled(
+    environment: dotenv.isInitialized ? dotenv.env : const <String, String>{},
+    environmentLoaded: dotenv.isInitialized,
+  );
   String sentryDsn = '';
   String appEnv = 'production';
 
   if (dotenv.isInitialized) {
-    analyticsEnabled = dotenv.env['ANALYTICS_ENABLED'] == 'true';
     sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
     appEnv = dotenv.env['APP_ENV'] ?? 'production';
   }
 
-  // Analytics — enable when ANALYTICS_ENABLED=true in .env
+  // Analytics: --dart-define wins, then runtime env, then web release fallback.
   analytics.configure(enabled: analyticsEnabled);
   analytics.appOpen();
 
@@ -164,6 +162,21 @@ Future<void> main() async {
       FlutterError.presentError(details);
     };
     runApp(const BondyApp());
+  }
+}
+
+Future<void> loadRuntimeEnvironment() async {
+  try {
+    await dotenv.load(fileName: '.env');
+    return;
+  } catch (_) {
+    // .env may be rewritten by hosting or intentionally absent.
+  }
+
+  try {
+    await dotenv.load(fileName: 'env.txt');
+  } catch (_) {
+    // No runtime env asset bundled — platform defaults will be used.
   }
 }
 

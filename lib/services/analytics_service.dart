@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 abstract class AnalyticsClient {
+  Future<void> setAnalyticsCollectionEnabled(bool enabled);
+
   Future<void> setUserId(String? userId);
 
   Future<void> setUserProperty({required String name, required String? value});
@@ -19,6 +22,11 @@ class FirebaseAnalyticsClient implements AnalyticsClient {
     : _analytics = analytics ?? FirebaseAnalytics.instance;
 
   final FirebaseAnalytics _analytics;
+
+  @override
+  Future<void> setAnalyticsCollectionEnabled(bool enabled) {
+    return _analytics.setAnalyticsCollectionEnabled(enabled);
+  }
 
   @override
   Future<void> setUserId(String? userId) {
@@ -39,9 +47,40 @@ class FirebaseAnalyticsClient implements AnalyticsClient {
   }
 }
 
-/// Pluggable analytics service. No-op by default; activate by setting
-/// ANALYTICS_ENABLED=true in .env and calling
-/// [AnalyticsService.configure] at startup.
+bool resolveAnalyticsEnabled({
+  String dartDefineValue = const String.fromEnvironment('ANALYTICS_ENABLED'),
+  Map<String, String> environment = const <String, String>{},
+  bool environmentLoaded = false,
+  bool isWeb = kIsWeb,
+  bool isRelease = kReleaseMode,
+}) {
+  final dartDefineEnabled = _parseAnalyticsBool(dartDefineValue);
+  if (dartDefineEnabled != null) return dartDefineEnabled;
+
+  if (environmentLoaded) {
+    final environmentEnabled = _parseAnalyticsBool(
+      environment['ANALYTICS_ENABLED'],
+    );
+    if (environmentEnabled != null) return environmentEnabled;
+  }
+
+  return isWeb && isRelease;
+}
+
+bool? _parseAnalyticsBool(String? value) {
+  final normalized = value?.trim().toLowerCase();
+  if (normalized == null || normalized.isEmpty) return null;
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return null;
+}
+
+/// Pluggable analytics service. Activate by setting ANALYTICS_ENABLED=true
+/// through --dart-define, runtime env, or the web release fallback.
 ///
 /// Usage example:
 /// ```dart
@@ -77,6 +116,10 @@ class AnalyticsService {
   /// Call once after login / at app start.
   void configure({bool enabled = true}) {
     _enabled = enabled;
+    _call(
+      'set analytics collection enabled',
+      () => _analyticsClient.setAnalyticsCollectionEnabled(enabled),
+    );
   }
 
   /// Identify the user so all subsequent events carry the user context.
