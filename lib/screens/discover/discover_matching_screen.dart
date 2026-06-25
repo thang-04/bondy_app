@@ -162,6 +162,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     int targetIndex,
     SwiperActivity activity,
   ) {
+    if (_showSwipeTutorial) {
+      _dismissSwipeTutorial();
+    }
     if (activity is! Swipe) return;
     _showSwipeFeedback(discoverSwipeActionForDirection(activity.direction));
   }
@@ -171,6 +174,9 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     int targetIndex,
     SwiperActivity activity,
   ) async {
+    if (_showSwipeTutorial) {
+      _dismissSwipeTutorial();
+    }
     if (activity is! Swipe) return;
     final profiles = _viewModel.profiles;
     if (previousIndex >= profiles.length) return;

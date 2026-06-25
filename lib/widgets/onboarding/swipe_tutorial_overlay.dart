@@ -179,24 +179,68 @@ class _SwipeTutorialOverlayState extends State<SwipeTutorialOverlay>
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Lớp phủ mờ đục lỗ sáng
+          // Lớp phủ mờ đục lỗ sáng (chỉ vẽ, không nhận touch event)
           Positioned.fill(
-            child: CustomPaint(
-              painter: HolePainter(
-                targetRect: effectiveRect,
-                borderRadius: 16,
-                barrierColor: Colors.black.withValues(alpha: 0.6),
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: HolePainter(
+                  targetRect: effectiveRect,
+                  borderRadius: 16,
+                  barrierColor: Colors.black.withValues(alpha: 0.6),
+                ),
               ),
             ),
           ),
 
-          // Chặn click xuyên qua nền mờ
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {}, // hấp thụ click nền
+          // 4 khối chắn click bên ngoài vùng đục lỗ sáng (vùng target)
+          // 1. Phía trên target
+          if (effectiveRect.top > 0)
+            Positioned(
+              left: 0,
+              top: 0,
+              right: 0,
+              height: effectiveRect.top,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+              ),
             ),
-          ),
+          // 2. Phía dưới target
+          if (screenHeight - effectiveRect.bottom > 0)
+            Positioned(
+              left: 0,
+              top: effectiveRect.bottom,
+              right: 0,
+              bottom: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+              ),
+            ),
+          // 3. Phía bên trái target
+          if (effectiveRect.left > 0)
+            Positioned(
+              left: 0,
+              top: effectiveRect.top,
+              width: effectiveRect.left,
+              height: effectiveRect.height,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+              ),
+            ),
+          // 4. Phía bên phải target
+          if (screenWidth - effectiveRect.right > 0)
+            Positioned(
+              left: effectiveRect.right,
+              top: effectiveRect.top,
+              right: 0,
+              height: effectiveRect.height,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+              ),
+            ),
 
           // Hoạt họa tay quẹt (chỉ ở bước có showHandAnimation)
           if (step.showHandAnimation)
