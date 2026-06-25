@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bondy_button.dart';
+import '../../services/analytics_service.dart';
 
 class ThankYouScreen extends StatelessWidget {
   const ThankYouScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      analytics.profileComplete();
+    });
     return Scaffold(
       body: Container(
         width: double.infinity,

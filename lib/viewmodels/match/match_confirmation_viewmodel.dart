@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../services/api_client.dart';
+import '../../services/analytics_service.dart';
 
 enum MatchConfirmationStatus { pending, confirmed, expired }
 
@@ -78,6 +79,7 @@ class MatchConfirmationViewModel extends ChangeNotifier {
       _status = _parseStatus(data['status'] as String? ?? 'PENDING');
       _chatId = data['chatId'] as String?;
       if (_status == MatchConfirmationStatus.confirmed) {
+        analytics.matchConfirmed(matchId);
         _countdownTimer?.cancel();
         _remainingTime = Duration.zero;
       }

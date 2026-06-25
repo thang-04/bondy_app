@@ -11,6 +11,7 @@ import 'widgets/today_checkin_summary_card.dart';
 import 'widgets/emotional_checkin_sheet.dart';
 import 'widgets/inline_checkin_strip.dart';
 import 'widgets/healing_onboarding_sheet.dart';
+import '../../services/analytics_service.dart';
 
 class HealingModeDashboardScreen extends StatefulWidget {
   final HealingFlowState? initialState;
@@ -423,6 +424,7 @@ class _HealingModeDashboardScreenState
     );
 
     if (submitted && mounted) {
+      analytics.healingCheckin();
       Navigator.of(
         context,
       ).pushNamed('/healing/checkin-result', arguments: viewModel.lastCheckin);

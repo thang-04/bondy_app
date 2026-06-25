@@ -5,6 +5,7 @@ import '../../models/healing/healing_models.dart';
 import '../../services/api_client.dart';
 import '../../services/healing/healing_progress_store.dart';
 import '../../services/healing/healing_service.dart';
+import '../../services/analytics_service.dart';
 
 class HealingArticleViewModel extends ChangeNotifier {
   final HealingDataSource _service;
@@ -196,6 +197,7 @@ class HealingCourseViewModel extends ChangeNotifier {
         _progressStore.rememberCourseProgress(progress);
       }
       course = _withStoredProgress(await _service.fetchCourse(current.id));
+      analytics.healingCourseStarted(current.id);
     } catch (error) {
       if (error is ApiClientException &&
           error.code == 'ACTIVE_COURSE_CONFIRMATION_REQUIRED') {

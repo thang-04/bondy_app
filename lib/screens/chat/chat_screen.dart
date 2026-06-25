@@ -28,6 +28,7 @@ import '../../theme/app_theme.dart';
 import '../healing/healing_stitch_style.dart';
 import '../../core/ai_prompts_config.dart';
 import '../../services/relationship_service.dart';
+import '../../services/analytics_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -1324,6 +1325,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     try {
       _currentUserId = await _authService.getCurrentUserId();
       await _hydrateChatMetadata();
+      final chatIdForAnalytics = _chatId;
+      if (chatIdForAnalytics != null) {
+        analytics.chatOpened(chatIdForAnalytics);
+      }
       await _loadMessages();
       final chatId = _chatId;
       if (chatId != null) {
@@ -1540,6 +1545,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         if (preset == null) _controller.clear();
       });
       _updateChatSummary(message);
+      final msgChatId = _chatId;
+      if (msgChatId != null) {
+        analytics.messageSent(msgChatId, preset != null ? 'preset' : 'text');
+      }
       _scrollToBottom();
       try {
         await _chatService.updateDeliveryStatus(message.id, 'DELIVERED');
