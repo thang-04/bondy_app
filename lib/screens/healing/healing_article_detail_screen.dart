@@ -124,7 +124,7 @@ class _ArticleScaffold extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(0, 10, 0, 100),
           children: [
             HealingTopBar(
-              title: 'Article',
+              title: 'Bài đọc',
               onBack: () => Navigator.of(context).maybePop(),
             ),
             const SizedBox(height: 8),

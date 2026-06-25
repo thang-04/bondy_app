@@ -57,7 +57,7 @@ class CheckinResultBridgeScreen extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                     ),
-                    child: const Text('Về Healing Home'),
+                    child: const Text('Về Home'),
                   ),
                 ],
               ),
@@ -73,36 +73,24 @@ class CheckinResultBridgeScreen extends StatelessWidget {
     HealingRecoveryBundle? bundle,
   ) {
     if (bundle == null) return const [];
+    // Redesign §5.3: tối đa 2 gợi ý — chọn cái phù hợp nhất, không quá tải.
+    final candidates = <({HealingContentPreview item, String badge})>[
+      if (bundle.suggestedExercise != null)
+        (item: bundle.suggestedExercise!, badge: 'BÌNH TÂM'),
+      if (bundle.suggestedArticle != null)
+        (item: bundle.suggestedArticle!, badge: 'BÀI ĐỌC'),
+      if (bundle.suggestedCourse != null)
+        (item: bundle.suggestedCourse!, badge: 'KHOÁ HỌC'),
+    ].take(2).toList();
+
     final widgets = <Widget>[];
-    final ex = bundle.suggestedExercise;
-    final ar = bundle.suggestedArticle;
-    final co = bundle.suggestedCourse;
-    if (ex != null) {
-      widgets.add(
-        _SuggestionCard(
-          item: ex,
-          badge: 'BÀI TẬP',
-          onTap: () => _openContent(context, ex),
-        ),
-      );
-    }
-    if (ar != null) {
+    for (final c in candidates) {
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 10));
       widgets.add(
         _SuggestionCard(
-          item: ar,
-          badge: 'BÀI ĐỌC',
-          onTap: () => _openContent(context, ar),
-        ),
-      );
-    }
-    if (co != null) {
-      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 10));
-      widgets.add(
-        _SuggestionCard(
-          item: co,
-          badge: 'KHOÁ HỌC',
-          onTap: () => _openContent(context, co),
+          item: c.item,
+          badge: c.badge,
+          onTap: () => _openContent(context, c.item),
         ),
       );
     }
@@ -110,7 +98,7 @@ class CheckinResultBridgeScreen extends StatelessWidget {
   }
 
   String _primaryCtaLabel(HealingRecoveryBundle? bundle) {
-    if (bundle == null) return 'Về Healing Home';
+    if (bundle == null) return 'Về Home';
     if (bundle.suggestedExercise != null) return 'Bắt đầu bài tập';
     if (bundle.suggestedArticle != null) return 'Đọc bài gợi ý';
     if (bundle.suggestedCourse != null) return 'Khám phá khoá học';
@@ -132,12 +120,15 @@ class CheckinResultBridgeScreen extends StatelessWidget {
   }
 
   void _openContent(BuildContext context, HealingContentPreview item) {
+    if (item.type.toUpperCase() == 'RITUAL') {
+      openRitualContent(context, item.id);
+      return;
+    }
     final route = switch (item.type.toUpperCase()) {
       'ARTICLE' => '/healing/article-detail',
       'EXERCISE' => '/healing/exercise-detail',
       'AUDIO' => '/healing/audio-player',
       'COURSE' => '/healing/course-detail',
-      'RITUAL' => '/healing/ritual-reading-detail',
       _ => '/healing/article-detail',
     };
     Navigator.of(context).pushNamed(route, arguments: item.id);

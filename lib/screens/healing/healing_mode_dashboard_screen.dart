@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import '../../models/healing/healing_models.dart';
 import '../../viewmodels/healing/healing_home_viewmodel.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
-import 'first_time_entry_bottom_sheet.dart';
-import 'daily_ritual_personalization.dart';
 import 'healing_flow_state.dart';
 import 'healing_navigation.dart';
 import 'healing_shared_utils.dart';
-import 'post_checkin_card_config.dart';
 import 'healing_stitch_style.dart';
 import 'widgets/today_checkin_summary_card.dart';
-import 'widgets/emotional_checkin_dialog.dart';
+import 'widgets/emotional_checkin_sheet.dart';
+import 'widgets/inline_checkin_strip.dart';
+import 'widgets/healing_onboarding_sheet.dart';
 
 class HealingModeDashboardScreen extends StatefulWidget {
   final HealingFlowState? initialState;
@@ -34,8 +33,6 @@ class HealingModeDashboardScreen extends StatefulWidget {
 
 class _HealingModeDashboardScreenState
     extends State<HealingModeDashboardScreen> {
-  bool _didShowFirstTimeSheet = false;
-  bool _didAutoOpenQuickCheckin = false;
   HealingHomeViewModel? _viewModel;
   bool _ownsViewModel = false;
   final Set<int> _expandedJourneyDays = <int>{};
@@ -60,53 +57,8 @@ class _HealingModeDashboardScreenState
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _showFirstTimeSheetIfNeeded();
-  }
-
-  @override
-  void didUpdateWidget(HealingModeDashboardScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
-      _showFirstTimeSheetIfNeeded();
-      if (_viewModel?.home != null) {
-        _autoOpenQuickCheckinIfNeeded(
-          _flowFromHome(_viewModel!.home!),
-          _viewModel!.home!,
-        );
-      }
-    }
-  }
-
-  void _showFirstTimeSheetIfNeeded() {
-    if (!widget.isActive) return;
-    if (widget.initialState == null) return;
-    if (_didShowFirstTimeSheet) return;
-    final flow = widget.initialState!;
-    if (!flow.isFirstTime) return;
-    _didShowFirstTimeSheet = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showModalBottomSheet<void>(
-        context: context,
-        builder: (sheetContext) {
-          return FirstTimeEntryBottomSheet(
-            onCheckin: () {
-              Navigator.of(sheetContext).pop();
-              _openQuickCheckin(flow);
-            },
-            onReflection: () {
-              Navigator.of(sheetContext).pop();
-              Navigator.of(context).pushNamed(flow.reflectionRoute);
-            },
-            onLater: () => Navigator.of(sheetContext).pop(),
-          );
-        },
-      );
-    });
-  }
+  // Redesign §4.1: tab Chữa lành KHÔNG bao giờ tự bật popup. Không còn
+  // didChangeDependencies / didUpdateWidget để auto-mở sheet hay dialog.
 
   @override
   Widget build(BuildContext context) {
@@ -130,28 +82,9 @@ class _HealingModeDashboardScreenState
         final flow = home == null
             ? HealingFlowState.returningInProgress()
             : _flowFromHome(home);
-        _autoOpenQuickCheckinIfNeeded(flow, home);
         return _buildScaffold(context, flow, home, viewModel);
       },
     );
-  }
-
-  void _autoOpenQuickCheckinIfNeeded(
-    HealingFlowState flow,
-    HealingHomeData? home,
-  ) {
-    if (!widget.isActive) return;
-    if (widget.initialState != null) return;
-    if (home == null || _didAutoOpenQuickCheckin) return;
-    if (flow.hasTodayCheckin || _viewModel?.hasLocalTodayCheckin == true) {
-      return;
-    }
-
-    _didAutoOpenQuickCheckin = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _openQuickCheckin(flow);
-    });
   }
 
   Widget _buildLoadingScaffold() {
@@ -227,14 +160,6 @@ class _HealingModeDashboardScreenState
         home?.todayForYou.article ??
         home?.todayForYou.exercise ??
         home?.todayForYou.course;
-    final reflectionPrompt =
-        home?.todayForYou.reflectionPrompt ?? 'Điều mình đang tự trách là gì?';
-    final postCheckinConfig = hasTodayCheckin && todayMood != null
-        ? PostCheckinCardConfig.fromMood(
-            mood: todayMood.mood,
-            intensity: todayMood.intensity,
-          )
-        : null;
     final greetingName = _viewModel?.displayName.trim();
     final activePlan = home?.activePlanSummary;
     final recommendedPlan = home?.recommendedPlan;
@@ -245,6 +170,20 @@ class _HealingModeDashboardScreenState
     final shellBottomPadding = widget.showBottomNavigation
         ? 0.0
         : BondyBottomNavBar.getReservedHeight(context);
+
+    // Mode + "Thẻ Hôm nay" do resolver quyết định (Redesign §4.2, §5.1).
+    final mode = resolveHomeMode(
+      hasActivePlan: activePlan != null,
+      entry: flow.entry,
+    );
+    final todayFocus = resolveTodayFocus(
+      mode: mode,
+      isFirstTime: flow.isFirstTime,
+      hasTodayCheckin: hasTodayCheckin,
+      lastIntensity: todayMood?.intensity,
+      suggestionTitle: todayItem?.title,
+      suggestionSummary: todayItem?.summary,
+    );
 
     return Scaffold(
       backgroundColor: HealingStitchColors.creamBackground,
@@ -285,8 +224,8 @@ class _HealingModeDashboardScreenState
                   ),
                   const SizedBox(height: 18),
 
-                  // ── Journey Mode: có active plan ──
-                  if (activePlan != null) ...[
+                  // ── Journey Mode: đang theo một lộ trình ──
+                  if (mode == HealingHomeMode.journey && activePlan != null) ...[
                     _JourneyProgressHeader(
                       title: activePlan.title,
                       currentDay: activePlan.currentDay,
@@ -295,7 +234,7 @@ class _HealingModeDashboardScreenState
                     ),
                     const SizedBox(height: 12),
                     HealingGradientButton(
-                      label: 'Khám phá Content Hub',
+                      label: 'Khám phá Thư viện',
                       icon: Icons.auto_stories_outlined,
                       onTap: () => Navigator.of(context).pushNamed('/content'),
                     ),
@@ -317,29 +256,21 @@ class _HealingModeDashboardScreenState
                       icon: Icons.play_arrow,
                       onTap: () => _continuePlanCurrentDay(activePlan),
                     ),
+                    const SizedBox(height: 16),
+                    _checkinBlock(hasTodayCheckin, todayMood),
                   ]
-                  // ── Discovery Mode: chưa có plan ──
+                  // ── Discovery Mode: khám phá tự do ──
                   else ...[
-                    if (flow.topBlock == HealingTopBlock.continueJourney)
-                      _ContinueJourneyCard(
-                        title: 'Tiếp tục hành trình',
-                        subtitle: 'Bước hôm trước đang chờ bạn hoàn thành.',
-                        onTap: () => _openContinueJourney(home, flow),
-                      )
-                    else
-                      _StartHealingPathCard(
-                        onCheckin: () => _openQuickCheckin(flow),
-                        onReflection: () async {
-                          await Navigator.of(context).pushNamed(
-                            '/healing/plan',
-                            arguments: const {'preview': true},
-                          );
-                          viewModel?.loadHome(includeDisplayName: false);
-                        },
-                        showCheckinAction: !hasTodayCheckin,
-                      ),
-                    const SizedBox(height: 20),
+                    // ① Một trọng tâm "Hôm nay" + 1 CTA chính.
+                    _TodayFocusHero(
+                      focus: todayFocus,
+                      onTap: () => _onTodayFocusTap(todayFocus, todayItem),
+                    ),
+                    const SizedBox(height: 16),
+                    // ② Dải check-in inline (mời gọi, không ép buộc).
+                    _checkinBlock(hasTodayCheckin, todayMood),
                     if (recommendedPlan != null) ...[
+                      const SizedBox(height: 16),
                       _PlanDiscoveryCard(
                         plan: recommendedPlan,
                         onTap: () async {
@@ -350,67 +281,15 @@ class _HealingModeDashboardScreenState
                           viewModel?.loadHome(includeDisplayName: false);
                         },
                       ),
-                      const SizedBox(height: 20),
                     ],
-                    _SectionHeader(
-                      title: 'Hôm nay dành cho bạn',
-                      action: 'Xem tất cả',
-                      onTap: () => Navigator.of(context).pushNamed('/content'),
-                    ),
-                    const SizedBox(height: 12),
-                    _TodayForYouCard(
-                      intent: flow.primaryIntent,
-                      title: todayItem?.title,
-                      subtitle: todayItem?.summary,
-                      onTap: () =>
-                          _openContentPreview(todayItem, flow.todayForYouRoute),
-                    ),
-                  ],
-
-                  // ── Common widgets (both modes) ──
-                  const SizedBox(height: 16),
-                  if (hasTodayCheckin)
-                    TodayCheckinSummaryCard(
-                      todayMood: todayMood,
-                      onViewResult: () => Navigator.of(context).pushNamed(
-                        '/healing/checkin-result',
-                        arguments: _viewModel?.lastCheckin,
-                      ),
-                    )
-                  else if (flow.topBlock == HealingTopBlock.continueJourney)
-                    _QuickCheckinCard(onTap: () => _openQuickCheckin(flow)),
-                  if (postCheckinConfig != null && todayMood != null) ...[
-                    const SizedBox(height: 12),
-                    _PostCheckinPrimaryActionCard(
-                      topMessage: postCheckinConfig.topMessage,
-                      ctaLabel: postCheckinConfig.primaryCtaLabel,
-                      onTap: () => _openPrimaryMoodAction(todayMood),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  _ReflectionPromptCard(
-                    prompt: reflectionPrompt,
-                    onTap: () => Navigator.of(context).pushNamed('/chatbot'),
-                  ),
-                  if (activePlan != null) ...[
                     const SizedBox(height: 22),
-                    _StageProgressCard(plan: activePlan),
+                    // ③ 2 lối tắt phụ: Thư viện · Tâm sự với Bondy.
+                    _HomeShortcuts(
+                      onLibrary: () =>
+                          Navigator.of(context).pushNamed('/content'),
+                      onChat: () => Navigator.of(context).pushNamed('/chatbot'),
+                    ),
                   ],
-                  ..._buildRitualSection(context, home),
-                  const SizedBox(height: 24),
-                  _CoachCard(
-                    onTap: () => Navigator.of(context).pushNamed('/chatbot'),
-                  ),
-                  const SizedBox(height: 24),
-                  _SectionHeader(
-                    title: 'Kết nối nhẹ nhàng',
-                    action: '',
-                    onTap: null,
-                  ),
-                  const SizedBox(height: 12),
-                  _ConnectGentlyCard(
-                    onTap: () => Navigator.of(context).pushNamed('/discover'),
-                  ),
                 ],
               ),
             ),
@@ -464,15 +343,51 @@ class _HealingModeDashboardScreenState
     });
   }
 
-  void _openContinueJourney(HealingHomeData? home, HealingFlowState flow) {
-    final courseId = home?.continueJourney?.courseId;
-    if (courseId == null || courseId.isEmpty) {
-      Navigator.of(context).pushNamed('/healing/plan');
+  /// Dải check-in: đã check-in → tóm tắt; chưa → dải emoji inline mời gọi.
+  Widget _checkinBlock(bool hasTodayCheckin, HealingLogSnapshot? todayMood) {
+    if (hasTodayCheckin) {
+      return TodayCheckinSummaryCard(
+        todayMood: todayMood,
+        onViewResult: () => Navigator.of(context).pushNamed(
+          '/healing/checkin-result',
+          arguments: _viewModel?.lastCheckin,
+        ),
+      );
+    }
+    return InlineCheckinStrip(
+      onPick: (mood) => _openQuickCheckin(initialMood: mood),
+    );
+  }
+
+  void _onTodayFocusTap(
+    HealingTodayFocus focus,
+    HealingContentPreview? todayItem,
+  ) {
+    if (focus.kind == HealingTodayFocusKind.onboarding) {
+      _openOnboarding();
       return;
     }
-    Navigator.of(
+    _openContentPreview(todayItem, '/content');
+  }
+
+  void _openOnboarding() {
+    HealingOnboardingSheet.show(
       context,
-    ).pushNamed('/healing/course-detail', arguments: courseId);
+      onExercise: () => Navigator.of(context).pushNamed(
+        healingExerciseDetailRoute,
+        arguments: 'exercise-self-worth-checklist',
+      ),
+      onReading: () => Navigator.of(context).pushNamed(
+        healingArticleDetailRoute,
+        arguments: 'article-ghosting-self-worth',
+      ),
+      onPlan: () async {
+        await Navigator.of(
+          context,
+        ).pushNamed(healingPlanRoute, arguments: const {'preview': true});
+        _viewModel?.loadHome(includeDisplayName: false);
+      },
+    );
   }
 
   void _openContentPreview(HealingContentPreview? item, String fallbackRoute) {
@@ -490,25 +405,20 @@ class _HealingModeDashboardScreenState
     Navigator.of(context).pushNamed(route, arguments: item.id);
   }
 
-  void _openQuickCheckin(HealingFlowState flow) async {
+  Future<void> _openQuickCheckin({String? initialMood}) async {
     final viewModel = _viewModel;
     if (viewModel == null) return;
 
-    bool submitted = false;
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (dialogContext) {
-        return EmotionalCheckinDialog(
-          onSubmit: (mood, intensity, note) async {
-            final result = await viewModel.submitCheckin(
-              mood: mood,
-              intensity: intensity,
-              note: note,
-            );
-            submitted = result != null;
-          },
+    final submitted = await EmotionalCheckinSheet.show(
+      context,
+      initialMood: initialMood,
+      onSubmit: (mood, intensity, note) async {
+        final result = await viewModel.submitCheckin(
+          mood: mood,
+          intensity: intensity,
+          note: note,
         );
+        return result != null;
       },
     );
 
@@ -519,116 +429,29 @@ class _HealingModeDashboardScreenState
     }
   }
 
-  List<Widget> _buildRitualSection(
-    BuildContext context,
-    HealingHomeData? home,
-  ) {
-    final rituals = home?.sections.rituals ?? const [];
-    final fallback = home?.sections.exercises ?? const [];
-    final items = rituals.isNotEmpty
-        ? rituals
-        : fallback.isNotEmpty
-        ? fallback
-        : (home?.sections.articles ?? const []);
-    if (items.isEmpty) {
-      return const [SizedBox.shrink()];
-    }
-    final visibleItems = items.take(6).toList();
-    return [
-      const SizedBox(height: 26),
-      _SectionHeader(
-        title: 'Nghi thức hằng ngày',
-        action: 'Xem tất cả',
-        onTap: () =>
-            Navigator.of(context).pushNamed('/healing/ritual-overview'),
-      ),
-      const SizedBox(height: 12),
-      SizedBox(
-        height: 244,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          itemCount: visibleItems.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 14),
-          itemBuilder: (_, i) {
-            final item = visibleItems[i];
-            return _SquareRitualCard(
-              type: _ritualBadgeFor(item),
-              title: item.title,
-              duration: _ritualDurationLabel(item),
-              image: _ritualImageFor(item, i),
-              onTap: () => _openRitualItem(context, item),
-            );
-          },
-        ),
-      ),
-    ];
-  }
-
-  String _ritualBadgeFor(HealingContentPreview item) {
-    final type = item.type.toUpperCase();
-    if (type == 'AUDIO') return 'AUDIO';
-    if (type == 'EXERCISE') return 'BÀI TẬP';
-    if (type == 'ARTICLE') return 'ĐỌC';
-    final tags = item.tags.map((t) => t.toLowerCase()).toList();
-    if (tags.contains('audio') || tags.contains('breathing')) return 'AUDIO';
-    return 'ĐỌC';
-  }
-
-  String _ritualDurationLabel(HealingContentPreview item) {
-    final mins = item.estimatedMinutes ?? 5;
-    return '$mins phút';
-  }
-
-  String _ritualImageFor(HealingContentPreview item, int index) {
-    final type = item.type.toUpperCase();
-    if (type == 'AUDIO') return HealingStitchAssets.meditation;
-    return index.isEven
-        ? HealingStitchAssets.openBook
-        : HealingStitchAssets.meditation;
-  }
-
-  void _openRitualItem(BuildContext context, HealingContentPreview item) {
-    final type = item.type.toUpperCase();
-    final tags = item.tags.map((t) => t.toLowerCase()).toList();
-    final route = switch (type) {
-      'AUDIO' => '/healing/ritual-audio-detail',
-      'EXERCISE' => '/healing/exercise-detail',
-      'ARTICLE' => '/healing/article-detail',
-      'RITUAL' =>
-        tags.contains('audio') || tags.contains('breathing')
-            ? '/healing/ritual-audio-detail'
-            : '/healing/ritual-reading-detail',
-      _ => '/healing/ritual-reading-detail',
-    };
-    Navigator.of(context).pushNamed(route, arguments: item.id);
-  }
-
-  void _openPrimaryMoodAction(HealingLogSnapshot mood) {
-    final action = resolveActionForMood(
-      mood: mood.mood,
-      intensity: mood.intensity,
-    );
-    Navigator.of(context).pushNamed(resolveRoute(action));
-  }
-
   Future<void> _openPlanItem(HealingPlanTimelineItem item) async {
     final itemType = item.type.toUpperCase();
-    final route = switch (itemType) {
-      'ARTICLE' => '/healing/article-detail',
-      'EXERCISE' => '/healing/exercise-detail',
-      'AUDIO' => '/healing/audio-player',
-      'RITUAL' => '/healing/ritual-reading-detail',
-      _ => '/healing/article-detail',
-    };
-    final arguments = switch (itemType) {
-      'AUDIO' => {'audioId': item.contentId, 'planMode': true},
-      'RITUAL' => {'ritualId': item.contentId, 'planMode': true},
-      _ => item.contentId,
-    };
-    final completed = await Navigator.of(
-      context,
-    ).pushNamed(route, arguments: arguments);
+    Object? completed;
+    if (itemType == 'RITUAL') {
+      // Gộp về màn Đọc/Audio chuẩn (Redesign §5.6).
+      completed = await openRitualContent(
+        context,
+        item.contentId,
+        planMode: true,
+      );
+    } else {
+      final route = switch (itemType) {
+        'ARTICLE' => '/healing/article-detail',
+        'EXERCISE' => '/healing/exercise-detail',
+        'AUDIO' => '/healing/audio-player',
+        _ => '/healing/article-detail',
+      };
+      final arguments = switch (itemType) {
+        'AUDIO' => {'audioId': item.contentId, 'planMode': true},
+        _ => item.contentId,
+      };
+      completed = await Navigator.of(context).pushNamed(route, arguments: arguments);
+    }
     if (completed == true) {
       await _viewModel?.completePlanItem(item.contentId, itemType);
     }
@@ -1009,184 +832,9 @@ class _JourneyDayTile extends StatelessWidget {
       'EXERCISE' => 'Bài tập',
       'AUDIO' => 'Audio',
       'RITUAL' => 'Nghi thức',
-      'REFLECTION' => 'Reflection',
+      'REFLECTION' => 'Suy ngẫm',
       _ => item.type,
     };
-  }
-}
-
-class _PostCheckinPrimaryActionCard extends StatelessWidget {
-  final String topMessage;
-  final String ctaLabel;
-  final VoidCallback onTap;
-
-  const _PostCheckinPrimaryActionCard({
-    required this.topMessage,
-    required this.ctaLabel,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF2F0ED)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            topMessage,
-            style: healingText(size: 14, weight: FontWeight.w900),
-          ),
-          const SizedBox(height: 10),
-          HealingGradientButton(label: ctaLabel, onTap: onTap),
-        ],
-      ),
-    );
-  }
-}
-
-class _ContinueJourneyCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ContinueJourneyCard({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.1,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [healingSoftShadow(0.1)],
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              HealingStitchAssets.dailyAudioWater,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const ColoredBox(color: HealingStitchColors.paleCoral),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.84),
-                    Colors.black.withValues(alpha: 0.25),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Text(
-                          'ĐANG HỌC',
-                          style: healingText(
-                            size: 10,
-                            weight: FontWeight.w900,
-                            color: Colors.white,
-                          ).copyWith(letterSpacing: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    style: healingText(
-                      size: 25,
-                      weight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1.12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: healingText(
-                      size: 13,
-                      weight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: onTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: HealingStitchColors.warmGradient,
-                        borderRadius: BorderRadius.circular(999),
-                        boxShadow: [
-                          healingGlowShadow(HealingStitchColors.pink),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.play_circle_fill,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Tiếp tục ngay',
-                            style: healingText(
-                              size: 13,
-                              weight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -1256,501 +904,69 @@ class _PlanDiscoveryCard extends StatelessWidget {
   }
 }
 
-class _StartHealingPathCard extends StatelessWidget {
-  final VoidCallback onCheckin;
-  final VoidCallback onReflection;
-  final bool showCheckinAction;
+// ──────────────────────────────────────────────────────
+// Discovery Mode Widgets (Redesign §5.1)
+// ──────────────────────────────────────────────────────
 
-  const _StartHealingPathCard({
-    required this.onCheckin,
-    required this.onReflection,
-    required this.showCheckinAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.1,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [healingSoftShadow(0.1)],
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              HealingStitchAssets.dailyHero,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const ColoredBox(color: HealingStitchColors.paleCoral),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.84),
-                    Colors.black.withValues(alpha: 0.25),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Text(
-                          'MỚI BẮT ĐẦU',
-                          style: healingText(
-                            size: 10,
-                            weight: FontWeight.w900,
-                            color: Colors.white,
-                          ).copyWith(letterSpacing: 0.7),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: HealingStitchColors.pink,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.bolt,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              'SẴN SÀNG',
-                              style: healingText(
-                                size: 10,
-                                weight: FontWeight.w900,
-                                color: Colors.white,
-                              ).copyWith(letterSpacing: 0.7),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Bắt đầu hành trình',
-                    style: healingText(
-                      size: 25,
-                      weight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1.12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Mỗi bước nhỏ đều giúp bạn nhẹ lòng hơn. Hãy để Bondy đồng hành cùng bạn hôm nay.',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: healingText(
-                      size: 13,
-                      weight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      if (showCheckinAction) ...[
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: onCheckin,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 11),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: Colors.white54),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Check-in',
-                                  style: healingText(
-                                    size: 13,
-                                    weight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: onReflection,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              gradient: HealingStitchColors.warmGradient,
-                              borderRadius: BorderRadius.circular(999),
-                              boxShadow: [
-                                healingGlowShadow(HealingStitchColors.pink),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.auto_awesome,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Reflection',
-                                  style: healingText(
-                                    size: 13,
-                                    weight: FontWeight.w900,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TodayForYouCard extends StatelessWidget {
-  final HealingPrimaryIntent intent;
-  final String? title;
-  final String? subtitle;
+/// Thẻ "Hôm nay" — 1 hero duy nhất + 1 CTA chính. Nội dung do
+/// resolveTodayFocus quyết định, UI chỉ hiển thị.
+class _TodayFocusHero extends StatelessWidget {
+  final HealingTodayFocus focus;
   final VoidCallback onTap;
 
-  const _TodayForYouCard({
-    required this.intent,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _TodayFocusHero({required this.focus, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final fallbackTitle = switch (intent) {
-      HealingPrimaryIntent.stabilize => 'Ổn định cảm xúc trước',
-      HealingPrimaryIntent.reflect => 'Gợi ý phản tư cho bạn',
-      HealingPrimaryIntent.rebuild => 'Tiếp tục xây lại nhịp mới',
-    };
-    final displayTitle = title ?? fallbackTitle;
-    final fallbackSubtitle = switch (intent) {
-      HealingPrimaryIntent.stabilize => 'Bài tập giúp bạn bình tâm lại.',
-      HealingPrimaryIntent.reflect => 'Dành vài phút viết ra suy nghĩ.',
-      HealingPrimaryIntent.rebuild => 'Cùng nhau học cách buông bỏ.',
-    };
-    final displaySubtitle = subtitle?.isNotEmpty == true
-        ? subtitle!
-        : fallbackSubtitle;
-    final imageAsset = switch (intent) {
-      HealingPrimaryIntent.stabilize => HealingStitchAssets.meditation,
-      HealingPrimaryIntent.reflect => HealingStitchAssets.openBook,
-      HealingPrimaryIntent.rebuild => HealingStitchAssets.dailyAudioBeach,
-    };
-    final badgeText = switch (intent) {
-      HealingPrimaryIntent.stabilize => 'BÌNH TÂM',
-      HealingPrimaryIntent.reflect => 'PHẢN TƯ',
-      HealingPrimaryIntent.rebuild => 'BƯỚC TIẾP',
-    };
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF3F4F6)),
-          boxShadow: [healingSoftShadow(0.035)],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.asset(
-                imageAsset,
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const ColoredBox(color: HealingStitchColors.paleCoral),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    badgeText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: healingText(
-                      size: 10,
-                      weight: FontWeight.w900,
-                      color: HealingStitchColors.pink,
-                    ).copyWith(letterSpacing: 0.4),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    displayTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: healingText(size: 14, weight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    displaySubtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: healingText(
-                      size: 12,
-                      color: HealingStitchColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: HealingStitchColors.paleCoral,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward,
-                color: HealingStitchColors.pink,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickCheckinCard extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _QuickCheckinCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF3F4F6)),
-          boxShadow: [healingSoftShadow(0.04)],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: HealingStitchColors.paleCoral,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.mood,
-                color: HealingStitchColors.orange,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Check-in cảm xúc',
-                style: healingText(size: 15, weight: FontWeight.w800),
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: HealingStitchColors.textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReflectionPromptCard extends StatelessWidget {
-  final String prompt;
-  final VoidCallback onTap;
-
-  const _ReflectionPromptCard({required this.prompt, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF3F4F6)),
-          boxShadow: [healingSoftShadow(0.04)],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: HealingStitchColors.purple.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.psychology_alt,
-                color: HealingStitchColors.purple,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Gợi ý reflection: $prompt',
-                style: healingText(size: 14, weight: FontWeight.w700),
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: HealingStitchColors.textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StageProgressCard extends StatelessWidget {
-  final HealingPlanTimeline plan;
-
-  const _StageProgressCard({required this.plan});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalDays = plan.durationDays == 0 ? 1 : plan.durationDays;
-    final clampedCurrent = plan.currentDay.clamp(1, totalDays);
-    final percent = ((clampedCurrent / totalDays) * 100).round();
-    final fraction = (clampedCurrent / totalDays).clamp(0.0, 1.0);
-
     return Container(
-      padding: const EdgeInsets.all(18),
+      key: const Key('today-focus-hero'),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF2F0ED)),
-        boxShadow: [healingSoftShadow(0.04)],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            HealingStitchColors.coral.withValues(alpha: 0.10),
+            HealingStitchColors.purple.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: HealingStitchColors.coral.withValues(alpha: 0.18),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'NGÀY $clampedCurrent / $totalDays',
-                      style: healingText(
-                        size: 11,
-                        weight: FontWeight.w900,
-                        color: HealingStitchColors.pink,
-                      ).copyWith(letterSpacing: 0.8),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      plan.title,
-                      style: healingText(size: 20, weight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '$percent%',
-                style: healingText(
-                  size: 13,
-                  weight: FontWeight.w700,
-                  color: HealingStitchColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 10,
-              backgroundColor: const Color(0xFFF3F4F6),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                HealingStitchColors.pink,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           Text(
-            'Bạn đang làm rất tốt. Hãy đi chậm, không cần vội vàng để chữa lành.',
+            'Hôm nay',
+            style: healingText(
+              size: 11,
+              weight: FontWeight.w900,
+              color: HealingStitchColors.pink,
+            ).copyWith(letterSpacing: 0.8),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            focus.title,
+            style: healingText(size: 19, weight: FontWeight.w900, height: 1.25),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            focus.subtitle,
             style: healingText(
               size: 13,
-              height: 1.45,
               color: HealingStitchColors.textSoft,
+              height: 1.45,
             ),
+          ),
+          const SizedBox(height: 16),
+          HealingGradientButton(
+            label: focus.ctaLabel,
+            icon: focus.opensContent
+                ? Icons.play_arrow_rounded
+                : Icons.spa_outlined,
+            onTap: onTap,
           ),
         ],
       ),
@@ -1758,304 +974,77 @@ class _StageProgressCard extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String action;
-  final VoidCallback? onTap;
+/// 2 lối tắt phụ: Thư viện · Tâm sự với Bondy.
+class _HomeShortcuts extends StatelessWidget {
+  final VoidCallback onLibrary;
+  final VoidCallback onChat;
 
-  const _SectionHeader({
-    required this.title,
-    required this.action,
-    required this.onTap,
-  });
+  const _HomeShortcuts({required this.onLibrary, required this.onChat});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: healingText(size: 21, weight: FontWeight.w900),
+          child: _ShortcutTile(
+            icon: Icons.auto_stories_outlined,
+            label: 'Thư viện',
+            onTap: onLibrary,
           ),
         ),
-        if (action.isNotEmpty)
-          TextButton(
-            onPressed: onTap,
-            child: Text(
-              action,
-              style: healingText(
-                size: 13,
-                weight: FontWeight.w800,
-                color: HealingStitchColors.pink,
-              ),
-            ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ShortcutTile(
+            icon: Icons.forum_outlined,
+            label: 'Tâm sự với Bondy',
+            onTap: onChat,
           ),
+        ),
       ],
     );
   }
 }
 
-class _SquareRitualCard extends StatelessWidget {
-  final String type;
-  final String title;
-  final String duration;
-  final String image;
+class _ShortcutTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
   final VoidCallback onTap;
 
-  const _SquareRitualCard({
-    required this.type,
-    required this.title,
-    required this.duration,
-    required this.image,
+  const _ShortcutTile({
+    required this.icon,
+    required this.label,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const ColoredBox(
-                        color: HealingStitchColors.paleCoral,
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Container(
-                        margin: const EdgeInsets.all(10),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          duration,
-                          style: healingText(size: 10, weight: FontWeight.w900),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(
-                color: HealingStitchColors.pink.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Text(
-                type,
-                style: healingText(
-                  size: 10,
-                  weight: FontWeight.w900,
-                  color: HealingStitchColors.pink,
-                ).copyWith(letterSpacing: 0.6),
-              ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: healingText(
-                size: 15,
-                weight: FontWeight.w900,
-                height: 1.15,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CoachCard extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _CoachCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(26),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFFF3F4F6)),
-          boxShadow: [healingSoftShadow(0.07)],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFFF3F4F6)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.forum,
-                    size: 14,
-                    color: HealingStitchColors.pink,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'TÂM SỰ',
-                    style: healingText(
-                      size: 10,
-                      weight: FontWeight.w900,
-                      color: HealingStitchColors.textSoft,
-                    ).copyWith(letterSpacing: 1),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Đang thấy quá tải? Bondy ở đây để lắng nghe mà không phán xét.',
-              textAlign: TextAlign.center,
-              style: healingText(
-                size: 20,
-                weight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Container(
-              width: 48,
-              height: 4,
-              decoration: BoxDecoration(
-                gradient: HealingStitchColors.warmGradient,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ConnectGentlyCard extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _ConnectGentlyCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF5F3F0)),
-        boxShadow: [healingSoftShadow(0.035)],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7ED),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFFEDD5)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.spa_outlined,
-                  color: HealingStitchColors.orange,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Đi chậm thôi',
-                        style: healingText(
-                          size: 13,
-                          weight: FontWeight.w900,
-                          color: const Color(0xFF9A3412),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Kết nối với người cùng hành trình. Không áp lực phải phản hồi ngay.',
-                        style: healingText(
-                          size: 11,
-                          height: 1.35,
-                          color: const Color(0xFFB45309),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF2F0ED)),
           ),
-          const SizedBox(height: 16),
-          Row(
+          child: Row(
             children: [
+              Icon(icon, size: 20, color: HealingStitchColors.pink),
+              const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tìm một người đồng hành',
-                      style: healingText(size: 13, weight: FontWeight.w800),
-                    ),
-                    TextButton.icon(
-                      onPressed: onTap,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      iconAlignment: IconAlignment.end,
-                      icon: const Icon(Icons.arrow_forward, size: 16),
-                      label: Text(
-                        'Tìm match',
-                        style: healingText(
-                          size: 13,
-                          weight: FontWeight.w900,
-                          color: HealingStitchColors.pink,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: healingText(size: 13, weight: FontWeight.w800),
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -11,7 +11,7 @@ void main() {
   setUp(() => HealingProgressStore.instance.clear());
 
   testWidgets(
-    'auto opens quick check-in when user enters without today check-in',
+    'does not auto-open any check-in popup; shows opt-in inline strip instead',
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -26,8 +26,17 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      // Redesign §4.1: tab Chữa lành không bao giờ tự bật popup.
       expect(
         find.text('Your check-ins are private and secure.'),
+        findsNothing,
+      );
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(Dialog), findsNothing);
+
+      // Thay vào đó là dải check-in inline để user chủ động chạm.
+      expect(
+        find.byKey(const Key('inline-checkin-strip')),
         findsOneWidget,
       );
     },
@@ -312,7 +321,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    expect(find.text('Reflection'), findsOneWidget);
+    expect(find.text('Suy ngẫm'), findsOneWidget);
     expect(find.text('Audio'), findsNothing);
     await tester.tap(find.text('Previous day'));
     await tester.pumpAndSettle();
@@ -391,25 +400,25 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Reflection'), findsOneWidget);
+    expect(find.text('Suy ngẫm'), findsOneWidget);
     expect(find.text('Audio'), findsNothing);
 
     await tester.tap(find.text('Previous day'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reflection'), findsOneWidget);
+    expect(find.text('Suy ngẫm'), findsOneWidget);
     expect(find.text('Audio'), findsOneWidget);
 
     await tester.tap(find.text('Previous day'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reflection'), findsOneWidget);
+    expect(find.text('Suy ngẫm'), findsOneWidget);
     expect(find.text('Audio'), findsNothing);
 
     await tester.tap(find.text('Current day'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reflection'), findsNothing);
+    expect(find.text('Suy ngẫm'), findsNothing);
   });
 
   testWidgets('keeps future locked plan day items hidden', (tester) async {
@@ -521,8 +530,8 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('Khám phá Content Hub'), findsOneWidget);
-      await tester.tap(find.text('Khám phá Content Hub'));
+      expect(find.text('Khám phá Thư viện'), findsOneWidget);
+      await tester.tap(find.text('Khám phá Thư viện'));
       await tester.pumpAndSettle();
 
       expect(openedContentHub, isTrue);

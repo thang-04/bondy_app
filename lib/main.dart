@@ -63,17 +63,10 @@ import 'screens/healing/content_hub_library_screen.dart';
 import 'screens/healing/healing_article_detail_screen.dart';
 import 'screens/healing/healing_audio_player_screen.dart';
 import 'screens/healing/healing_course_detail_screen.dart';
-import 'screens/healing/healing_daily_screen.dart';
 import 'screens/healing/healing_exercise_detail_screen.dart';
-import 'screens/healing/healing_mode_dashboard_screen.dart';
 import 'screens/healing/healing_plan_screen.dart';
 import 'screens/healing/checkin_result_bridge_screen.dart';
-import 'screens/healing/daily_ritual_overview_screen.dart';
-import 'screens/healing/ritual_reading_detail_screen.dart';
-import 'screens/healing/ritual_audio_detail_screen.dart';
-import 'screens/healing/stabilize_quick_actions_screen.dart';
 import 'screens/healing/reflection_complete_sheet.dart';
-import 'screens/healing/starter_recommendation_screen.dart';
 
 // Social screens
 import 'screens/social/weekend_date_suggestions_screen.dart';
@@ -298,7 +291,6 @@ class BondyApp extends StatelessWidget {
           '/chat/info': (context) => const ChatInfoScreen(),
           '/chatbot': (context) => const HealingChatbotCoachScreen(),
           '/bondy-ai': (context) => const BondyAIChatScreen(),
-          '/healing/daily': (context) => const HealingDailyScreen(),
           '/healing/article-detail': (context) =>
               const HealingArticleDetailScreen(),
           '/healing/exercise-detail': (context) =>
@@ -308,21 +300,10 @@ class BondyApp extends StatelessWidget {
           '/healing/plan': (context) => const HealingPlanScreen(),
           '/healing/audio-player': (context) =>
               const HealingAudioPlayerScreen(),
-          '/healing/mode': (context) => const HealingModeDashboardScreen(),
           '/healing/checkin-result': (context) =>
               const CheckinResultBridgeScreen(),
-          '/healing/ritual-overview': (context) =>
-              const DailyRitualOverviewScreen(),
-          '/healing/ritual-reading-detail': (context) =>
-              const RitualReadingDetailScreen(),
-          '/healing/ritual-audio-detail': (context) =>
-              const RitualAudioDetailScreen(),
-          '/healing/stabilize-quick-actions': (context) =>
-              const StabilizeQuickActionsScreen(),
           '/healing/reflection-complete': (context) =>
               const ReflectionCompleteSheet(),
-          '/healing/starter-recommendation': (context) =>
-              const StarterRecommendationScreen(),
           '/chat/deeper': (context) => const ActiveChatDeeperPromptsScreen(),
           '/content': (context) => const ContentHubLibraryScreen(),
           '/date-suggestions': (context) =>

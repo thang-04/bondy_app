@@ -64,4 +64,78 @@ void main() {
       expect(state.entry, HealingEntry.triggered);
     });
   });
+
+  group('resolveHomeMode', () {
+    test('active plan → journey', () {
+      expect(
+        resolveHomeMode(hasActivePlan: true, entry: HealingEntry.voluntary),
+        HealingHomeMode.journey,
+      );
+    });
+
+    test('triggered entry → journey even without a plan', () {
+      expect(
+        resolveHomeMode(hasActivePlan: false, entry: HealingEntry.triggered),
+        HealingHomeMode.journey,
+      );
+    });
+
+    test('voluntary entry without a plan → discovery', () {
+      expect(
+        resolveHomeMode(hasActivePlan: false, entry: HealingEntry.voluntary),
+        HealingHomeMode.discovery,
+      );
+    });
+  });
+
+  group('resolveTodayFocus', () {
+    test('first-time discovery → onboarding invitation', () {
+      final focus = resolveTodayFocus(
+        mode: HealingHomeMode.discovery,
+        isFirstTime: true,
+        hasTodayCheckin: false,
+      );
+      expect(focus.kind, HealingTodayFocusKind.onboarding);
+      expect(focus.opensContent, isFalse);
+    });
+
+    test('returning discovery → explore suggestion with server title', () {
+      final focus = resolveTodayFocus(
+        mode: HealingHomeMode.discovery,
+        isFirstTime: false,
+        hasTodayCheckin: true,
+        suggestionTitle: 'Thở 4-7-8',
+        suggestionSummary: '3 phút làm dịu',
+      );
+      expect(focus.kind, HealingTodayFocusKind.exploreSuggestion);
+      expect(focus.title, 'Thở 4-7-8');
+      expect(focus.opensContent, isTrue);
+    });
+
+    test('journey + high intensity → recover focus', () {
+      final focus = resolveTodayFocus(
+        mode: HealingHomeMode.journey,
+        isFirstTime: false,
+        hasTodayCheckin: true,
+        lastIntensity: 8,
+      );
+      expect(focus.kind, HealingTodayFocusKind.recover);
+      expect(focus.title, 'Cùng bình tâm lại');
+    });
+
+    test('journey + low intensity → continue plan with day label', () {
+      final focus = resolveTodayFocus(
+        mode: HealingHomeMode.journey,
+        isFirstTime: false,
+        hasTodayCheckin: true,
+        lastIntensity: 3,
+        planDayLabel: 'Ngày 2',
+        planItemTitle: 'Gọi tên cảm xúc',
+      );
+      expect(focus.kind, HealingTodayFocusKind.continuePlan);
+      expect(focus.title, 'Ngày 2');
+      expect(focus.subtitle, 'Gọi tên cảm xúc');
+      expect(focus.ctaLabel, 'Tiếp tục');
+    });
+  });
 }

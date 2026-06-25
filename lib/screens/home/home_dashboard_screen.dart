@@ -178,7 +178,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               SliverToBoxAdapter(
                 child: _FeaturedJourneyCard(
                   onStart: () =>
-                      Navigator.of(context).pushNamed('/healing/daily'),
+                      Navigator.of(context).pushNamed('/home/healing'),
                 ),
               ),
               SliverToBoxAdapter(
@@ -1125,7 +1125,7 @@ class _ServerWidgetTile extends StatelessWidget {
         break;
       case 'EMOTION_CHECKIN':
       case 'HEALING_CHECKIN':
-        Navigator.of(context).pushNamed('/healing/daily');
+        Navigator.of(context).pushNamed('/home/healing');
         break;
       case 'OPEN_DISCOVER':
         Navigator.of(context).pushNamed('/discover');

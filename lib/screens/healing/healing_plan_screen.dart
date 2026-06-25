@@ -7,7 +7,6 @@ import '../../services/healing/healing_service.dart';
 import 'healing_audio_player_screen.dart';
 import 'healing_navigation.dart';
 import 'healing_stitch_style.dart';
-import 'ritual_reading_detail_screen.dart';
 
 class HealingPlanScreen extends StatefulWidget {
   final HealingDataSource? service;
@@ -342,15 +341,12 @@ class _HealingPlanScreenState extends State<HealingPlanScreen> {
         );
       }
     } else if (item.type == 'RITUAL') {
-      // Trước đây không truyền ritualId nên screen luôn show content cứng cho
-      // mọi ritual của plan. Giờ pass id để load đúng nội dung từ server.
-      completed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => RitualReadingDetailScreen(
-            planMode: true,
-            ritualId: item.contentId,
-          ),
-        ),
+      // Gộp về màn Đọc/Audio chuẩn — phân giải ritual qua resolver chung
+      // thay cho màn ritual-reading-detail trùng lặp đã gỡ. (Redesign §5.6)
+      completed = await openRitualContent(
+        context,
+        item.contentId,
+        planMode: true,
       );
       if (completed == true) {
         await _service.completePlanItem(

@@ -109,6 +109,8 @@ class _ContentHubLibraryScreenState extends State<ContentHubLibraryScreen> {
         return ContentHubArticlesTab(articles: sections.articles);
       case 3:
         return _AudioSessionsTab(audios: sections.audios);
+      case 4:
+        return _RitualsTab(rituals: sections.rituals);
       default:
         return _AllContentTab(
           sections: sections,
@@ -119,7 +121,7 @@ class _ContentHubLibraryScreenState extends State<ContentHubLibraryScreen> {
   }
 
   Widget _buildCategoryScroller() {
-    final labels = ['Tất cả', 'Khoá học', 'Bài đọc', 'Audio'];
+    final labels = ['Tất cả', 'Khoá học', 'Bài đọc', 'Audio', 'Nghi thức'];
     return SizedBox(
       height: 58,
       child: ListView.separated(
@@ -200,12 +202,12 @@ class _AllContentTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Content Hub',
+                      'Thư viện',
                       style: healingText(size: 24, weight: FontWeight.w900),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Khám phá nội dung healing phù hợp với bạn',
+                      'Khám phá nội dung chữa lành phù hợp với bạn',
                       style: healingText(
                         size: 13,
                         weight: FontWeight.w700,
@@ -306,6 +308,77 @@ class _AudioSessionsTabState extends State<_AudioSessionsTab> {
         const SizedBox(height: 8),
         Text(
           'Nghe thiền định và bài tập hướng dẫn — chạm để bắt đầu.',
+          style: healingText(
+            size: 13,
+            color: HealingStitchColors.textSoft,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 20),
+        for (final item in visibleItems) ...[
+          _SessionTile(item: item),
+          const SizedBox(height: 12),
+        ],
+        if (hasMore && !_showAll)
+          Center(
+            child: TextButton.icon(
+              onPressed: () => setState(() => _showAll = true),
+              icon: const Icon(Icons.expand_more, size: 18),
+              label: Text(
+                'Xem thêm (${items.length - _initialLimit})',
+                style: healingText(
+                  size: 13,
+                  weight: FontWeight.w800,
+                  color: HealingStitchColors.pink,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Nghi thức hằng ngày — gộp từ màn daily_ritual_overview cũ vào Thư viện
+/// dưới dạng một filter. (Redesign §5.4)
+class _RitualsTab extends StatefulWidget {
+  final List<HealingContentPreview> rituals;
+
+  const _RitualsTab({required this.rituals});
+
+  @override
+  State<_RitualsTab> createState() => _RitualsTabState();
+}
+
+class _RitualsTabState extends State<_RitualsTab> {
+  static const int _initialLimit = 6;
+  bool _showAll = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.rituals;
+    if (items.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+        children: const [
+          _EmptyContentCard(message: 'Chưa có nghi thức nào.'),
+        ],
+      );
+    }
+    final hasMore = items.length > _initialLimit;
+    final visibleItems = _showAll || !hasMore
+        ? items
+        : items.take(_initialLimit).toList();
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+      children: [
+        Text(
+          'Nghi thức hằng ngày',
+          style: healingText(size: 28, weight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Những nghi thức nhỏ để làm dịu và giữ nhịp mỗi ngày.',
           style: healingText(
             size: 13,
             color: HealingStitchColors.textSoft,

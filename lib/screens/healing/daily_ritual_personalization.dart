@@ -60,7 +60,7 @@ DailyRitualModel buildDailyRitualModel({
       ctaLabel: 'Bắt đầu bài tập',
       firstItemTitle: 'Thở sâu 5 phút',
       firstItemSubtitle: 'Ổn định tâm trí trước khi phản hồi',
-      secondItemTitle: 'Reflection có hướng dẫn',
+      secondItemTitle: 'Suy ngẫm có hướng dẫn',
       secondItemSubtitle: 'Ghi lại điều mình đang cần hôm nay',
     );
   }
