@@ -18,11 +18,15 @@ class SwipeTutorialOverlay extends StatefulWidget {
   /// Gọi khi user hoàn thành hoặc bỏ qua tour
   final VoidCallback onDismiss;
 
+  /// Gọi khi user nhấn Bỏ qua
+  final VoidCallback? onSkip;
+
   const SwipeTutorialOverlay({
     super.key,
     required this.cardAreaKey,
     required this.bottomButtonsKey,
     required this.onDismiss,
+    this.onSkip,
   });
 
   @override
@@ -105,7 +109,11 @@ class _SwipeTutorialOverlayState extends State<SwipeTutorialOverlay>
   }
 
   void _skip() {
-    widget.onDismiss();
+    if (widget.onSkip != null) {
+      widget.onSkip!();
+    } else {
+      widget.onDismiss();
+    }
   }
 
   /// Lấy Rect của GlobalKey, trả về null nếu chưa sẵn sàng
@@ -148,17 +156,22 @@ class _SwipeTutorialOverlayState extends State<SwipeTutorialOverlay>
     double? tooltipTop;
     double? tooltipBottom;
 
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+    final safeAreaTop = MediaQuery.of(context).padding.top;
+
     if (step.position == ShowcasePosition.top) {
-      tooltipBottom = screenHeight - effectiveRect.top + 16;
-      // Đảm bảo tooltip không bị đẩy ra ngoài màn hình
-      if (tooltipBottom > screenHeight - 100) {
-        tooltipBottom = screenHeight * 0.5;
+      final spaceAbove = effectiveRect.top;
+      if (spaceAbove < 220) {
+        tooltipTop = safeAreaTop + 16;
+      } else {
+        tooltipBottom = screenHeight - effectiveRect.top + 16;
       }
     } else {
-      tooltipTop = effectiveRect.bottom + 16;
-      // Đảm bảo tooltip không bị đẩy quá xuống dưới
-      if (tooltipTop > screenHeight - 150) {
-        tooltipTop = screenHeight - 200;
+      final spaceBelow = screenHeight - effectiveRect.bottom;
+      if (spaceBelow < 220) {
+        tooltipBottom = safeAreaBottom + 16;
+      } else {
+        tooltipTop = effectiveRect.bottom + 16;
       }
     }
 

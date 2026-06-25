@@ -93,6 +93,11 @@ class _MainShellScreenState extends State<MainShellScreen>
           final p = await SharedPreferences.getInstance();
           await p.setBool('has_seen_main_onboarding', true);
         },
+        onSkipped: () async {
+          final p = await SharedPreferences.getInstance();
+          await p.setBool('has_seen_main_onboarding', true);
+          await p.setBool('skip_all_tutorials', true);
+        },
       );
     }
   }

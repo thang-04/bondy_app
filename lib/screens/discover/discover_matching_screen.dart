@@ -92,7 +92,10 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   Future<void> _checkSwipeTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeen = prefs.getBool('has_seen_swipe_tutorial') ?? false;
-    if (!hasSeen && mounted) {
+    final skipAll = prefs.getBool('skip_all_tutorials') ?? false;
+    if ((hasSeen || skipAll) && mounted) return;
+
+    if (!hasSeen && !skipAll && mounted) {
       // Đợi UI render xong để GlobalKey có RenderObject
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
@@ -100,9 +103,12 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     }
   }
 
-  Future<void> _dismissSwipeTutorial() async {
+  Future<void> _dismissSwipeTutorial({bool skipped = false}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_swipe_tutorial', true);
+    if (skipped) {
+      await prefs.setBool('skip_all_tutorials', true);
+    }
     if (mounted) {
       setState(() => _showSwipeTutorial = false);
     }
@@ -678,6 +684,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                       cardAreaKey: _cardAreaKey,
                       bottomButtonsKey: _bottomButtonsKey,
                       onDismiss: _dismissSwipeTutorial,
+                      onSkip: () => _dismissSwipeTutorial(skipped: true),
                     ),
                   ),
               ],

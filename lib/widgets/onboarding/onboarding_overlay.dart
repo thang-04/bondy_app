@@ -10,6 +10,7 @@ class OnboardingOverlay {
     BuildContext context, {
     required List<ShowcaseStep> steps,
     VoidCallback? onCompleted,
+    VoidCallback? onSkipped,
   }) {
     if (steps.isEmpty) return;
 
@@ -109,7 +110,7 @@ class OnboardingOverlay {
                     },
                     onSkip: () {
                       remove();
-                      onCompleted?.call();
+                      onSkipped?.call();
                     },
                   ),
                 ),
