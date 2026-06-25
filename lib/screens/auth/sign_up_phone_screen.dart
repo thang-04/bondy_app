@@ -6,6 +6,7 @@ import '../../widgets/bondy_button.dart';
 import '../../widgets/bondy_logo.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../widgets/common/bondy_widgets.dart';
+import '../../services/analytics_service.dart';
 
 class SignUpPhoneScreen extends StatefulWidget {
   const SignUpPhoneScreen({super.key});
@@ -16,6 +17,12 @@ class SignUpPhoneScreen extends StatefulWidget {
 
 class _SignUpPhoneScreenState extends State<SignUpPhoneScreen> {
   final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    analytics.signupStart();
+  }
 
   @override
   void dispose() {

@@ -73,6 +73,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     _discoverService = DiscoverService();
     _viewModel = DiscoverViewModel(service: _discoverService);
     _viewModel.addListener(_onViewModelUpdate);
+    analytics.discoverView();
     _loadInitialData();
   }
 
@@ -218,6 +219,7 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
         if (matched && _viewModel.lastMatchId != null) {
           await context.read<ChatViewModel>().fetchChats();
           if (!mounted) break;
+          analytics.matchCreated(_viewModel.lastMatchId!);
           _showNewMatchDialog(
             _viewModel.lastMatchId!,
             _viewModel.lastConversationId,

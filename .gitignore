@@ -64,3 +64,6 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 
 # Superpowers temporary brainstorm files
 .superpowers/
+
+# Analytics boost scripts (demo only)
+scripts/analytics_boost*.py
