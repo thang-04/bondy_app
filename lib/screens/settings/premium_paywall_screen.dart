@@ -6,6 +6,7 @@ import '../../services/ai_service.dart';
 import '../../viewmodels/ai/ai_quota_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
 import '../../services/analytics_service.dart';
+import 'payment_checkout_screen.dart';
 
 class PaywallFeature {
   final String title;
@@ -84,27 +85,27 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
   }
 
   Future<void> _upgrade() async {
-    final viewModel = context.read<SubscriptionViewModel>();
-    final success = await viewModel.upgradeSubscription(_selectedTier);
-    if (!mounted) return;
-    if (success) {
-      // Track purchase success
-      analytics.track('subscription_purchase_success', {'tier': _selectedTier});
+    analytics.track('subscription_checkout_start', {'tier': _selectedTier});
 
+    // Open the SePay hosted checkout; it returns true once payment is confirmed.
+    final paid = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentCheckoutScreen(tier: _selectedTier),
+      ),
+    );
+    if (!mounted) return;
+
+    if (paid == true) {
+      analytics.track('subscription_purchase_success', {'tier': _selectedTier});
+      await context.read<SubscriptionViewModel>().loadSubscription();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Nâng cấp thành công (beta — chưa thu phí). Cảm ơn bạn đã thử Bondy Premium!',
-          ),
+          content: Text('Cảm ơn bạn! Gói của bạn đã được kích hoạt.'),
         ),
       );
       Navigator.pop(context);
-    } else {
-      if (viewModel.errorMessage != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(viewModel.errorMessage!)));
-      }
     }
   }
 
@@ -176,8 +177,8 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            'Beta: nâng cấp miễn phí để dùng thử — chưa thu phí. '
-                            'Hãy gửi feedback cho Bondy sau khi trải nghiệm.',
+                            'Thanh toán an toàn qua chuyển khoản QR (SePay). '
+                            'Gói được kích hoạt tự động ngay sau khi nhận tiền.',
                             style: healingText(
                               size: 13,
                               color: HealingStitchColors.textMuted,
