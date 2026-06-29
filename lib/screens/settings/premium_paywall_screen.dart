@@ -84,10 +84,61 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     });
   }
 
+  String _priceLabel(String tier) {
+    switch (tier) {
+      case 'PLUS':
+        return '39.000đ / tháng';
+      case 'PREMIUM':
+        return '199.000đ / năm';
+      case 'ELITE':
+        return '399.000đ / năm';
+      default:
+        return '';
+    }
+  }
+
+  Future<bool?> _confirmPurchase(String tier) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Xác nhận thanh toán',
+            style: healingText(size: 18, weight: FontWeight.w800)),
+        content: Text(
+          'Bạn sắp thanh toán gói $tier — ${_priceLabel(tier)}.\n\n'
+          'Tiếp tục để hiện mã QR và thanh toán nhé?',
+          style: healingText(color: HealingStitchColors.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Huỷ',
+                style: healingText(color: HealingStitchColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HealingStitchColors.coral,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Xác nhận',
+                style: healingText(
+                    weight: FontWeight.w700, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _upgrade() async {
+    // Bước 1: popup xác nhận gói trước khi sang màn QR.
+    final confirmed = await _confirmPurchase(_selectedTier);
+    if (confirmed != true || !mounted) return;
+
     analytics.track('subscription_checkout_start', {'tier': _selectedTier});
 
-    // Open the SePay hosted checkout; it returns true once payment is confirmed.
+    // Bước 2: mở màn QR trong app; trả về true khi thanh toán xong.
     final paid = await Navigator.push<bool>(
       context,
       MaterialPageRoute(

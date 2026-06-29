@@ -1,15 +1,18 @@
 import 'api_client.dart';
 
-/// A SePay Payment Gateway order returned by the backend.
+/// A SePay VietQR payment order returned by the backend.
 class PaymentOrder {
   final String id;
-  final String invoiceNumber;
+  final String code;
   final String tier;
   final int amount;
   final int durationDays;
   final String status; // PENDING | PAID | EXPIRED | CANCELLED | FAILED
-  final String paymentMethod;
-  final String checkoutUrl; // page that opens SePay's hosted checkout
+  final String qrUrl;
+  final String bankCode;
+  final String accountNumber;
+  final String? accountHolder;
+  final String transferContent;
   final String? planName;
   final String? period;
   final DateTime? paidAt;
@@ -17,13 +20,16 @@ class PaymentOrder {
 
   PaymentOrder({
     required this.id,
-    required this.invoiceNumber,
+    required this.code,
     required this.tier,
     required this.amount,
     required this.durationDays,
     required this.status,
-    required this.paymentMethod,
-    required this.checkoutUrl,
+    required this.qrUrl,
+    required this.bankCode,
+    required this.accountNumber,
+    required this.accountHolder,
+    required this.transferContent,
     required this.planName,
     required this.period,
     required this.paidAt,
@@ -40,18 +46,21 @@ class PaymentOrder {
         v == null ? null : DateTime.tryParse(v.toString())?.toLocal();
     return PaymentOrder(
       id: json['id']?.toString() ?? '',
-      invoiceNumber: json['invoiceNumber']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
       tier: json['tier']?.toString() ?? 'FREE',
       amount: (json['amount'] as num?)?.toInt() ?? 0,
       durationDays: (json['durationDays'] as num?)?.toInt() ?? 0,
       status: json['status']?.toString() ?? 'PENDING',
-      paymentMethod: json['paymentMethod']?.toString() ?? '',
-      checkoutUrl: json['checkoutUrl']?.toString() ?? '',
+      qrUrl: json['qrUrl']?.toString() ?? '',
+      bankCode: json['bankCode']?.toString() ?? '',
+      accountNumber: json['accountNumber']?.toString() ?? '',
+      accountHolder: json['accountHolder']?.toString(),
+      transferContent: json['transferContent']?.toString() ?? '',
       planName: json['planName']?.toString(),
       period: json['period']?.toString(),
       paidAt: parseDate(json['paidAt']),
       expiresAt: parseDate(json['expiresAt']) ??
-          DateTime.now().add(const Duration(minutes: 30)),
+          DateTime.now().add(const Duration(minutes: 15)),
     );
   }
 }
@@ -97,7 +106,7 @@ class PaymentService {
 
   PaymentService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
-  /// Create a SePay QR order for [tier] (PLUS | PREMIUM | ELITE).
+  /// Create a SePay VietQR order for [tier] (PLUS | PREMIUM | ELITE).
   Future<PaymentOrder> createSubscriptionOrder(String tier) async {
     final response = await _apiClient.post(
       '/payments/subscription',

@@ -6,23 +6,40 @@ class SubscriptionInfo {
   final bool unlimitedLikes;
   final bool premiumHealing;
   final bool mockBilling;
+  final bool isPaid;
+  final bool isTrial;
+  final DateTime? expiresAt;
+  final int? daysRemaining;
 
   SubscriptionInfo({
     required this.tier,
     required this.dailyLikeLimit,
     required this.unlimitedLikes,
     required this.premiumHealing,
-    this.mockBilling = true,
+    this.mockBilling = false,
+    this.isPaid = false,
+    this.isTrial = false,
+    this.expiresAt,
+    this.daysRemaining,
   });
+
+  bool get isFree => tier == 'FREE';
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
     final features = json['features'] as Map<String, dynamic>? ?? {};
+    final tier = json['tier']?.toString() ?? 'FREE';
     return SubscriptionInfo(
-      tier: json['tier']?.toString() ?? 'FREE',
+      tier: tier,
       dailyLikeLimit: (json['dailyLikeLimit'] as num?)?.toInt() ?? 50,
       unlimitedLikes: features['unlimitedLikes'] == true,
       premiumHealing: features['premiumHealing'] == true,
       mockBilling: json['mockBilling'] == true,
+      isPaid: json['isPaid'] == true || (tier != 'FREE'),
+      isTrial: json['isTrial'] == true,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.tryParse(json['expiresAt'].toString())?.toLocal()
+          : null,
+      daysRemaining: (json['daysRemaining'] as num?)?.toInt(),
     );
   }
 }

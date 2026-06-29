@@ -13,6 +13,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/navigation/bondy_bottom_nav_bar.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/relationship/relationship_viewmodel.dart';
+import '../../viewmodels/subscription/subscription_viewmodel.dart';
+import '../../services/subscription_service.dart';
 import '../healing/healing_mode_dashboard_screen.dart';
 import '../chat/matches_list_screen.dart';
 import '../relationship/relationship_home_dashboard.dart';
@@ -913,6 +915,9 @@ class _ProfileTabState extends State<_ProfileTab> {
       _errorMessage = null;
     });
 
+    // Refresh subscription status so the profile shows the current tier + days.
+    context.read<SubscriptionViewModel>().loadSubscription();
+
     try {
       final results = await Future.wait([
         widget.profileService.getProfile(),
@@ -962,6 +967,121 @@ class _ProfileTabState extends State<_ProfileTab> {
     }
   }
 
+  String _tierLabel(String tier) {
+    switch (tier) {
+      case 'PLUS':
+        return 'Plus';
+      case 'PREMIUM':
+        return 'Premium';
+      case 'ELITE':
+        return 'Elite';
+      default:
+        return tier;
+    }
+  }
+
+  /// Subscription status card: shows the current tier and a day countdown when
+  /// the user is on a paid plan, or a "Nâng cấp" prompt when free.
+  Widget _buildSubscriptionCard(SubscriptionInfo? sub) {
+    final tier = sub?.tier ?? 'FREE';
+    final isPaid = sub?.isPaid ?? false;
+    final days = sub?.daysRemaining;
+    final isTrial = sub?.isTrial ?? false;
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed('/settings/premium'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: isPaid
+              ? const LinearGradient(
+                  colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)])
+              : null,
+          color: isPaid ? null : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: isPaid ? null : Border.all(color: const Color(0xFFF3F4F6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isPaid
+                    ? Colors.white.withValues(alpha: 0.25)
+                    : const Color(0xFFFFF5E6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isPaid
+                    ? Icons.workspace_premium_rounded
+                    : Icons.star_outline_rounded,
+                color: isPaid ? Colors.white : const Color(0xFFF59E0B),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isPaid ? 'Gói ${_tierLabel(tier)}' : 'Gói Miễn phí',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isPaid ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isPaid
+                        ? (days != null
+                            ? 'Còn $days ngày${isTrial ? ' · dùng thử' : ''}'
+                            : 'Đang kích hoạt')
+                        : 'Nâng cấp để mở khoá toàn bộ tính năng',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: isPaid
+                          ? Colors.white.withValues(alpha: 0.92)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isPaid
+                    ? Colors.white.withValues(alpha: 0.22)
+                    : const Color(0xFFF59E0B),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                isPaid ? 'Gia hạn' : 'Nâng cấp',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -1001,7 +1121,11 @@ class _ProfileTabState extends State<_ProfileTab> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              _buildSubscriptionCard(
+                context.watch<SubscriptionViewModel>().currentSubscription,
+              ),
+              const SizedBox(height: 16),
               if (_errorMessage != null) ...[
                 BondyErrorBanner(
                   message: _errorMessage!,
