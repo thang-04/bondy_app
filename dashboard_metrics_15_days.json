@@ -1,0 +1,536 @@
+{
+    "summary": {
+        "period": "Last 15 Days",
+        "matchMetrics": {
+            "totalLikes": 5039,
+            "totalPasses": 8301,
+            "totalMatches": 972,
+            "successMatches": 754,
+            "failedMatches": 218,
+            "successRate": 77.57,
+            "chatAcceptedMatches": 495,
+            "chatConversionRate": 65.65,
+            "averageResponseLatencyMinutes": 5.4
+        },
+        "relationshipMetrics": {
+            "totalRelationships": 104,
+            "relationshipPending": 46,
+            "relationshipConfirmed": 45,
+            "relationshipDeclined": 13
+        },
+        "subscriptionMetrics": {
+            "freeSubsCount": 53,
+            "plusSubsCount": 17,
+            "premiumSubsCount": 22,
+            "eliteSubsCount": 12,
+            "premiumRate": 49.04
+        },
+        "featureUsage": {
+            "courseCompletionRate": 80.55,
+            "aiAdoptionRate": 64.87,
+            "breakdown": {
+                "selfReflectionCorner": 318,
+                "couplesCorner": 174,
+                "conflictResolution": 106,
+                "aiCoachChat": 414
+            }
+        }
+    },
+    "timeseries": [
+        {
+            "date": "2026-06-15",
+            "matchMetrics": {
+                "likesCount": 425,
+                "passesCount": 739,
+                "totalMatches": 92,
+                "successMatches": 65,
+                "failedMatches": 27,
+                "successRate": 70.65,
+                "chatAcceptedMatches": 49,
+                "chatConversionRate": 75.38,
+                "responseLatencyMinutes": 11.7
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 9,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 4,
+                "relationshipDeclined": 2
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 45,
+                "plusSubsCount": 15,
+                "premiumSubsCount": 20,
+                "eliteSubsCount": 10,
+                "premiumRate": 50.0
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 14,
+                "couplesCorner": 9,
+                "conflictResolution": 9,
+                "aiCoachChat": 20
+            }
+        },
+        {
+            "date": "2026-06-16",
+            "matchMetrics": {
+                "likesCount": 469,
+                "passesCount": 623,
+                "totalMatches": 99,
+                "successMatches": 79,
+                "failedMatches": 20,
+                "successRate": 79.8,
+                "chatAcceptedMatches": 50,
+                "chatConversionRate": 63.29,
+                "responseLatencyMinutes": 6.9
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 14,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 8,
+                "relationshipDeclined": 3
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 45,
+                "plusSubsCount": 15,
+                "premiumSubsCount": 20,
+                "eliteSubsCount": 10,
+                "premiumRate": 50.0
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 16,
+                "couplesCorner": 12,
+                "conflictResolution": 10,
+                "aiCoachChat": 16
+            }
+        },
+        {
+            "date": "2026-06-17",
+            "matchMetrics": {
+                "likesCount": 435,
+                "passesCount": 308,
+                "totalMatches": 86,
+                "successMatches": 74,
+                "failedMatches": 12,
+                "successRate": 86.05,
+                "chatAcceptedMatches": 54,
+                "chatConversionRate": 72.97,
+                "responseLatencyMinutes": 14.1
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 9,
+                "relationshipPending": 4,
+                "relationshipConfirmed": 4,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 45,
+                "plusSubsCount": 15,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 10,
+                "premiumRate": 50.55
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 22,
+                "couplesCorner": 15,
+                "conflictResolution": 10,
+                "aiCoachChat": 27
+            }
+        },
+        {
+            "date": "2026-06-18",
+            "matchMetrics": {
+                "likesCount": 387,
+                "passesCount": 458,
+                "totalMatches": 60,
+                "successMatches": 44,
+                "failedMatches": 16,
+                "successRate": 73.33,
+                "chatAcceptedMatches": 23,
+                "chatConversionRate": 52.27,
+                "responseLatencyMinutes": 3.7
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 5,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 2,
+                "relationshipDeclined": 0
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 45,
+                "plusSubsCount": 15,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 10,
+                "premiumRate": 50.55
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 20,
+                "couplesCorner": 12,
+                "conflictResolution": 8,
+                "aiCoachChat": 38
+            }
+        },
+        {
+            "date": "2026-06-19",
+            "matchMetrics": {
+                "likesCount": 484,
+                "passesCount": 608,
+                "totalMatches": 80,
+                "successMatches": 69,
+                "failedMatches": 11,
+                "successRate": 86.25,
+                "chatAcceptedMatches": 47,
+                "chatConversionRate": 68.12,
+                "responseLatencyMinutes": 8.6
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 13,
+                "relationshipPending": 6,
+                "relationshipConfirmed": 6,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 46,
+                "plusSubsCount": 15,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 10,
+                "premiumRate": 50.0
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 29,
+                "couplesCorner": 8,
+                "conflictResolution": 7,
+                "aiCoachChat": 26
+            }
+        },
+        {
+            "date": "2026-06-20",
+            "matchMetrics": {
+                "likesCount": 376,
+                "passesCount": 574,
+                "totalMatches": 63,
+                "successMatches": 47,
+                "failedMatches": 16,
+                "successRate": 74.6,
+                "chatAcceptedMatches": 25,
+                "chatConversionRate": 53.19,
+                "responseLatencyMinutes": 8.2
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 5,
+                "relationshipPending": 2,
+                "relationshipConfirmed": 2,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 48,
+                "plusSubsCount": 16,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 10,
+                "premiumRate": 49.47
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 12,
+                "couplesCorner": 6,
+                "conflictResolution": 6,
+                "aiCoachChat": 29
+            }
+        },
+        {
+            "date": "2026-06-21",
+            "matchMetrics": {
+                "likesCount": 355,
+                "passesCount": 458,
+                "totalMatches": 78,
+                "successMatches": 61,
+                "failedMatches": 17,
+                "successRate": 78.21,
+                "chatAcceptedMatches": 47,
+                "chatConversionRate": 77.05,
+                "responseLatencyMinutes": 12.9
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 6,
+                "relationshipPending": 4,
+                "relationshipConfirmed": 2,
+                "relationshipDeclined": 0
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 50,
+                "plusSubsCount": 16,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 11,
+                "premiumRate": 48.98
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 24,
+                "couplesCorner": 12,
+                "conflictResolution": 9,
+                "aiCoachChat": 23
+            }
+        },
+        {
+            "date": "2026-06-22",
+            "matchMetrics": {
+                "likesCount": 281,
+                "passesCount": 637,
+                "totalMatches": 60,
+                "successMatches": 49,
+                "failedMatches": 11,
+                "successRate": 81.67,
+                "chatAcceptedMatches": 33,
+                "chatConversionRate": 67.35,
+                "responseLatencyMinutes": 3.8
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 8,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 4,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 50,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 11,
+                "premiumRate": 49.49
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 17,
+                "couplesCorner": 15,
+                "conflictResolution": 6,
+                "aiCoachChat": 34
+            }
+        },
+        {
+            "date": "2026-06-23",
+            "matchMetrics": {
+                "likesCount": 205,
+                "passesCount": 460,
+                "totalMatches": 34,
+                "successMatches": 26,
+                "failedMatches": 8,
+                "successRate": 76.47,
+                "chatAcceptedMatches": 15,
+                "chatConversionRate": 57.69,
+                "responseLatencyMinutes": 3.4
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 4,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 1,
+                "relationshipDeclined": 0
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 50,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 11,
+                "premiumRate": 49.49
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 25,
+                "couplesCorner": 14,
+                "conflictResolution": 5,
+                "aiCoachChat": 30
+            }
+        },
+        {
+            "date": "2026-06-24",
+            "matchMetrics": {
+                "likesCount": 246,
+                "passesCount": 630,
+                "totalMatches": 38,
+                "successMatches": 29,
+                "failedMatches": 9,
+                "successRate": 76.32,
+                "chatAcceptedMatches": 22,
+                "chatConversionRate": 75.86,
+                "responseLatencyMinutes": 4.1
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 3,
+                "relationshipPending": 2,
+                "relationshipConfirmed": 1,
+                "relationshipDeclined": 0
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 50,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 11,
+                "premiumRate": 49.49
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 30,
+                "couplesCorner": 13,
+                "conflictResolution": 8,
+                "aiCoachChat": 22
+            }
+        },
+        {
+            "date": "2026-06-25",
+            "matchMetrics": {
+                "likesCount": 408,
+                "passesCount": 442,
+                "totalMatches": 84,
+                "successMatches": 60,
+                "failedMatches": 24,
+                "successRate": 71.43,
+                "chatAcceptedMatches": 43,
+                "chatConversionRate": 71.67,
+                "responseLatencyMinutes": 8.1
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 10,
+                "relationshipPending": 4,
+                "relationshipConfirmed": 5,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 52,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 12,
+                "premiumRate": 49.02
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 20,
+                "couplesCorner": 14,
+                "conflictResolution": 6,
+                "aiCoachChat": 40
+            }
+        },
+        {
+            "date": "2026-06-26",
+            "matchMetrics": {
+                "likesCount": 259,
+                "passesCount": 577,
+                "totalMatches": 62,
+                "successMatches": 45,
+                "failedMatches": 17,
+                "successRate": 72.58,
+                "chatAcceptedMatches": 24,
+                "chatConversionRate": 53.33,
+                "responseLatencyMinutes": 8.8
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 4,
+                "relationshipPending": 2,
+                "relationshipConfirmed": 1,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 52,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 12,
+                "premiumRate": 49.02
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 17,
+                "couplesCorner": 14,
+                "conflictResolution": 6,
+                "aiCoachChat": 29
+            }
+        },
+        {
+            "date": "2026-06-27",
+            "matchMetrics": {
+                "likesCount": 218,
+                "passesCount": 598,
+                "totalMatches": 48,
+                "successMatches": 36,
+                "failedMatches": 12,
+                "successRate": 75.0,
+                "chatAcceptedMatches": 21,
+                "chatConversionRate": 58.33,
+                "responseLatencyMinutes": 3.7
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 5,
+                "relationshipPending": 2,
+                "relationshipConfirmed": 2,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 52,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 12,
+                "premiumRate": 49.02
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 19,
+                "couplesCorner": 6,
+                "conflictResolution": 2,
+                "aiCoachChat": 26
+            }
+        },
+        {
+            "date": "2026-06-28",
+            "matchMetrics": {
+                "likesCount": 282,
+                "passesCount": 743,
+                "totalMatches": 42,
+                "successMatches": 32,
+                "failedMatches": 10,
+                "successRate": 76.19,
+                "chatAcceptedMatches": 22,
+                "chatConversionRate": 68.75,
+                "responseLatencyMinutes": 11.9
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 4,
+                "relationshipPending": 3,
+                "relationshipConfirmed": 1,
+                "relationshipDeclined": 0
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 53,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 21,
+                "eliteSubsCount": 12,
+                "premiumRate": 48.54
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 30,
+                "couplesCorner": 10,
+                "conflictResolution": 5,
+                "aiCoachChat": 25
+            }
+        },
+        {
+            "date": "2026-06-29",
+            "matchMetrics": {
+                "likesCount": 209,
+                "passesCount": 446,
+                "totalMatches": 46,
+                "successMatches": 38,
+                "failedMatches": 8,
+                "successRate": 82.61,
+                "chatAcceptedMatches": 20,
+                "chatConversionRate": 52.63,
+                "responseLatencyMinutes": 6.9
+            },
+            "relationshipMetrics": {
+                "totalRelationships": 5,
+                "relationshipPending": 2,
+                "relationshipConfirmed": 2,
+                "relationshipDeclined": 1
+            },
+            "subscriptionMetrics": {
+                "freeSubsCount": 53,
+                "plusSubsCount": 17,
+                "premiumSubsCount": 22,
+                "eliteSubsCount": 12,
+                "premiumRate": 49.04
+            },
+            "featureUsage": {
+                "selfReflectionCorner": 23,
+                "couplesCorner": 14,
+                "conflictResolution": 9,
+                "aiCoachChat": 29
+            }
+        }
+    ]
+}

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../services/profile_service.dart';
@@ -25,12 +24,14 @@ import '../../services/discover_service.dart';
 import '../auth/interests_setup_screen.dart';
 import 'home_dashboard_screen.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
-import '../../widgets/onboarding/showcase_step.dart';
-import '../../widgets/onboarding/onboarding_overlay.dart';
+
+import '../../widgets/common/ai_chat_bubble.dart';
 
 class MainShellScreen extends StatefulWidget {
   final ProfileService? profileService;
   final int initialIndex;
+
+  static bool isShowingProfile = false;
 
   const MainShellScreen({
     super.key,
@@ -46,8 +47,6 @@ class _MainShellScreenState extends State<MainShellScreen>
     with WidgetsBindingObserver {
   late int _currentIndex;
   late final ProfileService _profileService;
-  final GlobalKey _matchKey = GlobalKey();
-  final GlobalKey _healingKey = GlobalKey();
 
   @override
   void initState() {
@@ -55,53 +54,12 @@ class _MainShellScreenState extends State<MainShellScreen>
     WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _profileService = widget.profileService ?? ProfileService();
+    MainShellScreen.isShowingProfile = _currentIndex == 3;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<ChatViewModel>().fetchChats();
       context.read<RelationshipViewModel>().loadDashboard();
-      _checkAndShowOnboarding();
     });
-  }
-
-  Future<void> _checkAndShowOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeen = prefs.getBool('has_seen_main_onboarding') ?? false;
-    if (!hasSeen && mounted) {
-      // Đợi 800ms để đảm bảo UI render xong và BottomNav ổn định vị trí
-      await Future.delayed(const Duration(milliseconds: 800));
-      if (!mounted) return;
-
-      final steps = [
-        ShowcaseStep(
-          targetKey: _matchKey,
-          title: 'Quẹt Tìm Bạn 🔥',
-          content: 'Bấm vào nút Trái Tim này để bắt đầu khám phá và quẹt chọn một nửa phù hợp của bạn.',
-          icon: '❤️',
-          position: ShowcasePosition.top,
-        ),
-        ShowcaseStep(
-          targetKey: _healingKey,
-          title: 'Hành Trình Chữa Lành 💖',
-          content: 'Khám phá không gian chữa lành tâm hồn, nơi bạn và đối tác cùng tham gia các thử thách cặp đôi.',
-          icon: '🩺',
-          position: ShowcasePosition.top,
-        ),
-      ];
-
-      OnboardingOverlay.show(
-        context,
-        steps: steps,
-        onCompleted: () async {
-          final p = await SharedPreferences.getInstance();
-          await p.setBool('has_seen_main_onboarding', true);
-        },
-        onSkipped: () async {
-          final p = await SharedPreferences.getInstance();
-          await p.setBool('has_seen_main_onboarding', true);
-          await p.setBool('skip_all_tutorials', true);
-        },
-      );
-    }
   }
 
   @override
@@ -119,14 +77,31 @@ class _MainShellScreenState extends State<MainShellScreen>
 
   void _selectTab(int index) {
     setState(() => _currentIndex = index);
+    MainShellScreen.isShowingProfile = index == 3;
     if (index == 0) {
       context.read<RelationshipViewModel>().loadDashboard();
     }
+    // Cập nhật trạng thái hiển thị của AI Chat Bubble
+    final showBubble = index != 3;
+    aiBubbleKey.currentState?.setVisible(showBubble);
+    aiBubbleKey.currentState?.setHasBottomNav(true);
   }
 
   @override
   Widget build(BuildContext context) {
     final totalUnread = context.watch<ChatViewModel>().totalUnreadCount;
+
+    // Đảm bảo trạng thái hiển thị của bubble luôn chính xác ở home shell
+    // Chỉ set visible khi MainShellScreen đang là route hiện tại (không bị overlay bởi chat/tarot...)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? false;
+      if (!isCurrentRoute) return; // Không ghi đè nếu đang ở màn hình con
+      final showBubble = _currentIndex != 3;
+      aiBubbleKey.currentState?.setVisible(showBubble);
+      aiBubbleKey.currentState?.setHasBottomNav(true);
+    });
+
     return Scaffold(
       backgroundColor: BondyColors.background,
       body: IndexedStack(
@@ -160,8 +135,6 @@ class _MainShellScreenState extends State<MainShellScreen>
         onTabSelected: _selectTab,
         onMatchTap: () => Navigator.of(context).pushNamed('/discover'),
         hasMatchBadge: totalUnread > 0,
-        matchKey: _matchKey,
-        healingKey: _healingKey,
       ),
     );
   }
@@ -996,7 +969,8 @@ class _ProfileTabState extends State<_ProfileTab> {
         decoration: BoxDecoration(
           gradient: isPaid
               ? const LinearGradient(
-                  colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)])
+                  colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                )
               : null,
           color: isPaid ? null : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -1044,8 +1018,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                   Text(
                     isPaid
                         ? (days != null
-                            ? 'Còn $days ngày${isTrial ? ' · dùng thử' : ''}'
-                            : 'Đang kích hoạt')
+                              ? 'Còn $days ngày${isTrial ? ' · dùng thử' : ''}'
+                              : 'Đang kích hoạt')
                         : 'Nâng cấp để mở khoá toàn bộ tính năng',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5,
@@ -1059,8 +1033,7 @@ class _ProfileTabState extends State<_ProfileTab> {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isPaid
                     ? Colors.white.withValues(alpha: 0.22)

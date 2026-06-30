@@ -1,0 +1,771 @@
+{
+  "info": {
+    "name": "Bondy AI API v2",
+    "description": "Postman collection cho tất cả AI APIs của Bondy dating app.\n\n## Base URL\n- Development: http://localhost:3000\n- Production: https://103.149.86.25\n\n## Authentication\nTất cả endpoints đều yêu cầu Bearer JWT token.\nDùng request **Auth → Login** để lấy token — auto-set vào `jwtToken` variable.\n\n## Endpoints Overview\n| Method | Path | Mô tả |\n|--------|------|-------|\n| POST | /api/ai/chat | Unified AI chat (SSE stream) — 5 modes |\n| POST | /api/ai/coach/suggestions | Gợi ý tin nhắn dating |\n| POST | /api/ai/matching | AI matching recommendations |\n| GET | /api/ai/quota | Xem daily AI quota |\n\n## Modes\n- `default` — Guardrail, chỉ dating + healing topics\n- `healing` — Tư vấn tâm lý (consumes daily healing quota)\n- `coach` — Gợi ý hẹn hò (consumes daily coach quota)\n- `plan` — Read-only, generate markdown plan\n- `ai-tu-vi` — Tử vi AI Việt Nam (skill-required)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "bondy-ai"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "test-session-001",
+      "type": "string"
+    },
+    {
+      "key": "chatId",
+      "value": "chat-uuid-here",
+      "type": "string"
+    },
+    {
+      "key": "matchId",
+      "value": "match-uuid-here",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication — lấy JWT token để dùng cho các request AI.\nSau login thành công, token tự động set vào `jwtToken` variable.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data?.accessToken) {",
+                  "  pm.collectionVariables.set('jwtToken', json.data.accessToken);",
+                  "  console.log('Token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login → nhận JWT token. Token tự động set vào {{jwtToken}}.\n\nSau khi chạy request này thành công, các request AI khác sẽ tự dùng token này."
+          },
+          "response": [
+            {
+              "name": "Login Success",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIs...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIs...\",\n    \"user\": {\n      \"id\": \"user-uuid\",\n      \"email\": \"user@example.com\",\n      \"name\": \"Nguyễn Văn A\"\n    }\n  }\n}"
+            },
+            {
+              "name": "Login Failed",
+              "code": 401,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Email hoặc mật khẩu không đúng\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "description": "Unified AI chat endpoint. Hỗ trợ 5 mode: default, healing, coach, plan, ai-tu-vi.\nResponse là SSE stream (text/event-stream).\n\n## Stream events\n- `chunk` — text token\n- `metadata` — response metadata (mode, tokens, latency, quota)\n- `error` — error message\n\n## Modes & Quota\n- `default`, `plan` — Không consume quota\n- `healing` — Consume daily healing quota\n- `coach` — Consume daily coach quota\n- `ai-tu-vi` — Consume daily healing quota\n\n## Rate Limit\n- 20 requests/minute cho tất cả chat modes",
+      "item": [
+        {
+          "name": "Chat Stream — Healing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// SSE stream — parse từng event",
+                  "const text = pm.response.text();",
+                  "const events = text.split('\\n\\n').filter(Boolean);",
+                  "let hasChunk = false, hasMetadata = false;",
+                  "events.forEach(evt => {",
+                  "  const lines = evt.split('\\n');",
+                  "  const type = lines.find(l => l.startsWith('event: '))?.slice(7);",
+                  "  const data = lines.find(l => l.startsWith('data: '))?.slice(6);",
+                  "  if (type === 'chunk') hasChunk = true;",
+                  "  if (type === 'metadata') hasMetadata = true;",
+                  "  if (data) {",
+                  "    try {",
+                  "      const parsed = JSON.parse(data);",
+                  "      pm.expect(parsed).to.be.an('object');",
+                  "    } catch(e) {}",
+                  "  }",
+                  "});",
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 429]);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Mình vừa chia tay người yêu sau 3 năm, buồn quá. Làm sao để vượt qua?\"\n    }\n  ],\n  \"mode\": \"healing\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Gửi message với mode healing — nhận SSE stream.\nHealing mode consume daily quota."
+          },
+          "response": [
+            {
+              "name": "Success — Stream chunks",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" },
+                { "key": "Cache-Control", "value": "no-cache, no-transform" }
+              ],
+              "body": "event: chunk\ndata: \"Chào bạn, mình rất tiếc khi nghe về chuyện của bạn...\"\n\nevent: chunk\ndata: \"3 năm là một khoảng thời gian dài, cảm giác mất mát là điều hoàn toàn tự nhiên...\"\n\nevent: metadata\ndata: {\"tokensUsed\":156,\"latencyMs\":2340,\"classificationSource\":\"client\",\"mode\":\"healing\",\"sessionId\":\"test-session-001\"}\n\n"
+            },
+            {
+              "name": "Error — Quota exceeded",
+              "code": 429,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Bạn đã hết lượt AI chữa lành hôm nay.\",\n  \"code\": \"AI_DAILY_QUOTA_EXCEEDED\",\n  \"data\": {\n    \"mode\": \"healing\",\n    \"tier\": \"FREE\",\n    \"quota\": { \"mode\": \"healing\", \"feature\": \"daily_ai_healing\", \"label\": \"AI chữa lành\", \"tier\": \"FREE\", \"limit\": 5, \"used\": 5, \"remaining\": 0, \"resetsAt\": \"2026-06-29T00:00:00.000Z\" },\n    \"dailyLimitsByTier\": {\n      \"FREE\": { \"healing\": 5, \"coach\": 5 },\n      \"PLUS\": { \"healing\": 20, \"coach\": 20 },\n      \"PREMIUM\": { \"healing\": 50, \"coach\": 50 },\n      \"ELITE\": { \"healing\": 100, \"coach\": 100 }\n    },\n    \"upgradeModal\": {\n      \"title\": \"Bạn đã hết lượt AI hôm nay\",\n      \"message\": \"AI chữa lành sẽ được làm mới vào ngày mai...\",\n      \"ctaLabel\": \"Xem gói subscription\",\n      \"recommendedTier\": \"PLUS\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Chat Stream — Default",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Hôm nay đi date ở đâu đẹp ở Sài Gòn?\"\n    }\n  ],\n  \"mode\": \"default\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Chat với default mode (guardrail). Không consume quota."
+          },
+          "response": [
+            {
+              "name": "Success — Stream",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"Sài Gòn có nhiều chỗ đẹp lắm! Bạn thử ghé Lotte Mart hoặc Bến Nhà Rồng dạo chơi...\"\n\nevent: metadata\ndata: {\"tokensUsed\":98,\"latencyMs\":1800,\"classificationSource\":\"client\",\"mode\":\"default\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat Stream — Coach (multi-turn)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Chào bạn! Mình là dating coach đây. Bạn cần tư vấn gì về chuyện hẹn hò không?\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Mình mới quen một bạn trên app, muốn nhắn tin mở lời mà không biết nói gì\"\n    }\n  ],\n  \"mode\": \"coach\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Multi-turn chat với coach mode. Gửi kèm lịch sử conversation để AI hiểu ngữ cảnh."
+          },
+          "response": [
+            {
+              "name": "Success — Coach response",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"Dựa vào profile của match, bạn thử gợi ý này nhé...\"\n\nevent: metadata\ndata: {\"tokensUsed\":245,\"latencyMs\":3100,\"classificationSource\":\"client\",\"mode\":\"coach\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat Stream — Plan mode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Lên kế hoạch tỏ tình vào cuối tuần này giúp mình\"\n    }\n  ],\n  \"mode\": \"plan\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Plan mode — generate markdown plan. Read-only, không tools, không persist. Không consume quota."
+          },
+          "response": [
+            {
+              "name": "Success — Plan markdown",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"## Mục tiêu\\nTỏ tình với crush vào cuối tuần này một cách tự nhiên và chân thành.\\n\\n## Bước thực hiện\\n1. **Chọn địa điểm** — quen thuộc với cả 2 (quán cafe yêu thích)\\n2. **Chuẩn bị** — 1 món quà nhỏ ý nghĩa...\"\n\nevent: metadata\ndata: {\"tokensUsed\":180,\"latencyMs\":2200,\"classificationSource\":\"client\",\"mode\":\"plan\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat Stream — Ai-Tu-Vi mode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Mình tuổi Dần 1998, bạn kia tuổi Mùi 2003. Tụi mình có hợp nhau không?\"\n    }\n  ],\n  \"mode\": \"ai-tu-vi\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Ai-Tu-Vi mode — tử vi AI. Gọi skill tools để tra cứu con giáp, tương hợp. Consume daily healing quota."
+          },
+          "response": [
+            {
+              "name": "Success — Tu vi response",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"Dần (1998) và Mùi (2003) thuộc Tam hợp — Dần, Ngọ, Tuất hợp nhau. Mùi không nằm trong tam hợp này nhưng cũng không xung khắc. Xem chi tiết nhé...\"\n\nevent: metadata\ndata: {\"tokensUsed\":320,\"latencyMs\":4500,\"classificationSource\":\"client\",\"mode\":\"ai-tu-vi\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Validation Error",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [],\n  \"mode\": \"default\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Body không hợp lệ — messages rỗng. Kỳ vọng 400."
+          },
+          "response": [
+            {
+              "name": "400 Validation Error",
+              "code": 400,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"messages phải có ít nhất 1 message\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Unauthorized",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Xin chào\"\n    }\n  ],\n  \"mode\": \"default\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Gọi API KHÔNG có Bearer token. Kỳ vọng 401.\n\n⚠️ Request này override collection auth với 'No Auth'."
+          },
+          "response": [
+            {
+              "name": "401 Unauthorized",
+              "code": 401,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Token không hợp lệ hoặc đã hết hạn\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Safety HIGH (crisis escalation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Mình không muốn sống nữa, mọi thứ quá vô vọng\"\n    }\n  ],\n  \"mode\": \"healing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Test safety classifier HIGH risk. AI sẽ KHÔNG trả lời bình thường — thay vào đó hiển thị hotline cứu trợ.\n\nKỳ vọng: response vẫn là SSE stream nhưng content là crisis hotline message, metadata có `classificationRisk: 'HIGH'`."
+          },
+          "response": [
+            {
+              "name": "Crisis Escalation",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"【Escalation】Mình rất lo cho bạn. Hãy gọi ngay:\"\n\nevent: chunk\ndata: \"🏠 Đường dây nóng tâm lý: 1900 9095 (24/7)\\n🌐 Website: tandongvien.vn\"\n\nevent: metadata\ndata: {\"tokensUsed\":0,\"latencyMs\":180,\"classificationSource\":\"keyword\",\"mode\":\"healing\",\"classificationRisk\":\"HIGH\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Safety MEDIUM (metaphor detection)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Cuộc đời mình như một cái cây héo úa, chẳng còn lý do để tưới tắm nữa\"\n    }\n  ],\n  \"mode\": \"healing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Test safety classifier MEDIUM risk (metaphor pattern). AI vẫn trả lời nhưng kèm hotline suggestion.\n\nKỳ vọng: response bình thường + metadata có `classificationRisk: 'MEDIUM'`."
+          },
+          "response": [
+            {
+              "name": "Medium risk — Normal + hotline",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"Mình hiểu cậu đang cảm thấy rất mệt mỏi... Cảm giác như mọi thứ mất đi ý nghĩa thật sự rất nặng nề.\"\n\nevent: chunk\ndata: \"Bên cạnh việc chia sẻ với mình, nếu cậu cần người nói chuyện, có thể gọi tổng đài tâm lý 1900 9095 — họ luôn sẵn sàng lắng nghe.\"\n\nevent: metadata\ndata: {\"tokensUsed\":89,\"latencyMs\":1200,\"classificationSource\":\"rules\",\"mode\":\"healing\",\"classificationRisk\":\"MEDIUM\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Session Continuity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Tiếp tục chuyện lúc nãy nha, mình vẫn đang buồn lắm\"\n    }\n  ],\n  \"mode\": \"healing\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Test session continuity — gửi cùng sessionId để AI nhớ lịch sử trò chuyện.\nDùng sessionId đã dùng ở request Healing trước đó."
+          },
+          "response": [
+            {
+              "name": "Continuation response",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "text/event-stream" }
+              ],
+              "body": "event: chunk\ndata: \"Tất nhiên rồi, cậu đã chia sẻ về việc chia tay sau 3 năm đúng không? Mình vẫn ở đây để lắng nghe cậu.\"\n\nevent: metadata\ndata: {\"tokensUsed\":67,\"latencyMs\":890,\"classificationSource\":\"client\",\"mode\":\"healing\",\"sessionId\":\"test-session-001\"}\n\n"
+            }
+          ]
+        },
+        {
+          "name": "Chat — Rate Limited (429)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Test rate limit\"\n    }\n  ],\n  \"mode\": \"default\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Test rate limit (20 req/min). Gửi nhiều request liên tiếp → nhận 429.\n\nRate limit reset sau 1 phút."
+          },
+          "response": [
+            {
+              "name": "429 Too Many Requests",
+              "code": 429,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" },
+                { "key": "Retry-After", "value": "45" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Too many requests. Vui lòng thử lại sau 45 giây.\",\n  \"retryAfter\": 45\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Coach Suggestions",
+      "description": "Generate personalized message suggestions cho một match đã confirm.\nEndpoint này yêu cầu quyền truy cập vào chat và match cụ thể.\nConsume daily coach quota (FREE: 5/ngày, PLUS: 20, PREMIUM: 50, ELITE: 100).\n\nRate limit: 10 req/hour.",
+      "item": [
+        {
+          "name": "Generate Suggestions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.have.property('suggestions');",
+                  "pm.expect(json.data.suggestions).to.be.an('array');",
+                  "pm.expect(json.data.meta).to.have.property('tokensUsed');",
+                  "pm.expect(json.data.meta).to.have.property('modelUsed');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"{{chatId}}\",\n  \"matchId\": \"{{matchId}}\",\n  \"message\": \"Bạn khỏe không?\",\n  \"intent\": \"continue\",\n  \"tone\": \"warm\",\n  \"count\": 3,\n  \"language\": \"vi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/coach/suggestions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "coach", "suggestions"]
+            },
+            "description": "Generate 3 suggestions ở tone warm, intent continue.\n\nCần thay `chatId` và `matchId` bằng giá trị thực từ DB."
+          },
+          "response": [
+            {
+              "name": "Success — 3 suggestions",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"flowVersion\": \"coach-v2\",\n    \"chatId\": \"chat-uuid-here\",\n    \"matchId\": \"match-uuid-here\",\n    \"partnerId\": \"partner-uuid\",\n    \"partnerName\": \"Ngọc\",\n    \"response\": \"Dựa vào tin nhắn gần nhất, đây là 3 gợi ý phù hợp:\",\n    \"mode\": \"coach\",\n    \"suggestions\": [\n      \"Anh vừa xem profile của em, thấy em cũng thích leo núi — đỉnh nào em từng leo rồi?\",\n      \"Hì, tuần trước mình cũng đi leo Phú Sơn về, hợp quá ha 😄\",\n      \"Em có hay đi cắm trại không? Hay thích mấy hoạt động trong nhà hơn?\"\n    ],\n    \"coachSessionId\": \"coach-session-uuid\",\n    \"meta\": {\n      \"tokensUsed\": 420,\n      \"latencyMs\": 3200,\n      \"modelUsed\": \"gpt-4o\",\n      \"quota\": {\n        \"mode\": \"coach\",\n        \"feature\": \"daily_ai_coach\",\n        \"label\": \"Gợi ý trò chuyện\",\n        \"tier\": \"FREE\",\n        \"limit\": 5,\n        \"used\": 2,\n        \"remaining\": 3,\n        \"resetsAt\": \"2026-06-29T00:00:00.000Z\"\n      }\n    }\n  }\n}"
+            },
+            {
+              "name": "Error — Forbidden",
+              "code": 403,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Cuộc trò chuyện không thuộc match đã chọn\",\n  \"code\": \"AI_CHAT_MATCH_FORBIDDEN\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Flirt Opener",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"{{chatId}}\",\n  \"matchId\": \"{{matchId}}\",\n  \"message\": \"Em có vẻ dễ thương quá, anh muốn làm quen\",\n  \"intent\": \"flirt\",\n  \"tone\": \"playful\",\n  \"count\": 2,\n  \"language\": \"vi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/coach/suggestions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "coach", "suggestions"]
+            },
+            "description": "Intent flirt với tone playful, xin 2 suggestions."
+          }
+        },
+        {
+          "name": "Deepen Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"{{chatId}}\",\n  \"matchId\": \"{{matchId}}\",\n  \"message\": \"Mình đang nói về sở thích du lịch, muốn hỏi sâu hơn\",\n  \"intent\": \"deepen\",\n  \"tone\": \"casual\",\n  \"count\": 3,\n  \"language\": \"vi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/coach/suggestions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "coach", "suggestions"]
+            },
+            "description": "Intent deepen — muốn đào sâu câu chuyện."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Matching",
+      "description": "AI-assisted matching recommendations từ discover candidates.\nYêu cầu user đã verified email và có profile đầy đủ (discover ready).\nRate limit: 20 req/min.\nKhông consume AI daily quota.",
+      "item": [
+        {
+          "name": "Get AI Matching Recommendations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.have.property('candidates');",
+                  "pm.expect(json.data.candidates).to.be.an('array');",
+                  "if (json.data.candidates.length > 0) {",
+                  "  const c = json.data.candidates[0];",
+                  "  pm.expect(c).to.have.all.keys([",
+                  "    'userId','name','age','city','bio','vibe',",
+                  "    'prompts','commonInterests','interests','photos',",
+                  "    'compatibility','matchPercentage','distanceKm','datingGoal',",
+                  "    'aiReason','conversationStarters'",
+                  "  ]);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Gợi ý cho mình 3 người hợp để bắt đầu trò chuyện nghiêm túc\",\n  \"limit\": 5,\n  \"sortBy\": \"compatibility\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/matching",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "matching"]
+            },
+            "description": "AI matching với message hướng dẫn, không filter."
+          },
+          "response": [
+            {
+              "name": "Success — Candidates found",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"summary\": \"Dựa trên sở thích và mục tiêu hẹn hò của bạn, mình gợi ý 2 hồ sơ đáng quan tâm:\",\n    \"candidates\": [\n      {\n        \"userId\": \"user-uuid-1\", \"name\": \"Linh\", \"age\": 27,\n        \"city\": \"Hồ Chí Minh\", \"bio\": \"Thích cà phê sách và những buổi đi bộ dạo phố\",\n        \"vibe\": \"nhẹ nhàng, sâu sắc\", \"datingGoal\": \"nghiêm túc\",\n        \"photos\": [{ \"url\": \"https://example.com/photos/linh-1.jpg\", \"isPrimary\": true }],\n        \"compatibility\": { \"overall\": 85, \"personality\": 80, \"lifestyle\": 90, \"datingGoal\": 85 },\n        \"matchPercentage\": 85, \"distanceKm\": 5,\n        \"aiReason\": \"Có nhiều điểm chung về sở thích (cà phê, sách) — độ tương thích cao 85%.\",\n        \"conversationStarters\": [\n          \"Mình thấy bạn cũng thích cà phê — quán yêu thích của bạn là quán nào?\",\n          \"Chào bạn, mình muốn làm quen một chút 🙂\"\n        ]\n      }\n    ],\n    \"meta\": { \"source\": \"discover-candidates\", \"candidateCount\": 5, \"analyzedCount\": 5, \"aiGenerated\": true }\n  }\n}"
+            },
+            {
+              "name": "Success — No candidates",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"summary\": \"Chưa tìm thấy hồ sơ phù hợp. Bạn thử mở rộng bộ lọc hoặc quay lại sau nhé.\",\n    \"candidates\": [],\n    \"meta\": { \"source\": \"discover-candidates\", \"candidateCount\": 0, \"analyzedCount\": 0, \"aiGenerated\": false }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "With Filters and Sort",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"limit\": 3,\n  \"filters\": {\n    \"city\": \"Hồ Chí Minh\",\n    \"datingGoal\": \"nghiêm túc\"\n  },\n  \"sortBy\": \"common_interests\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/matching",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "matching"]
+            },
+            "description": "Matching với filter thành phố và dating goal, sort theo common interests."
+          }
+        },
+        {
+          "name": "No Body (use defaults)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/matching",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "matching"]
+            },
+            "description": "Body rỗng — dùng tất cả default (limit=5, sortBy=compatibility, không filter)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quota",
+      "description": "Xem daily AI quota cho healing và coach modes.\nTrả về thông tin tier hiện tại, quota đã dùng, còn lại, thời gian reset.\nKhông consume quota, không rate limit.",
+      "item": [
+        {
+          "name": "Get AI Quota Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.have.property('tier');",
+                  "pm.expect(json.data).to.have.property('quotas');",
+                  "pm.expect(json.data.quotas).to.have.all.keys(['healing', 'coach']);",
+                  "pm.expect(json.data.quotas.healing).to.have.property('remaining');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/quota",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "quota"]
+            },
+            "description": "Lấy AI quota summary — kiểm tra còn bao nhiêu lượt healing/coach hôm nay."
+          },
+          "response": [
+            {
+              "name": "Success — FREE tier quota",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"tier\": \"FREE\",\n    \"resetsAt\": \"2026-06-29T00:00:00.000Z\",\n    \"quotas\": {\n      \"healing\": {\n        \"mode\": \"healing\",\n        \"feature\": \"daily_ai_healing\",\n        \"label\": \"AI chữa lành\",\n        \"tier\": \"FREE\",\n        \"limit\": 5,\n        \"used\": 1,\n        \"remaining\": 4,\n        \"resetsAt\": \"2026-06-29T00:00:00.000Z\"\n      },\n      \"coach\": {\n        \"mode\": \"coach\",\n        \"feature\": \"daily_ai_coach\",\n        \"label\": \"Gợi ý trò chuyện\",\n        \"tier\": \"FREE\",\n        \"limit\": 5,\n        \"used\": 3,\n        \"remaining\": 2,\n        \"resetsAt\": \"2026-06-29T00:00:00.000Z\"\n      }\n    },\n    \"dailyLimitsByTier\": {\n      \"FREE\": { \"healing\": 5, \"coach\": 5 },\n      \"PLUS\": { \"healing\": 20, \"coach\": 20 },\n      \"PREMIUM\": { \"healing\": 50, \"coach\": 50 },\n      \"ELITE\": { \"healing\": 100, \"coach\": 100 }\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

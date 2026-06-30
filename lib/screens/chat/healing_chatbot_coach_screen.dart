@@ -325,7 +325,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     try {
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
-          message: message,
+          messages: _buildRequestMessages(),
           mode: AiChatMode.healing,
           sessionId: _sessionId,
         ),
@@ -389,6 +389,20 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
         });
       }
     }
+  }
+
+  List<AiChatMessage> _buildRequestMessages() {
+    return _messages
+        .where((message) => message.text.trim().isNotEmpty)
+        .map(
+          (message) => AiChatMessage(
+            role: message.isUser
+                ? AiChatMessageRole.user
+                : AiChatMessageRole.assistant,
+            content: message.text,
+          ),
+        )
+        .toList();
   }
 
   Widget _buildBubble(_BotMessage message) {

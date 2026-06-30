@@ -18,7 +18,7 @@ class _QuotaAiService extends AiService {
       'healing': {
         'mode': 'healing',
         'feature': 'daily_ai_healing',
-        'label': 'AI chua lanh',
+        'label': 'AI chữa lành',
         'tier': 'FREE',
         'limit': 3,
         'used': 1,
@@ -27,8 +27,8 @@ class _QuotaAiService extends AiService {
       },
       'coach': {
         'mode': 'coach',
-        'feature': 'daily_ai_coach',
-        'label': 'Goi y tro chuyen',
+        'feature': 'Gợi ý trò chuyện',
+        'label': 'Gợi ý trò chuyện',
         'tier': 'FREE',
         'limit': 3,
         'used': 0,
@@ -60,7 +60,7 @@ class _StreamingAiService extends AiService {
         'quota': {
           'mode': 'healing',
           'feature': 'daily_ai_healing',
-          'label': 'AI chua lanh',
+          'label': 'AI chữa lành',
           'tier': 'FREE',
           'limit': 3,
           'used': 2,
@@ -103,6 +103,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(aiService.lastRequest?.mode, AiChatMode.healing);
+    expect(aiService.lastRequest?.messages.last.role, AiChatMessageRole.user);
+    expect(aiService.lastRequest?.messages.last.content, 'Hôm nay mình buồn');
     expect(find.textContaining('Mình đang lắng nghe'), findsOneWidget);
     expect(find.text('Còn 1/3 lượt'), findsOneWidget);
   });

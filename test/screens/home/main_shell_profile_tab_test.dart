@@ -6,10 +6,13 @@ import 'package:bondy/services/relationship_service.dart';
 import 'package:bondy/services/api_client.dart';
 import 'package:bondy/viewmodels/chat/chat_viewmodel.dart';
 import 'package:bondy/viewmodels/relationship/relationship_viewmodel.dart';
+import 'package:bondy/viewmodels/subscription/subscription_viewmodel.dart';
+import 'package:bondy/widgets/onboarding/onboarding_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeChatService extends ChatService {
   _FakeChatService() : super(ApiClient());
@@ -25,6 +28,11 @@ class _FakeRelationshipService extends RelationshipService {
   }
 }
 
+class _NoopSubscriptionViewModel extends SubscriptionViewModel {
+  @override
+  Future<void> loadSubscription() async {}
+}
+
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -33,36 +41,10 @@ void main() {
   testWidgets('profile tab loads current account and opens edit profile', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({});
     final profileService = _FakeProfileService();
 
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (_) => ChatViewModel(service: _FakeChatService()),
-          ),
-          ChangeNotifierProvider(
-            create: (_) =>
-                RelationshipViewModel(service: _FakeRelationshipService()),
-          ),
-        ],
-        child: MaterialApp(
-          routes: {
-            '/': (context) => MainShellScreen(profileService: profileService),
-            '/edit-profile': (context) =>
-                const Scaffold(body: Text('edit profile screen')),
-            '/discover': (context) => const Scaffold(body: Text('discover')),
-            '/chatbot': (context) => const Scaffold(body: Text('chatbot')),
-            '/relationship/home': (context) =>
-                const Scaffold(body: Text('relationship')),
-            '/settings/premium': (context) =>
-                const Scaffold(body: Text('premium')),
-            '/settings/change-password': (context) =>
-                const Scaffold(body: Text('change password')),
-          },
-        ),
-      ),
-    );
+    await _pumpMainShell(tester, profileService: profileService);
 
     await tester.tap(find.text('Profile'));
     await tester.pump();
@@ -79,6 +61,54 @@ void main() {
 
     expect(find.text('edit profile screen'), findsOneWidget);
   });
+
+  testWidgets('does not auto-show the home onboarding overlay', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await _pumpMainShell(tester);
+    await tester.pump(const Duration(milliseconds: 900));
+
+    expect(find.byType(OnboardingTooltip), findsNothing);
+  });
+}
+
+Future<void> _pumpMainShell(
+  WidgetTester tester, {
+  _FakeProfileService? profileService,
+}) async {
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ChatViewModel(service: _FakeChatService()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) =>
+              RelationshipViewModel(service: _FakeRelationshipService()),
+        ),
+        ChangeNotifierProvider<SubscriptionViewModel>(
+          create: (_) => _NoopSubscriptionViewModel(),
+        ),
+      ],
+      child: MaterialApp(
+        routes: {
+          '/': (context) => MainShellScreen(
+            profileService: profileService ?? _FakeProfileService(),
+          ),
+          '/edit-profile': (context) =>
+              const Scaffold(body: Text('edit profile screen')),
+          '/discover': (context) => const Scaffold(body: Text('discover')),
+          '/chatbot': (context) => const Scaffold(body: Text('chatbot')),
+          '/relationship/home': (context) =>
+              const Scaffold(body: Text('relationship')),
+          '/settings/premium': (context) =>
+              const Scaffold(body: Text('premium')),
+          '/settings/change-password': (context) =>
+              const Scaffold(body: Text('change password')),
+        },
+      ),
+    ),
+  );
 }
 
 class _FakeProfileService extends ProfileService {

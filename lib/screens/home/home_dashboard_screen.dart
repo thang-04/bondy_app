@@ -134,9 +134,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _Palette.background,
-      floatingActionButton: _AskBondyFab(
-        onTap: () => Navigator.of(context).pushNamed('/chatbot'),
-      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -1139,62 +1136,7 @@ class _ServerWidgetTile extends StatelessWidget {
   }
 }
 
-class _AskBondyFab extends StatelessWidget {
-  final VoidCallback onTap;
 
-  const _AskBondyFab({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 84, right: 8),
-      child: Material(
-        color: Colors.transparent,
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(28),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: _Palette.outlineVariant.withValues(alpha: 0.5),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFB28E).withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.chat_bubble_rounded,
-                  color: _Palette.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Hỏi Bondy',
-                  style: _font(
-                    size: 14,
-                    weight: FontWeight.w700,
-                    color: _Palette.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _SuggestedProfilesSection extends StatelessWidget {
   final List<DiscoverProfile> profiles;

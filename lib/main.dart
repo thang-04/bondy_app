@@ -56,6 +56,12 @@ import 'screens/chat/chat_screen.dart';
 import 'screens/chat/healing_chatbot_coach_screen.dart';
 import 'screens/chat/bondy_ai_chat_screen.dart';
 import 'screens/chat/active_chat_deeper_prompts_screen.dart';
+import 'screens/chat/ai_hub_screen.dart';
+import 'screens/chat/zodiac_ai_chat_screen.dart';
+import 'screens/chat/tarot_reading_screen.dart';
+import 'screens/chat/emotional_checkin_ai_screen.dart';
+import 'widgets/common/ai_chat_bubble.dart';
+import 'widgets/common/ai_bubble_route_observer.dart';
 import 'screens/chat/chat_info_screen.dart';
 
 // Healing screens
@@ -199,13 +205,24 @@ class BondyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: aiNavigatorKey,
         title: 'Bondy',
         debugShowCheckedModeBanner: false,
         theme: BondyTheme.lightTheme,
-        navigatorObservers: buildAnalyticsObservers(),
+        navigatorObservers: [
+          ...buildAnalyticsObservers(),
+          AiBubbleRouteObserver(),
+        ],
         builder: (context, child) {
           final mediaQuery = MediaQuery.of(context);
           final isWebLarge = mediaQuery.size.width > 500;
+
+          // Bọc toàn bộ app trong AiChatBubble một lần duy nhất
+          Widget appContent = AiChatBubble(
+            key: aiBubbleKey,
+            child: child ?? const SizedBox(),
+          );
+
           if (isWebLarge) {
             return Scaffold(
               backgroundColor: const Color(
@@ -226,14 +243,14 @@ class BondyApp extends StatelessWidget {
                     ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 430),
-                      child: child,
+                      child: appContent,
                     ),
                   ),
                 ),
               ),
             );
           }
-          return child ?? const SizedBox();
+          return appContent;
         },
 
         // Internationalisation
@@ -290,7 +307,11 @@ class BondyApp extends StatelessWidget {
           '/chat': (context) => const ChatScreen(),
           '/chat/info': (context) => const ChatInfoScreen(),
           '/chatbot': (context) => const HealingChatbotCoachScreen(),
+          '/ai-hub': (context) => const AiHubScreen(),
           '/bondy-ai': (context) => const BondyAIChatScreen(),
+          '/zodiac-ai': (context) => const ZodiacAiChatScreen(),
+          '/tarot-reading': (context) => const TarotReadingScreen(),
+          '/emotional-checkin-ai': (context) => const EmotionalCheckinAiScreen(),
           '/healing/article-detail': (context) =>
               const HealingArticleDetailScreen(),
           '/healing/exercise-detail': (context) =>

@@ -1,51 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
+
+import '../../core/ai_mode_catalog.dart';
+import '../../services/ai_service.dart';
+import '../../services/api_client.dart';
 import '../../services/safety_guardrails_service.dart';
-import '../../widgets/chat/date_suggestions_widget.dart';
-import '../../core/ai_prompts_config.dart';
+import '../../theme/app_theme.dart';
 
 class BondyAIChatScreen extends StatefulWidget {
-  const BondyAIChatScreen({super.key});
+  final AiService? aiService;
+
+  const BondyAIChatScreen({super.key, this.aiService});
 
   @override
   State<BondyAIChatScreen> createState() => _BondyAIChatScreenState();
 }
 
 class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
+  late final AiService _aiService = widget.aiService ?? AiService(ApiClient());
   final _controller = TextEditingController();
+  final _scrollController = ScrollController();
   final _safetyService = SafetyGuardrailsService();
+  final _sessionId = 'bondy-${DateTime.now().millisecondsSinceEpoch}';
+
   final List<_BotMessage> _messages = [
     _BotMessage(
-      'Chào bạn! Mình là Bondy AI 🌸\nMình ở đây để trợ giúp bạn mở lời, gợi ý hẹn hò và chia sẻ các mẹo thấu hiểu người ấy.',
+      'Chào bạn! Mình là Bondy AI. Bạn có thể hỏi mình về trò chuyện, hẹn hò, cảm xúc hoặc kế hoạch hôm nay.',
       false,
     ),
-    _BotMessage(
-      'Hôm nay bạn cần mình gợi ý chủ đề trò chuyện hay tìm địa điểm đi chơi cuối tuần cùng người ấy? Hãy nói cho mình biết nhé.',
-      false,
-    ),
+    _BotMessage('Hãy nhập câu hỏi hoặc chọn một gợi ý nhanh bên dưới.', false),
   ];
 
-  bool _showOverlay = false;
-  String? _pendingMessage;
+  AiChatMode _mode = AiChatMode.defaultMode;
+  bool _isSending = false;
   bool _showSafetyWarning = false;
   bool _didReadArguments = false;
+  String? _pendingMessage;
+
+  AiModeDescriptor get _modeDescriptor => AiModeCatalog.byMode(_mode);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didReadArguments) return;
     _didReadArguments = true;
-    _readRouteArguments();
-  }
-
-  void _readRouteArguments() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is Map<String, dynamic> && args.containsKey('initialMessage')) {
-        final initMsg = args['initialMessage'] as String;
-        args.remove('initialMessage');
-        _proceedWithMessage(initMsg);
+      if (args is! Map<String, dynamic>) return;
+
+      final nextMode = args['topic'] == 'compatibility'
+          ? AiChatMode.aiTuVi
+          : AiChatMode.fromJson(args['mode']);
+      if (mounted && nextMode != _mode) {
+        setState(() => _mode = nextMode);
+      }
+
+      final initialMessage = args['initialMessage'];
+      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+        _proceedWithMessage(initialMessage.trim());
       }
     });
   }
@@ -53,6 +65,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -79,31 +92,35 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 gradient: BondyColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Icon(Icons.smart_toy, color: Colors.white, size: 20),
-              ),
+              child: const Icon(Icons.smart_toy, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hỏi Bondy',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: BondyColors.textPrimary,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _modeDescriptor.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: BondyColors.textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  'Trợ lý AI thấu cảm',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: BondyColors.primary,
+                  Text(
+                    _modeDescriptor.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: BondyColors.primary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -114,222 +131,248 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             children: [
               Expanded(
                 child: ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
-                    return _buildBubble(msg);
-                  },
+                  itemBuilder: (context, index) =>
+                      _buildBubble(_messages[index]),
                 ),
               ),
-              // Quick assistant topics
               SizedBox(
                 height: 44,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: [
-                    _buildTopic('🌸 Gợi ý mở lời'),
-                    _buildTopic('🗺️ Chỗ chơi cuối tuần'),
-                    _buildTopic('💡 Bí quyết giữ lửa'),
-                    _buildTopic('💬 Chủ đề thấu hiểu'),
-                  ],
+                  children: _quickPrompts
+                      .map((prompt) => _buildPromptChip(prompt))
+                      .toList(),
                 ),
               ),
               const SizedBox(height: 8),
-              // Input
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    top: BorderSide(
-                      color: BondyColors.divider.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          minLines: 1,
-                          maxLines: 5,
-                          keyboardType: TextInputType.multiline,
-                          decoration: InputDecoration(
-                            hintText: 'Hỏi Bondy bất cứ điều gì...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              color: BondyColors.textHint,
-                            ),
-                            filled: true,
-                            fillColor: BondyColors.background,
-                          ),
-                          style: GoogleFonts.plusJakartaSans(fontSize: 14),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _sendMessage,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            gradient: BondyColors.primaryGradient,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildComposer(),
             ],
           ),
-          if (_showOverlay) _buildAskBondyOverlay(),
           if (_showSafetyWarning) _buildSafetyWarningOverlay(),
         ],
       ),
     );
   }
 
-  void _sendMessage() {
-    if (_controller.text.isNotEmpty) {
-      final message = _controller.text;
-      final safetyCheck = _safetyService.check(message);
-
-      if (safetyCheck.shouldWarn) {
-        setState(() {
-          _pendingMessage = message;
-          _showSafetyWarning = true;
-        });
-      } else {
-        _proceedWithMessage(message);
-      }
+  List<String> get _quickPrompts {
+    switch (_mode) {
+      case AiChatMode.coach:
+        return const ['Gợi ý mở lời', 'Chủ đề thấu hiểu', 'Giữ lửa'];
+      case AiChatMode.plan:
+        return const [
+          'Lên kế hoạch cuối tuần',
+          'Chia nhỏ mục tiêu',
+          'Nhắc việc',
+        ];
+      case AiChatMode.aiTuVi:
+        return const [
+          'Xem độ hợp nhau',
+          'Tình duyên hôm nay',
+          'Ngày tốt hẹn hò',
+        ];
+      case AiChatMode.tarot:
+        return const [
+          'Giải nghĩa trải bài',
+          'Thông điệp tình yêu',
+          'Lời khuyên',
+        ];
+      case AiChatMode.healing:
+        return const [
+          'Mình đang lo lắng',
+          'Giúp mình bình tĩnh',
+          'Viết nhật ký',
+        ];
+      case AiChatMode.defaultMode:
+        return const ['Gợi ý mở lời', 'Chỗ chơi cuối tuần', 'Bí quyết giữ lửa'];
     }
   }
 
-  void _proceedWithMessage(String message) {
-    setState(() {
-      _messages.add(_BotMessage(message, true));
-      _controller.clear();
-    });
-
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          final lowercase = message.toLowerCase();
-          if (lowercase.contains('mở lời') || lowercase.contains('phá băng')) {
-            _messages.add(
-              _BotMessage(
-                'Để tạo một mở đầu thấu cảm và tự nhiên, bạn có thể gửi một trong các câu hỏi phá băng nhẹ nhàng này nhé: ✨\n\n'
-                '1. "Khoảnh khắc bình yên nhất trong ngày của bạn là gì?"\n'
-                '2. "Vibe hôm nay của bạn có màu gì?"\n'
-                '3. "Bài hát yêu thích lúc này của bạn là gì?"',
-                false,
-              ),
-            );
-          } else if (lowercase.contains('chỗ chơi') ||
-              lowercase.contains('địa điểm') ||
-              lowercase.contains('hẹn hò')) {
-            _messages.add(
-              _BotMessage(
-                'Cuối tuần sắp đến rồi, hai bạn hãy thử dành thời gian chất lượng bên nhau nhé! Dưới đây là một vài địa điểm hẹn hò cực kỳ lãng mạn được đề xuất riêng cho hai bạn: 🗺️',
-                false,
-              ),
-            );
-            _messages.add(
-              _BotMessage('', false, messageType: 'DATE_SUGGESTION'),
-            );
-          } else if (lowercase.contains('giữ lửa') ||
-              lowercase.contains('bí quyết')) {
-            _messages.add(
-              _BotMessage(
-                'Bí quyết giữ lửa đơn giản nhất là dành cho nhau những khoảng thời gian chất lượng (Quality Time). Hãy cùng nhau làm một việc chưa từng thử, hoặc gửi cho đối phương những câu hỏi sâu để thấu hiểu thế giới nội tâm của nhau hơn nhé! 💕',
-                false,
-              ),
-            );
-          } else {
-            _messages.add(
-              _BotMessage(
-                'Mình đã nhận được câu hỏi của bạn. Để giúp bạn kết nối tốt nhất, mình khuyên hai bạn thử trải nghiệm một buổi hẹn hò cuối tuần ấm áp xem sao nhé! Dưới đây là gợi ý địa điểm riêng cho bạn: 🌸',
-                false,
-              ),
-            );
-            _messages.add(
-              _BotMessage('', false, messageType: 'DATE_SUGGESTION'),
-            );
-          }
-        });
-      }
-    });
-  }
-
-  Widget _buildBubble(_BotMessage msg) {
-    if (msg.messageType == 'DATE_SUGGESTION') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+  Widget _buildComposer() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: BondyColors.divider.withValues(alpha: 0.5)),
+        ),
+      ),
+      child: SafeArea(
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                gradient: BondyColors.primaryGradient,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(Icons.smart_toy, color: Colors.white, size: 16),
+            Expanded(
+              child: TextField(
+                key: const Key('bondy_ai_chat_input'),
+                controller: _controller,
+                enabled: !_isSending,
+                minLines: 1,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(
+                  hintText: 'Hỏi Bondy bất cứ điều gì...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    color: BondyColors.textHint,
+                  ),
+                  filled: true,
+                  fillColor: BondyColors.background,
+                ),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14),
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: DateSuggestionsWidget(
-                places: AIPromptsConfig.mockDateSuggestions,
-                onShare: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã chia sẻ địa điểm: $name')),
-                  );
-                },
-                onSave: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã lưu địa điểm: $name')),
-                  );
-                },
-                onMap: (name) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đang mở bản đồ cho: $name')),
-                  );
-                },
+            GestureDetector(
+              key: const Key('bondy_ai_chat_send'),
+              onTap: _isSending ? null : _sendMessage,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  gradient: BondyColors.primaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: _isSending
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.send, color: Colors.white, size: 18),
               ),
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _buildPromptChip(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: _isSending ? null : () => _proceedWithMessage(label),
+        child: Chip(
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: Color(0xFFFFD9C0)),
+          label: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: BondyColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    final message = _controller.text.trim();
+    if (message.isEmpty) return;
+
+    final safetyCheck = _safetyService.check(message);
+    if (safetyCheck.shouldWarn) {
+      setState(() {
+        _pendingMessage = message;
+        _showSafetyWarning = true;
+      });
+      return;
     }
 
+    _proceedWithMessage(message);
+  }
+
+  Future<void> _proceedWithMessage(String message) async {
+    if (_isSending || message.trim().isEmpty) return;
+    final assistantMessage = _BotMessage('', false, streaming: true);
+    setState(() {
+      _isSending = true;
+      _messages.add(_BotMessage(message, true));
+      _messages.add(assistantMessage);
+      _controller.clear();
+    });
+    _scrollToBottom();
+
+    try {
+      await for (final event in _aiService.streamChat(
+        AiStreamChatRequest(
+          messages: _buildRequestMessages(),
+          mode: _mode,
+          sessionId: _sessionId,
+        ),
+      )) {
+        if (!mounted) return;
+        if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          final chunk = event.chunk!;
+          setState(() {
+            if (chunk.startsWith('__STRIPPED__')) {
+              assistantMessage.text = chunk.substring('__STRIPPED__'.length);
+            } else {
+              assistantMessage.text += chunk;
+            }
+          });
+          _scrollToBottom();
+        } else if (event.type == AiStreamEventType.error) {
+          setState(() {
+            assistantMessage.text =
+                event.error ?? 'Mình xin lỗi, có lỗi xảy ra. Bạn thử lại nhé.';
+          });
+        }
+      }
+
+      if (assistantMessage.text.trim().isEmpty && mounted) {
+        setState(() {
+          assistantMessage.text =
+              'Mình đang lắng nghe. Bạn có thể nói rõ hơn một chút không?';
+        });
+      }
+    } on ApiClientException catch (error) {
+      if (!mounted) return;
+      setState(() => assistantMessage.text = error.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        assistantMessage.text =
+            'Mình xin lỗi, hiện chưa kết nối được AI. Bạn thử lại sau nhé.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          assistantMessage.streaming = false;
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  List<AiChatMessage> _buildRequestMessages() {
+    return _messages
+        .where((message) => message.text.trim().isNotEmpty)
+        .map(
+          (message) => AiChatMessage(
+            role: message.isUser
+                ? AiChatMessageRole.user
+                : AiChatMessageRole.assistant,
+            content: message.text,
+          ),
+        )
+        .toList();
+  }
+
+  Widget _buildBubble(_BotMessage msg) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -346,9 +389,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 gradient: BondyColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Icon(Icons.smart_toy, color: Colors.white, size: 16),
-              ),
+              child: const Icon(Icons.smart_toy, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 8),
           ],
@@ -368,40 +409,34 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                   bottomRight: Radius.circular(msg.isUser ? 4 : 16),
                 ),
               ),
-              child: Text(
-                msg.text,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: msg.isUser ? Colors.white : BondyColors.textPrimary,
-                  height: 1.35,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      msg.text,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: msg.isUser
+                            ? Colors.white
+                            : BondyColors.textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  if (msg.streaming && msg.text.isEmpty) ...[
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTopic(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: () {
-          _proceedWithMessage(label);
-        },
-        child: Chip(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Color(0xFFFFD9C0)),
-          label: Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: BondyColors.textPrimary,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -422,18 +457,10 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: BondyColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: BondyColors.primary,
-                    size: 32,
-                  ),
+                const Icon(
+                  Icons.favorite,
+                  color: BondyColors.primary,
+                  size: 40,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -446,7 +473,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Mình không phải chuyên gia tâm lý, nhưng mình ở đây để lắng nghe bạn. Nếu bạn cần hỗ trợ chuyên môn, hãy cân nhắc tìm kiếm người giúp đỡ phù hợp.',
+                  'Bondy không thay thế chuyên gia tâm lý. Nếu bạn thấy không an toàn, hãy liên hệ người thân hoặc dịch vụ hỗ trợ khẩn cấp.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: BondyColors.textSecondary,
@@ -456,7 +483,6 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 ),
                 const SizedBox(height: 24),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
                       child: OutlinedButton(
@@ -469,11 +495,12 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          setState(() => _showSafetyWarning = false);
-                          if (_pendingMessage != null) {
-                            _proceedWithMessage(_pendingMessage!);
+                          final message = _pendingMessage;
+                          setState(() {
+                            _showSafetyWarning = false;
                             _pendingMessage = null;
-                          }
+                          });
+                          if (message != null) _proceedWithMessage(message);
                         },
                         child: const Text('Gửi tin nhắn'),
                       ),
@@ -488,69 +515,22 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
     );
   }
 
-  Widget _buildAskBondyOverlay() {
-    return GestureDetector(
-      onTap: () => setState(() => _showOverlay = false),
-      child: Container(
-        color: BondyColors.overlay,
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(32),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                    gradient: BondyColors.primaryGradient,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.smart_toy, color: Colors.white, size: 32),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Hỏi Bondy bất cứ điều gì',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bondy luôn sẵn sàng lắng nghe\nvà đồng hành cùng bạn.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: BondyColors.textSecondary,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => setState(() => _showOverlay = false),
-                  child: const Text('Bắt đầu trò chuyện'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
   }
 }
 
 class _BotMessage {
-  final String text;
+  String text;
   final bool isUser;
-  final String messageType;
+  bool streaming;
 
-  _BotMessage(this.text, this.isUser, {this.messageType = 'TEXT'});
+  _BotMessage(this.text, this.isUser, {this.streaming = false});
 }

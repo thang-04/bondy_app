@@ -140,7 +140,12 @@ void main() {
     final events = await service
         .streamChat(
           AiStreamChatRequest(
-            message: 'Hom nay minh buon',
+            messages: const [
+              AiChatMessage(
+                role: AiChatMessageRole.user,
+                content: 'Hom nay minh buon',
+              ),
+            ],
             mode: AiChatMode.healing,
             sessionId: 'healing-session-1',
           ),
@@ -148,12 +153,30 @@ void main() {
         .toList();
 
     expect(httpClient.request?.url.path, '/api/ai/chat');
+    expect(httpClient.request?.body, isNot(contains('"message"')));
+    expect(httpClient.request?.body, contains('"messages"'));
+    expect(httpClient.request?.body, contains('"role":"user"'));
+    expect(httpClient.request?.body, contains('"content":"Hom nay minh buon"'));
     expect(httpClient.request?.body, contains('"mode":"healing"'));
+    expect(
+      httpClient.request?.body,
+      contains('"sessionId":"healing-session-1"'),
+    );
     expect(
       events.where((event) => event.type == AiStreamEventType.chunk),
       hasLength(2),
     );
     expect(events.last.metadata?.quota?.remaining, 1);
+  });
+
+  test('supports all AI chat modes exposed by the server', () {
+    expect(AiChatMode.fromJson('default'), AiChatMode.defaultMode);
+    expect(AiChatMode.fromJson('healing'), AiChatMode.healing);
+    expect(AiChatMode.fromJson('coach'), AiChatMode.coach);
+    expect(AiChatMode.fromJson('plan'), AiChatMode.plan);
+    expect(AiChatMode.fromJson('ai-tu-vi'), AiChatMode.aiTuVi);
+    expect(AiChatMode.fromJson('tarot'), AiChatMode.tarot);
+    expect(AiChatMode.tarot.apiValue, 'tarot');
   });
 
   test('coach chat request sends the explicit match contract', () {

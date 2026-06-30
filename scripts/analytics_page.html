@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bondy App Analytics</title>
+
+  <!-- Google Analytics gtag.js -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XD4HYE0MPD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XD4HYE0MPD', {
+      send_page_view: true,
+      cookie_flags: 'SameSite=None;Secure',
+      debug_mode: true
+    });
+
+    // ---- Danh sách events mô phỏng user journey tập trung vào Chat AI và Healing ----
+    const EVENTS = [
+      { name: 'app_open', params: {} },
+      { name: 'signup_start', params: {} },
+      { name: 'signup_complete', params: { userId: 'user_' + Math.random().toString(36).substr(2, 8) } },
+      { name: 'profile_complete', params: {} },
+      { name: 'discover_view', params: {} },
+      { name: 'screen_view', params: { firebase_screen: 'DiscoverScreen', firebase_screen_class: 'DiscoverScreen' } },
+      { name: 'swipe_like', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
+      { name: 'swipe_pass', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
+      
+      // ---- AI Chat AI interactions (Tập trung chính) ----
+      { name: 'chat_opened', params: { chatId: 'ai_chat_bot' } },
+      { name: 'screen_view', params: { firebase_screen: 'ChatDetailScreen', firebase_screen_class: 'ChatDetailScreen' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'emoji' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'image' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      
+      // ---- Healing Screen & Course interactions ----
+      { name: 'healing_checkin', params: { checkinType: 'mood_happy' } },
+      { name: 'screen_view', params: { firebase_screen: 'HealingScreen', firebase_screen_class: 'HealingScreen' } },
+      { name: 'healing_course_started', params: { courseId: 'meditation_101' } },
+      { name: 'healing_course_started', params: { courseId: 'self_care_daily' } },
+      { name: 'healing_checkin', params: { checkinType: 'reflect_end_day' } },
+      
+      // ---- More AI Chat exchanges ----
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+      
+      // ---- Monetization & settings ----
+      { name: 'subscription_paywall_view', params: {} },
+      { name: 'screen_view', params: { firebase_screen: 'PremiumPaywallScreen', firebase_screen_class: 'PremiumPaywallScreen' } },
+      { name: 'screen_view', params: { firebase_screen: 'ProfileScreen', firebase_screen_class: 'ProfileScreen' } },
+    ];
+
+    // ---- Gửi events tuần tự với delay mô phỏng người dùng thật ----
+    let eventIndex = 0;
+    let totalSent = 0;
+
+    function getRandomDelay() {
+      // 12s - 22s để mô phỏng người dùng dừng lại tương tác, đọc bài, gõ chat thật
+      return Math.floor(Math.random() * 10000) + 12000; 
+    }
+
+    function sendNextEvent() {
+      if (eventIndex >= EVENTS.length) {
+        updateStatus('✅ Hoàn thành! Đã gửi ' + totalSent + ' events. Tab sẽ đóng sau 5 giây.');
+        // Tự đóng tab sau 5 giây
+        setTimeout(() => { window.close(); }, 5000);
+        return;
+      }
+
+      const event = EVENTS[eventIndex];
+      // Tăng engagement time của mỗi event (15s - 45s) để nâng Average Engagement Time per user
+      const params = { ...event.params, engagement_time_msec: Math.floor(Math.random() * 30000) + 15000 };
+      gtag('event', event.name, params);
+      totalSent++;
+      eventIndex++;
+
+      updateStatus('📡 Đang gửi event ' + totalSent + '/' + EVENTS.length + ': ' + event.name);
+      setTimeout(sendNextEvent, getRandomDelay());
+    }
+
+    function updateStatus(text) {
+      const el = document.getElementById('status');
+      if (el) el.textContent = text;
+      console.log(text);
+    }
+
+    // Bắt đầu gửi events sau khi gtag.js load xong (3 giây)
+    setTimeout(() => {
+      updateStatus('🚀 Bắt đầu gửi events...');
+      sendNextEvent();
+    }, 3000);
+  </script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      background: #16213e;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      max-width: 500px;
+    }
+    h1 { color: #e94560; margin-bottom: 8px; }
+    #status { 
+      margin-top: 20px; 
+      padding: 12px 20px;
+      background: #0f3460;
+      border-radius: 8px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bondy App</h1>
+    <p>Analytics Event Simulator</p>
+    <div id="status">⏳ Đang tải gtag.js...</div>
+  </div>
+</body>
+</html>

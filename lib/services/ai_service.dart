@@ -116,7 +116,10 @@ class AiChatRequest {
 enum AiChatMode {
   defaultMode,
   healing,
-  coach;
+  coach,
+  plan,
+  aiTuVi,
+  tarot;
 
   static AiChatMode fromJson(Object? value) {
     switch (value?.toString().toLowerCase()) {
@@ -124,6 +127,12 @@ enum AiChatMode {
         return AiChatMode.coach;
       case 'healing':
         return AiChatMode.healing;
+      case 'plan':
+        return AiChatMode.plan;
+      case 'ai-tu-vi':
+        return AiChatMode.aiTuVi;
+      case 'tarot':
+        return AiChatMode.tarot;
       case 'default':
       default:
         return AiChatMode.defaultMode;
@@ -136,10 +145,62 @@ enum AiChatMode {
         return 'healing';
       case AiChatMode.coach:
         return 'coach';
+      case AiChatMode.plan:
+        return 'plan';
+      case AiChatMode.aiTuVi:
+        return 'ai-tu-vi';
+      case AiChatMode.tarot:
+        return 'tarot';
       case AiChatMode.defaultMode:
         return 'default';
     }
   }
+}
+
+enum AiChatMessageRole {
+  user,
+  assistant;
+
+  static AiChatMessageRole fromJson(Object? value) {
+    switch (value?.toString().toLowerCase()) {
+      case 'assistant':
+        return AiChatMessageRole.assistant;
+      case 'user':
+      default:
+        return AiChatMessageRole.user;
+    }
+  }
+
+  String get apiValue {
+    switch (this) {
+      case AiChatMessageRole.assistant:
+        return 'assistant';
+      case AiChatMessageRole.user:
+        return 'user';
+    }
+  }
+}
+
+class AiChatMessage {
+  final AiChatMessageRole role;
+  final String content;
+
+  const AiChatMessage({required this.role, required this.content});
+
+  const AiChatMessage.user(String content)
+    : this(role: AiChatMessageRole.user, content: content);
+
+  const AiChatMessage.assistant(String content)
+    : this(role: AiChatMessageRole.assistant, content: content);
+
+  factory AiChatMessage.fromJson(Map<String, dynamic> json) {
+    return AiChatMessage(
+      role: AiChatMessageRole.fromJson(json['role']),
+      content: json['content']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'role': role.apiValue, 'content': content};
 }
 
 class AiModeQuota {
@@ -320,18 +381,30 @@ Map<String, Map<String, int>> _parseDailyLimits(Object? value) {
 }
 
 class AiStreamChatRequest {
-  final String message;
+  final List<AiChatMessage> messages;
   final AiChatMode mode;
   final String? sessionId;
 
   const AiStreamChatRequest({
-    required this.message,
+    required this.messages,
     this.mode = AiChatMode.defaultMode,
     this.sessionId,
   });
 
+  factory AiStreamChatRequest.singleUserMessage({
+    required String message,
+    AiChatMode mode = AiChatMode.defaultMode,
+    String? sessionId,
+  }) {
+    return AiStreamChatRequest(
+      messages: [AiChatMessage.user(message)],
+      mode: mode,
+      sessionId: sessionId,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
-    'message': message,
+    'messages': messages.map((message) => message.toJson()).toList(),
     'mode': mode.apiValue,
     if (sessionId != null && sessionId!.isNotEmpty) 'sessionId': sessionId,
   };

@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bondy AI — Hướng dẫn tạo Mode, Skill & Dùng API</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+            line-height: 1.7; color: #1a1a2e; background: #f0f2f5; padding: 24px;
+        }
+        .container { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.08); padding: 48px; }
+        @media (max-width: 640px) { .container { padding: 20px; } body { padding: 8px; } }
+
+        h1 { font-size: 28px; color: #e91e63; border-bottom: 3px solid #e91e63; padding-bottom: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+        h1 small { font-size: 14px; color: #888; font-weight: 400; }
+        h2 { font-size: 22px; color: #ff8a65; margin: 36px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px; }
+        h3 { font-size: 17px; color: #444; margin: 24px 0 12px; }
+        h4 { font-size: 15px; color: #666; margin: 16px 0 8px; }
+        p { margin-bottom: 14px; }
+        ul, ol { margin: 0 0 14px 24px; }
+        li { margin-bottom: 4px; }
+
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #fff; }
+        .b-healing { background: #2196f3; }
+        .b-coach { background: #e91e63; }
+        .b-default { background: #9e9e9e; }
+        .b-plan { background: #673ab7; }
+        .b-tuvi { background: #ff9800; }
+        .b-get { background: #4caf50; }
+        .b-post { background: #ff9800; }
+        .b-required { background: #f44336; }
+        .b-optional { background: #9e9e9e; }
+
+        pre {
+            background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 10px;
+            overflow-x: auto; margin: 12px 0; font-size: 13px; line-height: 1.5;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            tab-size: 2;
+        }
+        pre .comment { color: #6c7086; }
+        pre .key { color: #89b4fa; }
+        pre .str { color: #a6e3a1; }
+        pre .num { color: #fab387; }
+        pre .bool { color: #cba6f7; }
+        pre .tag { color: #f38ba8; }
+        code { font-family: 'JetBrains Mono', 'Consolas', monospace; }
+        p > code, li > code { background: #f0f0f5; padding: 1px 6px; border-radius: 4px; font-size: 13px; color: #e91e63; }
+
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 14px; }
+        th { background: #ff8a65; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+        th:first-child { border-radius: 8px 0 0 0; }
+        th:last-child { border-radius: 0 8px 0 0; }
+        td { padding: 9px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+        tr:hover td { background: #fafafa; }
+
+        .box { padding: 16px 20px; border-radius: 10px; margin: 16px 0; border-left: 4px solid; }
+        .box-info { background: #e3f2fd; border-color: #2196f3; }
+        .box-warn { background: #fff3e0; border-color: #ff9800; }
+        .box-danger { background: #ffebee; border-color: #f44336; }
+        .box-success { background: #e8f5e9; border-color: #4caf50; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+
+        .step { display: flex; gap: 14px; margin: 12px 0; align-items: flex-start; }
+        .step-num { background: #e91e63; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+
+        .field-grid { display: grid; grid-template-columns: 140px 1fr; gap: 4px 16px; margin: 8px 0; font-size: 14px; }
+        .field-grid > dt { font-weight: 600; color: #e91e63; padding: 4px 0; }
+        .field-grid > dd { padding: 4px 0; }
+
+        .toc { background: #f8f9fa; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .toc h3 { margin: 0 0 12px; color: #e91e63; }
+        .toc ol { margin: 0; padding-left: 20px; }
+        .toc a { color: #e91e63; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        hr { border: none; border-top: 2px solid #eee; margin: 36px 0; }
+        .footer { text-align: center; color: #999; font-size: 13px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+
+        .tab-container { margin: 12px 0; }
+        .tab-btns { display: flex; gap: 0; overflow: hidden; border-radius: 8px 8px 0 0; }
+        .tab-btn { padding: 8px 18px; border: none; background: #eee; cursor: pointer; font-size: 13px; font-weight: 600; transition: .2s; }
+        .tab-btn:hover { background: #ddd; }
+        .tab-btn.active { background: #1e1e2e; color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>🤖 Bondy AI — Hướng dẫn đầy đủ <small>v2.0</small></h1>
+<p>Tài liệu này gồm 2 phần: <strong>(1) Sử dụng AI API</strong> và <strong>(2) Tạo Mode & Skill mới</strong>.</p>
+
+<div class="toc">
+<h3>📖 Mục lục</h3>
+<ol>
+    <li><a href="#overview">Tổng quan hệ thống AI</a></li>
+    <li><a href="#auth">Authentication — Lấy JWT Token</a></li>
+    <li><a href="#chat-api">AI Chat API — POST /api/ai/chat</a></li>
+    <li><a href="#coach-api">Coach Suggestions — POST /api/ai/coach/suggestions</a></li>
+    <li><a href="#matching-api">AI Matching — POST /api/ai/matching</a></li>
+    <li><a href="#quota-api">AI Quota — GET /api/ai/quota</a></li>
+    <li><a href="#create-mode">Tạo Mode mới</a></li>
+    <li><a href="#create-skill">Tạo Skill mới</a></li>
+    <li><a href="#env">Cấu hình môi trường</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="overview">1️⃣ Tổng quan hệ thống AI</h2>
+
+<p>Bondy sử dụng kiến trúc <strong>pipeline</strong> cho AI chat. Luồng xử lý:</p>
+
+<pre><code>Client POST /api/ai/chat
+  └─ withAuth (JWT Bearer)
+  └─ Rate Limit (20 req/min)
+  └─ Zod validation (DTO)
+  └─ Service Layer (aiChatService)
+      ├─ Resolve quota (healing/coach modes)
+      └─ Chat Pipeline
+          ├─ Load context (matches, emotional state, RAG, history)
+          ├─ Build system prompt (mode + skills catalog)
+          ├─ Filter tools per mode permissions
+          ├─ Safety classifier (keyword → rule → LLM)
+          ├─ OpenAI streaming with tool calling
+          └─ Post-process (strip reasoning, persist memory)
+</code></pre>
+
+<p><strong>4 API Endpoints:</strong></p>
+<table>
+    <tr>
+        <th>Method</th><th>Path</th><th>Mô tả</th><th>Auth</th><th>Rate Limit</th>
+    </tr>
+    <tr>
+        <td><span class="badge b-post">POST</span></td>
+        <td><code>/api/ai/chat</code></td>
+        <td>Unified AI chat (SSE stream), 5 modes</td>
+        <td><span class="badge b-required">JWT</span></td>
+        <td>20/min</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-post">POST</span></td>
+        <td><code>/api/ai/coach/suggestions</code></td>
+        <td>Gợi ý tin nhắn dating</td>
+        <td><span class="badge b-required">JWT</span></td>
+        <td>10/h</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-post">POST</span></td>
+        <td><code>/api/ai/matching</code></td>
+        <td>AI matching recommendations</td>
+        <td><span class="badge b-required">JWT</span> + Email verified</td>
+        <td>20/min</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-get">GET</span></td>
+        <td><code>/api/ai/quota</code></td>
+        <td>Xem daily AI quota</td>
+        <td><span class="badge b-required">JWT</span></td>
+        <td>—</td>
+    </tr>
+</table>
+
+<p><strong>5 Modes có sẵn:</strong></p>
+<table>
+    <tr><th>Mode</th><th>Mô tả</th><th>Quota</th><th>Tools</th></tr>
+    <tr>
+        <td><span class="badge b-default">default</span></td>
+        <td>Guardrail — chỉ dating & healing topics</td>
+        <td>❌ Không</td><td>Không có</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-healing">healing</span></td>
+        <td>Tư vấn tâm lý, emotional support</td>
+        <td>✅ Healing quota</td>
+        <td>rag_search, emotional_state_manager, memory_manager, citation_builder</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-coach">coach</span></td>
+        <td>Dating coach, gợi ý nhắn tin</td>
+        <td>✅ Coach quota</td>
+        <td>get_partner_info, get_conversation_history, get_coaching_history, get_user_preferences, save_feedback</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-plan">plan</span></td>
+        <td>Read-only plan generator</td>
+        <td>❌ Không</td><td>Không có</td>
+    </tr>
+    <tr>
+        <td><span class="badge b-tuvi">ai-tu-vi</span></td>
+        <td>Tử vi Việt Nam (12 con giáp, can chi)</td>
+        <td>✅ Healing quota</td>
+        <td>Skill tools (skillPolicy: required)</td>
+    </tr>
+</table>
+
+
+<!-- ============================================================ -->
+<h2 id="auth">2️⃣ Authentication — Lấy JWT Token</h2>
+
+<p>Tất cả AI endpoints yêu cầu <strong>Bearer JWT token</strong>. Lấy token qua login:</p>
+
+<div class="box box-info">
+    <div class="box-title">📌 POST /api/auth/login</div>
+</div>
+
+<div class="tab-container">
+    <div class="tab-btns">
+        <button class="tab-btn active" onclick="switchTab(this,'login-req')">Request</button>
+        <button class="tab-btn" onclick="switchTab(this,'login-res')">Response</button>
+    </div>
+    <div class="tab-content active" id="login-req">
+<pre><code>POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "your-password"
+}</code></pre>
+    </div>
+    <div class="tab-content" id="login-res">
+<pre><code>{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": "user-uuid",
+      "email": "user@example.com",
+      "name": "Nguyễn Văn A"
+    }
+  }
+}</code></pre>
+    </div>
+</div>
+
+<p>Sau đó gửi token trong header:</p>
+<pre><code>Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</code></pre>
+
+
+<!-- ============================================================ -->
+<h2 id="chat-api">3️⃣ AI Chat API — POST /api/ai/chat</h2>
+
+<p>Endpoint chính cho AI chat. Response là <strong>SSE stream</strong> (text/event-stream).</p>
+
+<h3>Request Body</h3>
+<div class="field-grid">
+    <dt><code>messages</code> <span class="badge b-required">required</span></dt>
+    <dd>Array of <code>{ role, content }</code>. Ít nhất 1 message, tối đa 100. Message cuối phải là <code>"role": "user"</code>. Mỗi <code>content</code> tối đa 8000 ký tự.</dd>
+    <dt><code>mode</code></dt>
+    <dd>String, kebab-case. Một trong: <code>default</code> | <code>healing</code> | <code>coach</code> | <code>plan</code> | <code>ai-tu-vi</code>. Default: <code>"default"</code>.</dd>
+    <dt><code>sessionId</code></dt>
+    <dd>String (optional). Dùng để duy trì context qua nhiều lượt chat.</dd>
+</div>
+
+<h3>SSE Stream Response</h3>
+<p>Mỗi event có format:</p>
+<pre><code>event: &lt;type&gt;
+data: &lt;json&gt;</code></pre>
+
+<table>
+    <tr><th>Event Type</th><th>Data</th><th>Xuất hiện khi</th></tr>
+    <tr><td><code>chunk</code></td><td>String — text token</td><td>AI đang generate</td></tr>
+    <tr><td><code>metadata</code></td><td>Object: <code>{ tokensUsed, latencyMs, mode, sessionId, classificationRisk?, quota? }</code></td><td>Kết thúc stream</td></tr>
+    <tr><td><code>error</code></td><td>Object: <code>{ message, code }</code></td><td>Lỗi trong quá trình stream</td></tr>
+    <tr><td><code>done</code></td><td>—</td><td>Stream kết thúc</td></tr>
+</table>
+
+<h3>Ví dụ request cho từng mode</h3>
+
+<div class="tab-container">
+    <div class="tab-btns">
+        <button class="tab-btn" onclick="switchTab(this,'ex-healing')">Healing</button>
+        <button class="tab-btn active" onclick="switchTab(this,'ex-default')">Default</button>
+        <button class="tab-btn" onclick="switchTab(this,'ex-coach')">Coach</button>
+        <button class="tab-btn" onclick="switchTab(this,'ex-plan')">Plan</button>
+        <button class="tab-btn" onclick="switchTab(this,'ex-tuvi')">Ai-Tu-Vi</button>
+    </div>
+    <div class="tab-content" id="ex-healing">
+<pre><code>POST /api/ai/chat
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "user", "content": "Mình vừa chia tay người yêu sau 3 năm, buồn quá. Làm sao để vượt qua?" }
+  ],
+  "mode": "healing",
+  "sessionId": "session-001"
+}</code></pre>
+    </div>
+    <div class="tab-content active" id="ex-default">
+<pre><code>POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "user", "content": "Hôm nay đi date ở đâu đẹp ở Sài Gòn?" }
+  ],
+  "mode": "default"
+}</code></pre>
+    </div>
+    <div class="tab-content" id="ex-coach">
+<pre><code>POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "assistant", "content": "Chào bạn! Mình là dating coach. Cần tư vấn gì?" },
+    { "role": "user", "content": "Mình mới quen một bạn, muốn nhắn tin mở lời" }
+  ],
+  "mode": "coach",
+  "sessionId": "match-abc-123"
+}</code></pre>
+    </div>
+    <div class="tab-content" id="ex-plan">
+<pre><code>POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "user", "content": "Lên kế hoạch tỏ tình vào cuối tuần này" }
+  ],
+  "mode": "plan"
+}</code></pre>
+    </div>
+    <div class="tab-content" id="ex-tuvi">
+<pre><code>POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "user", "content": "Mình tuổi Dần 1998, bạn kia tuổi Mùi 2003. Hợp không?" }
+  ],
+  "mode": "ai-tu-vi",
+  "sessionId": "session-001"
+}</code></pre>
+    </div>
+</div>
+
+<h3>Parsing SSE stream trong JavaScript</h3>
+<pre><code><span class="comment">// Xử lý EventSource hoặc fetch stream</span>
+const response = await fetch('/api/ai/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json',
+             'Authorization': 'Bearer ' + token },
+  body: JSON.stringify({ messages, mode })
+});
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let buffer = '';
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  buffer += decoder.decode(value, { stream: true });
+
+  const lines = buffer.split('\n');
+  buffer = lines.pop() || '';
+
+  for (const line of lines) {
+    if (line.startsWith('event: ')) {
+      currentEvent = line.slice(7);
+    } else if (line.startsWith('data: ')) {
+      const data = line.slice(6);
+      if (currentEvent === 'chunk') {
+        <span class="comment">// render text token</span>
+        appendToChat(JSON.parse(data));
+      } else if (currentEvent === 'metadata') {
+        <span class="comment">// tokensUsed, latencyMs, quota...</span>
+        const meta = JSON.parse(data);
+        updateMetaDisplay(meta);
+      } else if (currentEvent === 'error') {
+        showError(JSON.parse(data));
+      }
+    }
+  }
+}</code></pre>
+
+<h3>Error Codes</h3>
+<table>
+    <tr><th>Status</th><th>Code</th><th>Ý nghĩa</th><th>Xử lý</th></tr>
+    <tr><td>400</td><td>VALIDATION_ERROR</td><td>Body không hợp lệ</td><td>Kiểm tra Zod validation</td></tr>
+    <tr><td>401</td><td>UNAUTHORIZED</td><td>Thiếu/hết hạn token</td><td>Redirect login</td></tr>
+    <tr><td>403</td><td>EMAIL_NOT_VERIFIED</td><td>Chưa xác thực email</td><td>Yêu cầu verify email</td></tr>
+    <tr><td>429</td><td>RATE_LIMIT_EXCEEDED</td><td>Quá rate limit</td><td>Đợi Retry-After header</td></tr>
+    <tr><td>429</td><td>AI_DAILY_QUOTA_EXCEEDED</td><td>Hết quota AI hôm nay</td><td>Hiển thị upgrade modal</td></tr>
+    <tr><td>500</td><td>INTERNAL_ERROR</td><td>Lỗi server</td><td>Báo "Có lỗi xảy ra"</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<h2 id="coach-api">4️⃣ Coach Suggestions — POST /api/ai/coach/suggestions</h2>
+
+<p>Generate personalized message suggestions cho 1 match cụ thể. Yêu cầu user đã match với người đó.</p>
+
+<h3>Request</h3>
+<div class="field-grid">
+    <dt><code>chatId</code> <span class="badge b-required">required</span></dt><dd>ID của cuộc trò chuyện</dd>
+    <dt><code>matchId</code> <span class="badge b-required">required</span></dt><dd>ID của match</dd>
+    <dt><code>message</code> <span class="badge b-required">required</span></dt><dd>Tin nhắn mới nhất. Tối đa 2000 ký tự.</dd>
+    <dt><code>intent</code></dt><dd><code>opener</code> | <code>continue</code> | <code>deepen</code> | <code>humor</code> | <code>flirt</code>. Default: <code>"continue"</code>.</dd>
+    <dt><code>tone</code></dt><dd><code>casual</code> | <code>warm</code> | <code>playful</code>. Default: <code>"casual"</code>.</dd>
+    <dt><code>count</code></dt><dd>Số suggestions (1-5). Default: 3.</dd>
+    <dt><code>language</code></dt><dd>Luôn <code>"vi"</code> (chỉ support tiếng Việt).</dd>
+</div>
+
+<div class="box box-info">
+    <div class="box-title">📌 Rate limit: 10 req/hour</div>
+</div>
+
+<pre><code>POST /api/ai/coach/suggestions
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  "chatId": "chat-uuid",
+  "matchId": "match-uuid",
+  "message": "Bạn khỏe không?",
+  "intent": "continue",
+  "tone": "warm",
+  "count": 3,
+  "language": "vi"
+}</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre><code>{
+  "success": true,
+  "data": {
+    "flowVersion": "coach-v2",
+    "chatId": "chat-uuid",
+    "matchId": "match-uuid",
+    "partnerId": "partner-uuid",
+    "partnerName": "Ngọc",
+    "response": "Dựa vào tin nhắn gần nhất, 3 gợi ý:",
+    "mode": "coach",
+    "suggestions": [
+      "Em có hay đi cắm trại không?",
+      "Tuần trước mình đi leo Phú Sơn về 😄",
+      "Anh thấy em cũng thích leo núi — đỉnh nào em từng leo rồi?"
+    ],
+    "coachSessionId": "session-uuid",
+    "meta": {
+      "tokensUsed": 420,
+      "latencyMs": 3200,
+      "modelUsed": "mimo-v2.5",
+      "quota": {
+        "mode": "coach", "remaining": 3, "limit": 5
+      }
+    }
+  }
+}</code></pre>
+
+
+<!-- ============================================================ -->
+<h2 id="matching-api">5️⃣ AI Matching — POST /api/ai/matching</h2>
+
+<p>AI-assisted matching từ danh sách discover candidates. Không consume daily AI quota.</p>
+
+<div class="box box-warn">
+    <div class="box-title">⚠️ Yêu cầu</div>
+    Email đã verified + profile ≥ DISCOVER_READY
+</div>
+
+<h3>Request</h3>
+<div class="field-grid">
+    <dt><code>message</code></dt><dd>Mô tả tiêu chí (max 2000 ký tự). Optional.</dd>
+    <dt><code>limit</code></dt><dd>Số lượng candidates (1-10). Default: 5.</dd>
+    <dt><code>sortBy</code></dt><dd><code>compatibility</code> | <code>common_interests</code>. Default: <code>"compatibility"</code>.</dd>
+    <dt><code>filters</code></dt><dd>Object chứa <code>city</code>, <code>datingGoal</code>, v.v. Optional.</dd>
+</div>
+
+<pre><code>POST /api/ai/matching
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  "message": "Gợi ý người hợp để bắt đầu trò chuyện nghiêm túc",
+  "limit": 5,
+  "sortBy": "compatibility",
+  "filters": {
+    "city": "Hồ Chí Minh",
+    "datingGoal": "nghiêm túc"
+  }
+}</code></pre>
+
+<p><strong>Response (rút gọn):</strong></p>
+<pre><code>{
+  "success": true,
+  "data": {
+    "summary": "Mình gợi ý 2 hồ sơ:",
+    "candidates": [
+      {
+        "userId": "uuid",
+        "name": "Linh",
+        "age": 27,
+        "city": "Hồ Chí Minh",
+        "bio": "Thích cà phê sách...",
+        "vibe": "nhẹ nhàng, sâu sắc",
+        "commonInterests": ["cà phê", "sách"],
+        "compatibility": {
+          "overall": 85,
+          "personality": 80,
+          "lifestyle": 90,
+          "datingGoal": 85
+        },
+        "matchPercentage": 85,
+        "distanceKm": 5,
+        "aiReason": "Có nhiều điểm chung về sở thích...",
+        "conversationStarters": [
+          "Quán cà phê yêu thích của bạn là quán nào?"
+        ]
+      }
+    ],
+    "meta": {
+      "source": "discover-candidates",
+      "candidateCount": 5,
+      "aiGenerated": true
+    }
+  }
+}</code></pre>
+
+<p>Body rỗng <code>{}</code> cũng hợp lệ — dùng toàn bộ default.</p>
+
+
+<!-- ============================================================ -->
+<h2 id="quota-api">6️⃣ AI Quota — GET /api/ai/quota</h2>
+
+<p>Kiểm tra daily AI quota còn lại. Không consume quota, không rate limit.</p>
+
+<pre><code>GET /api/ai/quota
+Authorization: Bearer &lt;token&gt;</code></pre>
+
+<pre><code>{
+  "success": true,
+  "data": {
+    "tier": "FREE",
+    "resetsAt": "2026-06-29T00:00:00.000Z",
+    "quotas": {
+      "healing": {
+        "mode": "healing",
+        "feature": "daily_ai_healing",
+        "label": "AI chữa lành",
+        "tier": "FREE",
+        "limit": 5,
+        "used": 1,
+        "remaining": 4,
+        "resetsAt": "2026-06-29T00:00:00.000Z"
+      },
+      "coach": {
+        "mode": "coach",
+        "feature": "daily_ai_coach",
+        "label": "Gợi ý trò chuyện",
+        "tier": "FREE",
+        "limit": 5,
+        "used": 3,
+        "remaining": 2,
+        "resetsAt": "2026-06-29T00:00:00.000Z"
+      }
+    },
+    "dailyLimitsByTier": {
+      "FREE":  { "healing": 5,  "coach": 5  },
+      "PLUS":  { "healing": 20, "coach": 20 },
+      "PREMIUM": { "healing": 50,  "coach": 50 },
+      "ELITE": { "healing": 100, "coach": 100 }
+    }
+  }
+}</code></pre>
+
+<p>Quota reset hàng ngày theo <strong>Asia/Ho_Chi_Minh</strong> (UTC+7).</p>
+
+
+<!-- ============================================================ -->
+<hr>
+<h1 style="border-bottom-color:#673ab7; color:#673ab7;">🛠️ PHẦN 2 — TẠO MODE & SKILL</h1>
+
+<!-- ============================================================ -->
+<h2 id="create-mode">7️⃣ Tạo Mode mới</h2>
+
+<p>Mode là một file <code>.md</code> trong thư mục <code>src/ai/modes/</code>. File được <strong>tự động phát hiện</strong> khi server khởi động — không cần đăng ký thủ công.</p>
+
+<div class="box box-success">
+    <div class="box-title">📁 Đường dẫn</div>
+    <code>src/ai/modes/&lt;tên-mode&gt;.md</code>
+</div>
+
+<h3>Cấu trúc file mode</h3>
+<pre><code>---
+<span class="key">name</span>: <span class="str">tên-mode</span>          <span class="comment"># BẮT BUỘC, kebab-case, vd: "healing", "ai-tu-vi"</span>
+<span class="key">description</span>: <span class="str">Mô tả ngắn</span> <span class="comment"># BẮT BUỘC, 1-280 ký tự</span>
+<span class="key">temperature</span>: <span class="num">0.7</span>        <span class="comment"># 0-2, default 0.7</span>
+<span class="key">permissions</span>:
+  <span class="key">tools</span>: []               <span class="comment"># Danh sách tool names được phép dùng</span>
+  <span class="key">canAccessUserMatches</span>: <span class="bool">false</span>  <span class="comment"># Được load match data?</span>
+  <span class="key">canAccessEmotionalState</span>: <span class="bool">false</span> <span class="comment"># Được load trạng thái cảm xúc?</span>
+  <span class="key">canAccessRAG</span>: <span class="bool">false</span>        <span class="comment"># Được search RAG?</span>
+  <span class="key">canPersist</span>: <span class="bool">false</span>           <span class="comment"># Được ghi DB?</span>
+<span class="key">guidance</span>:               <span class="comment"># Array các hướng dẫn cho LLM</span>
+  - <span class="str">"Hướng dẫn 1"</span>
+  - <span class="str">"Hướng dẫn 2"</span>
+<span class="key">skills</span>: []               <span class="comment"># Skill names mode này dùng</span>
+<span class="key">skillPolicy</span>: <span class="str">optional</span>   <span class="comment"># disabled | optional | required</span>
+---
+
+<span class="comment"># System prompt body (markdown)</span>
+Bạn là AI có tính cách như thế nào...
+
+## Nguyên tắc
+- Nguyên tắc 1
+- Nguyên tắc 2</code></pre>
+
+<h3>Giải thích các trường</h3>
+
+<table>
+    <tr><th>Trường</th><th>Bắt buộc</th><th>Giá trị</th><th>Mô tả</th></tr>
+    <tr>
+        <td><code>name</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>kebab-case: <code>^[a-z][a-z0-9-]*$</code></td>
+        <td>Định danh duy nhất của mode. Được client gửi trong field <code>mode</code>.</td>
+    </tr>
+    <tr>
+        <td><code>description</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>String, 1-280 ký tự</td>
+        <td>Mô tả ngắn gọn mục đích mode.</td>
+    </tr>
+    <tr>
+        <td><code>temperature</code></td>
+        <td><span class="badge b-optional">Không</span></td>
+        <td>0.0 – 2.0 (default: 0.7)</td>
+        <td>Độ sáng tạo của AI. Thấp = deterministic, cao = creative.</td>
+    </tr>
+    <tr>
+        <td><code>permissions.tools</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>Array of tool names</td>
+        <td>Danh sách tools được phép gọi. Tool không có trong list sẽ bị filter.</td>
+    </tr>
+    <tr>
+        <td><code>permissions.canAccessUserMatches</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>boolean</td>
+        <td>Cho phép AI đọc thông tin match (partner profile, conversation history).</td>
+    </tr>
+    <tr>
+        <td><code>permissions.canAccessEmotionalState</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>boolean</td>
+        <td>Cho phép AI đọc trạng thái cảm xúc hiện tại của user.</td>
+    </tr>
+    <tr>
+        <td><code>permissions.canAccessRAG</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>boolean</td>
+        <td>Cho phép AI search knowledge base (pgvector + BM25).</td>
+    </tr>
+    <tr>
+        <td><code>permissions.canPersist</code></td>
+        <td><span class="badge b-required">Có</span></td>
+        <td>boolean</td>
+        <td>Cho phép AI ghi dữ liệu vào DB (healing messages, feedback, etc).</td>
+    </tr>
+    <tr>
+        <td><code>guidance</code></td>
+        <td><span class="badge b-optional">Không</span></td>
+        <td>Array of strings</td>
+        <td>Các hướng dẫn bổ sung, được join bằng newline vào system prompt.</td>
+    </tr>
+    <tr>
+        <td><code>skills</code></td>
+        <td><span class="badge b-optional">Không</span></td>
+        <td>Array of skill names</td>
+        <td>Skills được enable cho mode này. Hiện tại skills là GLOBAL (không filter per mode).</td>
+    </tr>
+    <tr>
+        <td><code>skillPolicy</code></td>
+        <td><span class="badge b-optional">Không</span></td>
+        <td><code>disabled</code> | <code>optional</code> | <code>required</code></td>
+        <td>Chính sách xử lý skill. <code>disabled</code> = không có skill catalog, <code>optional</code> = LLM có thể gọi, <code>required</code> = gợi ý LLM nên dùng skill.</td>
+    </tr>
+</table>
+
+<h3>Danh sách tools có sẵn</h3>
+<p>Các tools được đăng ký trong pipeline. Mode chỉ được dùng tools có trong <code>permissions.tools</code>:</p>
+<table>
+    <tr><th>Tool Name</th><th>Mô tả</th><th>Dùng bởi mode</th></tr>
+    <tr><td><code>rag_search</code></td><td>Search knowledge base (pgvector + BM25)</td><td>healing</td></tr>
+    <tr><td><code>emotional_state_manager</code></td><td>Đọc/ghi trạng thái cảm xúc</td><td>healing</td></tr>
+    <tr><td><code>memory_manager</code></td><td>Quản lý bộ nhớ conversation</td><td>healing</td></tr>
+    <tr><td><code>citation_builder</code></td><td>Build citation từ RAG results</td><td>healing</td></tr>
+    <tr><td><code>get_partner_info</code></td><td>Lấy thông tin partner từ matchId</td><td>coach</td></tr>
+    <tr><td><code>get_conversation_history</code></td><td>Lấy lịch sử chat với match</td><td>coach</td></tr>
+    <tr><td><code>get_coaching_history</code></td><td>Lấy lịch sử coaching trước đó</td><td>coach</td></tr>
+    <tr><td><code>get_user_preferences</code></td><td>Lấy preferences của user</td><td>coach</td></tr>
+    <tr><td><code>save_feedback</code></td><td>Lưu feedback coaching</td><td>coach</td></tr>
+</table>
+
+<h3>Ví dụ: Tạo mode "vent" (tâm sự bạn bè)</h3>
+
+<pre><code>---
+<span class="key">name</span>: <span class="str">vent</span>
+<span class="key">description</span>: <span class="str">Tâm sự bạn bè thân thiết, không phán xét, không trị liệu</span>
+<span class="key">temperature</span>: <span class="num">0.9</span>
+<span class="key">permissions</span>:
+  <span class="key">tools</span>: []
+  <span class="key">canAccessUserMatches</span>: <span class="bool">false</span>
+  <span class="key">canAccessEmotionalState</span>: <span class="bool">true</span>
+  <span class="key">canAccessRAG</span>: <span class="bool">false</span>
+  <span class="key">canPersist</span>: <span class="bool">false</span>
+<span class="key">guidance</span>:
+  - <span class="str">"Vai trò như người bạn thân, KHÔNG phải therapist"</span>
+  - <span class="str">"Không đưa lời khuyên trừ khi user hỏi"</span>
+  - <span class="str">"Dùng 'cậu' xưng hô, thân thiện, có thể dùng emoji"</span>
+<span class="key">skills</span>: []
+---
+
+Bạn là người bạn thân nhất của user — người luôn sẵn sàng lắng nghe mà không phán xét.
+
+## Nguyên tắc
+1. **Lắng nghe trước** — để user nói hết, chỉ đặt câu hỏi để khuyến khích họ chia sẻ thêm
+2. **Không phán xét** — tuyệt đối không "Sao bạn lại nghĩ vậy?" hay "Đáng lẽ bạn nên..."
+3. **Chỉ đưa lời khuyên khi được hỏi** — nếu không, chỉ cần "Mình hiểu", "Nghe khó khăn thật"
+4. **Không trị liệu** — nếu thấy dấu hiệu nghiêm trọng, nhẹ nhàng gợi ý tìm chuyên gia
+5. **Dùng tiếng Việt thân mật**, có thể dùng emoji 🫂💪
+
+## Phong cách
+- Giọng ấm áp, tự nhiên như bạn bè nói chuyện
+- Nếu user muốn chuyển chủ đề, theo họ
+- Có thể dùng slang nhẹ (mệt mỏi = "mệt vl"), nhưng tôn trọng giới hạn của user</code></pre>
+
+<div class="box box-info">
+    <div class="box-title">✅ Sau khi tạo file, restart server. Mode "vent" sẽ tự động có sẵn.</div>
+    Gọi: <code>POST /api/ai/chat</code> với <code>{ "mode": "vent", "messages": [...] }</code>
+</div>
+
+<div class="box box-warn">
+    <div class="box-title">⚠️ Lưu ý</div>
+    <ul>
+        <li>Mode mới KHÔNG consume quota trừ khi bạn thêm logic quota trong service layer</li>
+        <li>Nếu mode cần tools mới, phải đăng ký tool trong <code>src/ai/pipeline/get-tools.ts</code></li>
+        <li>Tên mode phải là kebab-case (chữ thường, dấu gạch ngang)</li>
+        <li>File mode được hot-reload trong dev mode (chokidar watch)</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="create-skill">8️⃣ Tạo Skill mới</h2>
+
+<p>Skill là kiến thức chuyên ngành mà AI có thể tra cứu khi cần. Mỗi skill là 1 folder riêng chứa file <code>SKILL.md</code>.</p>
+
+<div class="box box-success">
+    <div class="box-title">📁 Đường dẫn</div>
+    <code>src/ai/skills/&lt;tên-skill&gt;/SKILL.md</code>
+</div>
+
+<h3>So sánh Mode vs Skill</h3>
+<table>
+    <tr><th>Tiêu chí</th><th>Mode</th><th>Skill</th></tr>
+    <tr><td>Vai trò</td><td>Định nghĩa <strong>tính cách + hành vi</strong> của AI</td><td>Cung cấp <strong>kiến thức chuyên ngành</strong></td></tr>
+    <tr><td>Tác động</td><td>Thay đổi system prompt, permissions, tools</td><td>Thêm vào skill catalog, LLM gọi khi cần</td></tr>
+    <tr><td>Khi nào dùng</td><td>Client gửi <code>mode</code> trong request</td><td>LLM tự quyết định gọi <code>skill()</code> tool</td></tr>
+    <tr><td>Ví dụ</td><td><code>healing</code>, <code>coach</code>, <code>ai-tu-vi</code></td><td><code>cung-hoang-dao</code>, <code>dating-advice</code></td></tr>
+    <tr><td>Frontmatter fields</td><td>9+ fields (name, desc, temp, permissions, ...)</td><td>2 fields (name, description)</td></tr>
+</table>
+
+<h3>Cấu trúc file skill</h3>
+<pre><code>---
+<span class="key">name</span>: <span class="str">tên-skill</span>          <span class="comment"># BẮT BUỘC, định danh duy nhất</span>
+<span class="key">description</span>: <span class="str">Mô tả...</span>    <span class="comment"># Không bắt buộc, hiển thị trong skill catalog</span>
+---
+
+<span class="comment"># Nội dung kiến thức (markdown)</span>
+Đây là kiến thức chuyên ngành mà AI sẽ đọc khi gọi <code>skill(name="...")</code>.
+
+## Có thể dùng markdown
+- bullet lists
+- **bold**
+- ## headings
+- và bất kỳ format nào</code></pre>
+
+<h3>Cơ chế hoạt động</h3>
+<ol>
+    <li><strong>Discovery:</strong> Khi server khởi động, <code>SkillRegistry</code> quét thư mục <code>src/ai/skills/</code>, tìm tất cả folder con chứa <code>SKILL.md</code> → parse frontmatter → cache vào memory.</li>
+    <li><strong>Catalog:</strong> Skills được hiển thị trong system prompt dưới dạng XML block:</li>
+</ol>
+
+<pre><code>&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;cung-hoang-dao&lt;/name&gt;
+    &lt;description&gt;Tra cứu 12 con giáp&lt;/description&gt;
+  &lt;/skill&gt;
+  &lt;skill&gt;
+    &lt;name&gt;dating-advice&lt;/name&gt;
+    &lt;description&gt;Gợi ý nhắn tin dating&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;</code></pre>
+
+<ol start="3">
+    <li><strong>Loading:</strong> Khi LLM gọi tool <code>skill(name="tên-skill")</code>, nội dung SKILL.md được load và inject vào context.</li>
+</ol>
+
+<h3>Ví dụ: Tạo skill "breathing-exercises"</h3>
+
+<p><strong>Bước 1:</strong> Tạo thư mục và file:</p>
+<pre><code>mkdir -p src/ai/skills/breathing-exercises</code></pre>
+
+<p><strong>Bước 2:</strong> Tạo file <code>src/ai/skills/breathing-exercises/SKILL.md</code>:</p>
+<pre><code>---
+name: breathing-exercises
+description: "Bài tập thở giúp giảm lo âu, căng thẳng cho user"
+---
+
+# Bài tập thở (Breathing Exercises)
+
+## 1. Thở 4-7-8 (Thư giãn sâu)
+- **Cách thực hiện:** Hít vào 4 giây → Giữ hơi 7 giây → Thở ra 8 giây
+- **Lặp lại:** 4-5 lần
+- **Tác dụng:** Giảm lo âu nhanh, dễ ngủ
+- **Phù hợp:** Trước khi ngủ, khi đang panic
+
+## 2. Thở bụng (Diaphragmatic Breathing)
+- **Cách thực hiện:** Đặt tay lên bụng, hít vào phình bụng, thở ra xẹp bụng
+- **Nhịp:** Hít 4s → Thở 6s
+- **Thời gian:** 3-5 phút
+- **Tác dụng:** Giảm căng thẳng cơ bắp, ổn định nhịp tim
+
+## 3. Thở hộp (Box Breathing)
+- **Cách thực hiện:** Hít 4s → Giữ 4s → Thở 4s → Giữ 4s
+- **Lặp lại:** 5-10 lần
+- **Tác dụng:** Tăng focus, kiểm soát cảm xúc tức thì
+- **Phù hợp:** Trước buổi họp, khi cần bình tĩnh nhanh
+
+## 4. Thở luân phiên (Nadi Shodhana)
+- **Cách thực hiện:** Bịt lỗ mũi phải, hít vào trái → bịt trái, thở ra phải → đổi bên
+- **Thời gian:** 5-10 phút
+- **Tác dụng:** Cân bằng hệ thần kinh, giảm anxiety
+
+## Lưu ý an toàn
+- Nếu user có bệnh hô hấp (hen suyễn, COPD), khuyên tham khảo bác sĩ trước
+- Không tập quá sức — chóng mặt thì dừng lại, thở bình thường
+- Kết hợp với nhạc không lời hoặc âm thanh thiên nhiên để tăng hiệu quả</code></pre>
+
+<p><strong>Done!</strong> Skill mới tự động có sẵn sau khi restart server. LLM trong các mode có <code>skillPolicy: "optional"</code> hoặc <code>"required"</code> có thể gọi <code>skill(name="breathing-exercises")</code>.</p>
+
+<h3>Thêm keyword routing (tùy chọn)</h3>
+<p>Nếu muốn AI tự động detect khi user hỏi về breathing exercises, thêm keywords vào <code>src/ai/skills/router.ts</code>:</p>
+
+<pre><code><span class="comment">// Trong file src/ai/skills/router.ts</span>
+
+<span class="comment">// Thêm constant:</span>
+const BREATHING_KEYWORDS = [
+  <span class="str">'bài tập thở'</span>, <span class="str">'cách thở'</span>, <span class="str">'hít thở'</span>,
+  <span class="str">'breathing'</span>, <span class="str">'4-7-8'</span>, <span class="str">'box breathing'</span>,
+  <span class="str">'thư giãn'</span>, <span class="str">'bình tĩnh'</span>, <span class="str">'giảm lo âu'</span>,
+];
+
+<span class="comment">// Thêm case trong detectSkillIntent():</span>
+if (match(BREATHING_KEYWORDS)) {
+  return { skillName: <span class="str">'breathing-exercises'</span>, confidence: <span class="str">'high'</span> };
+}</code></pre>
+
+<h3>Skills hiện có</h3>
+<table>
+    <tr><th>Skill</th><th>Folder</th><th>Mô tả</th></tr>
+    <tr><td>cung-hoang-dao</td><td><code>src/ai/skills/cung-hoang-dao/</code></td><td>12 con giáp Việt Nam</td></tr>
+    <tr><td>dating-advice</td><td><code>src/ai/skills/dating-advice/</code></td><td>Gợi ý nhắn tin dating</td></tr>
+    <tr><td>grief-stages</td><td><code>src/ai/skills/grief-stages/</code></td><td>5 giai đoạn đau buồn Kubler-Ross</td></tr>
+    <tr><td>la-so</td><td><code>src/ai/skills/la-so/</code></td><td>Tử vi căn bản</td></tr>
+    <tr><td>profile-analysis</td><td><code>src/ai/skills/profile-analysis/</code></td><td>Phân tích profile dating</td></tr>
+    <tr><td>tuong-hop</td><td><code>src/ai/skills/tuong-hop/</code></td><td>Tương hợp cung tuổi</td></tr>
+    <tr><td>xem-ngay</td><td><code>src/ai/skills/xem-ngay/</code></td><td>Xem ngày tốt xấu</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<hr>
+<h2 id="env">9️⃣ Cấu hình môi trường</h2>
+
+<p>Biến môi trường liên quan đến AI (trong <code>.env</code>):</p>
+
+<table>
+    <tr><th>Biến</th><th>Mặc định</th><th>Mô tả</th></tr>
+    <tr><td><code>AI_PROVIDER_TYPE</code></td><td><code>mock</code></td><td>Loại provider: <code>openai-compatible</code> hoặc <code>mock</code> (chỉ test)</td></tr>
+    <tr><td><code>AI_PROVIDER_BASE_URL</code></td><td>—</td><td>Base URL của OpenAI-compatible API</td></tr>
+    <tr><td><code>AI_PROVIDER_API_KEY</code></td><td>—</td><td>API key</td></tr>
+    <tr><td><code>AI_PROVIDER_MODEL</code></td><td>—</td><td>Model name (vd: <code>mimo-v2.5</code>, <code>gpt-4o</code>)</td></tr>
+    <tr><td><code>AI_PROVIDER_TIMEOUT_MS</code></td><td><code>110000</code></td><td>Timeout gọi AI provider</td></tr>
+    <tr><td><code>AI_PROVIDER_MAX_TOKENS</code></td><td><code>2000</code></td><td>Max tokens response</td></tr>
+    <tr><td><code>COACH_RATE_LIMIT_PER_HOUR</code></td><td><code>10</code></td><td>Rate limit cho coach suggestions</td></tr>
+    <tr><td><code>PYTHON_EMBEDDING_URL</code></td><td><code>http://localhost:8001/embed</code></td><td>URL của Python embedding service</td></tr>
+    <tr><td><code>EMBEDDING_TIMEOUT_MS</code></td><td><code>3000</code></td><td>Timeout embedding</td></tr>
+    <tr><td><code>MEMORY_TTL_DAYS</code></td><td><code>30</code></td><td>Số ngày giữ bộ nhớ conversation</td></tr>
+    <tr><td><code>RAG_EMBEDDING_MODEL</code></td><td><code>aiteamvn/vietnamese-embedding</code></td><td>Model embedding cho RAG</td></tr>
+    <tr><td><code>RAG_EMBEDDING_DIMENSION</code></td><td><code>1024</code></td><td>Dimension của embedding vector</td></tr>
+    <tr><td><code>RAG_TOP_K</code></td><td><code>5</code></td><td>Số chunks trả về từ RAG</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<div class="footer">
+    <strong>Bondy AI API v2</strong> — Hướng dẫn tạo Mode, Skill & Dùng API<br>
+    Cập nhật: 28/06/2026
+</div>
+
+</div>
+
+<script>
+function switchTab(btn, id) {
+    const parent = btn.closest('.tab-container');
+    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/ai_mode_catalog.dart';
+import '../../services/ai_service.dart';
+import '../../theme/app_theme.dart';
+
+class AiHubScreen extends StatefulWidget {
+  const AiHubScreen({super.key});
+
+  @override
+  State<AiHubScreen> createState() => _AiHubScreenState();
+}
+
+class _AiHubScreenState extends State<AiHubScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF5F7),
+      appBar: _buildAppBar(context),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildGreetingBanner(),
+            const SizedBox(height: 24),
+            _buildSectionTitle('Chọn mode AI'),
+            const SizedBox(height: 16),
+            _buildModeGrid(context),
+            const SizedBox(height: 28),
+            _buildSectionTitle('Skill đang có'),
+            const SizedBox(height: 12),
+            _buildSkillList(),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, size: 20),
+        color: BondyColors.textPrimary,
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          colors: [Color(0xFFFF6B9D), Color(0xFFFF8C42)],
+        ).createShader(bounds),
+        child: Text(
+          'AI Bondy',
+          style: GoogleFonts.manrope(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGreetingBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFF6B9D), Color(0xFFFF8C42)],
+        ),
+        borderRadius: BorderRadius.circular(BondyRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: BondyColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.25),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 2,
+              ),
+            ),
+            child: const Center(
+              child: Text('🔮', style: TextStyle(fontSize: 28)),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI mode & skill',
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Chọn đúng trợ lý cho câu hỏi của bạn',
+                  style: GoogleFonts.manrope(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        title,
+        style: GoogleFonts.manrope(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: BondyColors.textSecondary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeGrid(BuildContext context) {
+    final modes = AiModeCatalog.modes;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.06,
+        ),
+        itemCount: modes.length,
+        itemBuilder: (context, index) =>
+            _buildModeCard(context, modes[index], index),
+      ),
+    );
+  }
+
+  Widget _buildModeCard(
+    BuildContext context,
+    AiModeDescriptor descriptor,
+    int index,
+  ) {
+    final colors = _modeColors(descriptor.mode);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + index * 60),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) =>
+          Transform.scale(scale: value, child: child),
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(
+          context,
+          descriptor.routeName,
+          arguments: descriptor.routeArguments.isEmpty
+              ? {'mode': descriptor.mode.apiValue}
+              : descriptor.routeArguments,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [colors.$1, colors.$2],
+            ),
+            borderRadius: BorderRadius.circular(BondyRadius.md),
+            border: Border.all(color: colors.$3.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    descriptor.emoji,
+                    style: const TextStyle(fontSize: 22),
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    descriptor.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: BondyColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    descriptor.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.manrope(
+                      fontSize: 11,
+                      color: BondyColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkillList() {
+    final skills = AiModeCatalog.modes
+        .expand((mode) => mode.skills)
+        .fold<Map<String, AiSkillDescriptor>>(
+          {},
+          (map, skill) => map..putIfAbsent(skill.key, () => skill),
+        )
+        .values
+        .toList();
+
+    return Column(
+      children: skills
+          .map(
+            (skill) => Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(BondyRadius.md),
+                border: Border.all(color: BondyColors.divider, width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: BondyColors.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          skill.label,
+                          style: GoogleFonts.manrope(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: BondyColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          skill.description,
+                          style: GoogleFonts.manrope(
+                            fontSize: 11,
+                            color: BondyColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  (Color, Color, Color) _modeColors(AiChatMode mode) {
+    switch (mode) {
+      case AiChatMode.healing:
+        return (
+          const Color(0xFFEEFFF5),
+          const Color(0xFFD6FFE8),
+          const Color(0xFF10B981),
+        );
+      case AiChatMode.coach:
+        return (
+          const Color(0xFFFFEEF2),
+          const Color(0xFFFFD6E0),
+          const Color(0xFFFF6B9D),
+        );
+      case AiChatMode.plan:
+        return (
+          const Color(0xFFEAF7FF),
+          const Color(0xFFD7ECFF),
+          const Color(0xFF0284C7),
+        );
+      case AiChatMode.aiTuVi:
+        return (
+          const Color(0xFFFFF5EE),
+          const Color(0xFFFFE8D6),
+          const Color(0xFFFF8C42),
+        );
+      case AiChatMode.tarot:
+        return (
+          const Color(0xFFEEEEFF),
+          const Color(0xFFD6D6FF),
+          const Color(0xFF8B5CF6),
+        );
+      case AiChatMode.defaultMode:
+        return (
+          const Color(0xFFFFF8E7),
+          const Color(0xFFFFEDD5),
+          const Color(0xFFF59E0B),
+        );
+    }
+  }
+}
