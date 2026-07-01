@@ -7,6 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/safety_guardrails_service.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/ai/ai_quota_viewmodel.dart';
+import '../../widgets/common/ai_markdown_text.dart';
 import '../healing/healing_stitch_style.dart';
 
 class HealingChatbotCoachScreen extends StatefulWidget {
@@ -450,16 +451,23 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
-                      message.text,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: message.isUser
-                            ? Colors.white
-                            : BondyColors.textPrimary,
-                        height: 1.35,
-                      ),
-                    ),
+                    child: message.isUser
+                        ? Text(
+                            message.text,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: Colors.white,
+                              height: 1.35,
+                            ),
+                          )
+                        : AiMarkdownText(
+                            data: message.text,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: BondyColors.textPrimary,
+                              height: 1.35,
+                            ),
+                          ),
                   ),
                   if (message.streaming && message.text.isEmpty) ...[
                     const SizedBox(width: 8),

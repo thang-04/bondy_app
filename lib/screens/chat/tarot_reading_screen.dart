@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
+import '../../widgets/common/ai_markdown_text.dart';
 
 class TarotReadingScreen extends StatefulWidget {
   final AiService? aiService;
@@ -406,13 +407,12 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             Container(
               width: 32,
               height: 32,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
                 color: Color(0xFF2D2D5E),
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Text('🔮', style: TextStyle(fontSize: 14)),
-              ),
+              child: Image.asset('assets/images/ai_avatars/avatar_tarot.png', fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
           ],
@@ -437,15 +437,25 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
-                      msg.text,
-                      style: GoogleFonts.manrope(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.95),
-                        height: 1.4,
-                      ),
-                    ),
+                    child: msg.isUser
+                        ? Text(
+                            msg.text,
+                            style: GoogleFonts.manrope(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.95),
+                              height: 1.4,
+                            ),
+                          )
+                        : AiMarkdownText(
+                            data: msg.text,
+                            style: GoogleFonts.manrope(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.95),
+                              height: 1.4,
+                            ),
+                          ),
                   ),
                   if (msg.streaming && msg.text.isEmpty) ...[
                     const SizedBox(width: 8),
@@ -573,7 +583,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
           if (isDraw) {
             _drawCards();
           } else {
-            _sendMessage(text);
+            _controller.text = text;
           }
         },
         child: Container(

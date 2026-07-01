@@ -18,6 +18,7 @@ class AiModeDescriptor {
   final String subtitle;
   final String routeName;
   final String emoji;
+  final String avatarAsset;
   final List<AiSkillDescriptor> skills;
   final Map<String, Object?> routeArguments;
 
@@ -27,6 +28,7 @@ class AiModeDescriptor {
     required this.subtitle,
     required this.routeName,
     required this.emoji,
+    required this.avatarAsset,
     this.skills = const [],
     this.routeArguments = const {},
   });
@@ -88,6 +90,7 @@ class AiModeCatalog {
       subtitle: 'Trợ lý AI chung',
       routeName: '/bondy-ai',
       emoji: '🤖',
+      avatarAsset: 'assets/images/ai_avatars/avatar_default.png',
       routeArguments: {'mode': 'default'},
     ),
     AiModeDescriptor(
@@ -96,6 +99,7 @@ class AiModeCatalog {
       subtitle: 'Lắng nghe cảm xúc',
       routeName: '/chatbot',
       emoji: '🌿',
+      avatarAsset: 'assets/images/ai_avatars/avatar_healing.png',
       skills: [griefStages],
     ),
     AiModeDescriptor(
@@ -104,6 +108,7 @@ class AiModeCatalog {
       subtitle: 'Gợi ý hẹn hò',
       routeName: '/bondy-ai',
       emoji: '💕',
+      avatarAsset: 'assets/images/ai_avatars/avatar_coach.png',
       skills: [datingAdvice, profileAnalysis],
       routeArguments: {'mode': 'coach'},
     ),
@@ -113,6 +118,7 @@ class AiModeCatalog {
       subtitle: 'Biến ý tưởng thành bước làm',
       routeName: '/bondy-ai',
       emoji: '🗓️',
+      avatarAsset: 'assets/images/ai_avatars/avatar_plan.png',
       routeArguments: {'mode': 'plan'},
     ),
     AiModeDescriptor(
@@ -121,6 +127,7 @@ class AiModeCatalog {
       subtitle: 'Cung, tuổi và tương hợp',
       routeName: '/zodiac-ai',
       emoji: '🔮',
+      avatarAsset: 'assets/images/ai_avatars/avatar_tuvi.png',
       skills: [zodiac, compatibility, datePicking, natalChart],
     ),
     AiModeDescriptor(
@@ -129,6 +136,7 @@ class AiModeCatalog {
       subtitle: 'Rút bài và giải nghĩa',
       routeName: '/tarot-reading',
       emoji: '🃏',
+      avatarAsset: 'assets/images/ai_avatars/avatar_tarot.png',
       skills: [tarotSkill],
     ),
   ];

@@ -16,7 +16,7 @@ class _RecordingAiService extends AiService {
   @override
   Stream<AiChatStreamEvent> streamChat(AiStreamChatRequest request) async* {
     requests.add(request);
-    yield AiChatStreamEvent.chunk('AI streamed response');
+    yield AiChatStreamEvent.chunk('## Goi y\n\n1. **AI streamed response**');
     yield AiChatStreamEvent.metadata(
       AiChatStreamMetadata.fromJson({'mode': request.mode.apiValue}),
     );
@@ -46,7 +46,12 @@ void main() {
 
     expect(aiService.requests.single.mode, AiChatMode.defaultMode);
     expect(aiService.requests.single.messages.last.content, 'hello');
-    expect(find.text('AI streamed response'), findsOneWidget);
+    expect(
+      find.textContaining('AI streamed response', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('##', findRichText: true), findsNothing);
+    expect(find.textContaining('**', findRichText: true), findsNothing);
   });
 
   testWidgets('Zodiac AI sends chat through ai-tu-vi mode', (tester) async {
@@ -64,7 +69,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(aiService.requests.single.mode, AiChatMode.aiTuVi);
-    expect(find.text('AI streamed response'), findsOneWidget);
+    expect(
+      find.textContaining('AI streamed response', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('##', findRichText: true), findsNothing);
+    expect(find.textContaining('**', findRichText: true), findsNothing);
   });
 
   testWidgets('Tarot AI sends follow-up chat through tarot mode', (
@@ -84,7 +94,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(aiService.requests.single.mode, AiChatMode.tarot);
-    expect(find.text('AI streamed response'), findsOneWidget);
+    expect(
+      find.textContaining('AI streamed response', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('##', findRichText: true), findsNothing);
+    expect(find.textContaining('**', findRichText: true), findsNothing);
   });
 
   testWidgets('Emotional check-in sends selected mood through healing mode', (
@@ -109,6 +124,11 @@ void main() {
       aiService.requests.single.messages.last.content,
       contains('can tam su'),
     );
-    expect(find.text('AI streamed response'), findsOneWidget);
+    expect(
+      find.textContaining('AI streamed response', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('##', findRichText: true), findsNothing);
+    expect(find.textContaining('**', findRichText: true), findsNothing);
   });
 }

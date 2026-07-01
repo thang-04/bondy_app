@@ -53,7 +53,9 @@ class _StreamingAiService extends AiService {
   @override
   Stream<AiChatStreamEvent> streamChat(AiStreamChatRequest request) async* {
     lastRequest = request;
-    yield AiChatStreamEvent.chunk('Mình đang lắng nghe bạn.');
+    yield AiChatStreamEvent.chunk(
+      '## Phản hồi\n\n**Mình đang lắng nghe bạn.**',
+    );
     yield AiChatStreamEvent.metadata(
       AiChatStreamMetadata.fromJson({
         'mode': 'healing',
@@ -105,7 +107,12 @@ void main() {
     expect(aiService.lastRequest?.mode, AiChatMode.healing);
     expect(aiService.lastRequest?.messages.last.role, AiChatMessageRole.user);
     expect(aiService.lastRequest?.messages.last.content, 'Hôm nay mình buồn');
-    expect(find.textContaining('Mình đang lắng nghe'), findsOneWidget);
+    expect(
+      find.textContaining('Mình đang lắng nghe', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('##', findRichText: true), findsNothing);
+    expect(find.textContaining('**', findRichText: true), findsNothing);
     expect(find.text('Còn 1/3 lượt'), findsOneWidget);
   });
 }

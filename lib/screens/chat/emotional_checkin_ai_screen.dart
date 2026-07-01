@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/ai_markdown_text.dart';
 
 class EmotionalCheckinAiScreen extends StatefulWidget {
   final AiService? aiService;
@@ -422,8 +423,8 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
               ],
             ),
             const SizedBox(height: 14),
-            Text(
-              _aiResponse,
+            AiMarkdownText(
+              data: _aiResponse,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 height: 1.55,

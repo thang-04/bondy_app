@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/ai_markdown_text.dart';
 
 class ZodiacAiChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -223,17 +224,11 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
             Container(
               width: 32,
               height: 32,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8C42)],
-                ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.smart_toy_outlined,
-                color: Colors.white,
-                size: 16,
-              ),
+              child: Image.asset('assets/images/ai_avatars/avatar_tuvi.png', fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
           ],
@@ -264,17 +259,25 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
-                      msg.text,
-                      style: GoogleFonts.manrope(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: msg.isUser
-                            ? Colors.white
-                            : BondyColors.textPrimary,
-                        height: 1.4,
-                      ),
-                    ),
+                    child: msg.isUser
+                        ? Text(
+                            msg.text,
+                            style: GoogleFonts.manrope(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              height: 1.4,
+                            ),
+                          )
+                        : AiMarkdownText(
+                            data: msg.text,
+                            style: GoogleFonts.manrope(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: BondyColors.textPrimary,
+                              height: 1.4,
+                            ),
+                          ),
                   ),
                   if (msg.streaming && msg.text.isEmpty) ...[
                     const SizedBox(width: 8),
@@ -394,7 +397,11 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        onTap: _isSending ? null : () => _sendMessage(text),
+        onTap: _isSending
+            ? null
+            : () {
+                _controller.text = text;
+              },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(

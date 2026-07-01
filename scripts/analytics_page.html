@@ -17,69 +17,119 @@
       debug_mode: true
     });
 
-    // ---- Danh sách events mô phỏng user journey tập trung vào Chat AI và Healing ----
+    // ============================================================
+    // Kịch bản hành trình người dùng Bondy App
+    // Tập trung: AI Hub (Chat AI) + Healing (Thiền & Khóa học)
+    // Mô phỏng: User mở app → dùng → tắt → QUAY LẠI dùng tiếp
+    // Tổng thời gian session: ~10-12 phút
+    // ============================================================
+
     const EVENTS = [
+      // ========== SESSION 1: Đăng ký & Khám phá ==========
       { name: 'app_open', params: {} },
+      { name: 'screen_view', params: { firebase_screen: 'HomeScreen', firebase_screen_class: 'HomeScreen' } },
       { name: 'signup_start', params: {} },
       { name: 'signup_complete', params: { userId: 'user_' + Math.random().toString(36).substr(2, 8) } },
       { name: 'profile_complete', params: {} },
-      { name: 'discover_view', params: {} },
       { name: 'screen_view', params: { firebase_screen: 'DiscoverScreen', firebase_screen_class: 'DiscoverScreen' } },
+      { name: 'discover_view', params: {} },
       { name: 'swipe_like', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
       { name: 'swipe_pass', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
-      
-      // ---- AI Chat AI interactions (Tập trung chính) ----
+      { name: 'swipe_like', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
+
+      // ========== PHẦN 1: AI HUB — Trò chuyện với AI Bot (LẦN 1) ==========
+      { name: 'screen_view', params: { firebase_screen: 'AIHubScreen', firebase_screen_class: 'AIHubScreen' } },
       { name: 'chat_opened', params: { chatId: 'ai_chat_bot' } },
       { name: 'screen_view', params: { firebase_screen: 'ChatDetailScreen', firebase_screen_class: 'ChatDetailScreen' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'emoji' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'image' } },
       { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
-      
-      // ---- Healing Screen & Course interactions ----
-      { name: 'healing_checkin', params: { checkinType: 'mood_happy' } },
+      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
+
+      // ========== PHẦN 2: HEALING — Check-in & Khóa thiền (LẦN 1) ==========
       { name: 'screen_view', params: { firebase_screen: 'HealingScreen', firebase_screen_class: 'HealingScreen' } },
+      { name: 'healing_checkin', params: { checkinType: 'mood_happy' } },
       { name: 'healing_course_started', params: { courseId: 'meditation_101' } },
+      { name: 'screen_view', params: { firebase_screen: 'HealingScreen', firebase_screen_class: 'HealingScreen' } },
+      { name: 'healing_course_started', params: { courseId: 'breathing_exercise' } },
       { name: 'healing_course_started', params: { courseId: 'self_care_daily' } },
-      { name: 'healing_checkin', params: { checkinType: 'reflect_end_day' } },
-      
-      // ---- More AI Chat exchanges ----
-      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
-      { name: 'message_sent', params: { chatId: 'ai_chat_bot', messageType: 'text' } },
-      
-      // ---- Monetization & settings ----
+      { name: 'healing_checkin', params: { checkinType: 'journal_entry' } },
+
+      // ========== PHẦN 3: Duyệt thêm — Match & Paywall ==========
+      { name: 'screen_view', params: { firebase_screen: 'DiscoverScreen', firebase_screen_class: 'DiscoverScreen' } },
+      { name: 'swipe_like', params: { targetUserId: 'target_' + Math.random().toString(36).substr(2, 8) } },
+      { name: 'match_created', params: { matchId: 'match_' + Math.random().toString(36).substr(2, 12) } },
+      { name: 'screen_view', params: { firebase_screen: 'MatchesScreen', firebase_screen_class: 'MatchesScreen' } },
+      { name: 'match_confirmed', params: { matchId: 'match_' + Math.random().toString(36).substr(2, 12) } },
       { name: 'subscription_paywall_view', params: {} },
       { name: 'screen_view', params: { firebase_screen: 'PremiumPaywallScreen', firebase_screen_class: 'PremiumPaywallScreen' } },
+
+      // ========== QUAY LẠI AI HUB (LẦN 2) — User quay lại chat tiếp ==========
+      { name: 'screen_view', params: { firebase_screen: 'AIHubScreen', firebase_screen_class: 'AIHubScreen' } },
+      { name: 'chat_opened', params: { chatId: 'ai_relationship_advisor' } },
+      { name: 'screen_view', params: { firebase_screen: 'ChatDetailScreen', firebase_screen_class: 'ChatDetailScreen' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'emoji' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_relationship_advisor', messageType: 'text' } },
+
+      // ========== QUAY LẠI HEALING (LẦN 2) — User thiền buổi tối ==========
+      { name: 'screen_view', params: { firebase_screen: 'HealingScreen', firebase_screen_class: 'HealingScreen' } },
+      { name: 'healing_checkin', params: { checkinType: 'mood_calm' } },
+      { name: 'healing_course_started', params: { courseId: 'evening_meditation' } },
+      { name: 'healing_course_started', params: { courseId: 'gratitude_journal' } },
+      { name: 'healing_checkin', params: { checkinType: 'reflect_end_day' } },
+      { name: 'screen_view', params: { firebase_screen: 'HealingScreen', firebase_screen_class: 'HealingScreen' } },
+      { name: 'healing_course_started', params: { courseId: 'sleep_story' } },
+
+      // ========== QUAY LẠI AI HUB (LẦN 3) — Hỏi thêm AI ==========
+      { name: 'screen_view', params: { firebase_screen: 'AIHubScreen', firebase_screen_class: 'AIHubScreen' } },
+      { name: 'chat_opened', params: { chatId: 'ai_mood_coach' } },
+      { name: 'screen_view', params: { firebase_screen: 'ChatDetailScreen', firebase_screen_class: 'ChatDetailScreen' } },
+      { name: 'message_sent', params: { chatId: 'ai_mood_coach', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_mood_coach', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_mood_coach', messageType: 'text' } },
+      { name: 'message_sent', params: { chatId: 'ai_mood_coach', messageType: 'emoji' } },
+
+      // ========== KẾT THÚC: Xem Profile & Settings ==========
       { name: 'screen_view', params: { firebase_screen: 'ProfileScreen', firebase_screen_class: 'ProfileScreen' } },
+      { name: 'screen_view', params: { firebase_screen: 'SettingsScreen', firebase_screen_class: 'SettingsScreen' } },
     ];
 
     // ---- Gửi events tuần tự với delay mô phỏng người dùng thật ----
     let eventIndex = 0;
     let totalSent = 0;
+    const startTime = Date.now();
 
     function getRandomDelay() {
-      // 12s - 22s để mô phỏng người dùng dừng lại tương tác, đọc bài, gõ chat thật
-      return Math.floor(Math.random() * 10000) + 12000; 
+      // 8s - 18s giữa các event (trung bình ~13s)
+      // Tổng: ~63 events × 13s = ~819s (~13.6 phút)
+      return Math.floor(Math.random() * 10000) + 8000;
     }
 
     function sendNextEvent() {
       if (eventIndex >= EVENTS.length) {
-        updateStatus('✅ Hoàn thành! Đã gửi ' + totalSent + ' events. Tab sẽ đóng sau 5 giây.');
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        updateStatus('✅ Hoàn thành! Đã gửi ' + totalSent + ' events trong ' + elapsed + 's. Tab sẽ đóng sau 5 giây.');
         // Tự đóng tab sau 5 giây
         setTimeout(() => { window.close(); }, 5000);
         return;
       }
 
       const event = EVENTS[eventIndex];
-      // Tăng engagement time của mỗi event (15s - 45s) để nâng Average Engagement Time per user
-      const params = { ...event.params, engagement_time_msec: Math.floor(Math.random() * 30000) + 15000 };
+      // engagement_time_msec: 20s - 60s cho mỗi event (trung bình 40s)
+      const params = { ...event.params, engagement_time_msec: Math.floor(Math.random() * 40000) + 20000 };
       gtag('event', event.name, params);
       totalSent++;
       eventIndex++;
 
-      updateStatus('📡 Đang gửi event ' + totalSent + '/' + EVENTS.length + ': ' + event.name);
+      updateStatus('📡 [' + totalSent + '/' + EVENTS.length + '] ' + event.name);
       setTimeout(sendNextEvent, getRandomDelay());
     }
 

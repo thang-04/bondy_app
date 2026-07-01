@@ -6,6 +6,7 @@ import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../services/safety_guardrails_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/ai_markdown_text.dart';
 
 class BondyAIChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -88,11 +89,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             Container(
               width: 36,
               height: 36,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                gradient: BondyColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 20),
+              child: Image.asset(_modeDescriptor.avatarAsset, fit: BoxFit.cover),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -262,7 +263,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        onTap: _isSending ? null : () => _proceedWithMessage(label),
+        onTap: _isSending
+            ? null
+            : () {
+                _controller.text = label;
+              },
         child: Chip(
           backgroundColor: Colors.white,
           side: const BorderSide(color: Color(0xFFFFD9C0)),
@@ -385,11 +390,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             Container(
               width: 32,
               height: 32,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                gradient: BondyColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 16),
+              child: Image.asset(_modeDescriptor.avatarAsset, fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
           ],
@@ -413,16 +418,23 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
-                      msg.text,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: msg.isUser
-                            ? Colors.white
-                            : BondyColors.textPrimary,
-                        height: 1.35,
-                      ),
-                    ),
+                    child: msg.isUser
+                        ? Text(
+                            msg.text,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: Colors.white,
+                              height: 1.35,
+                            ),
+                          )
+                        : AiMarkdownText(
+                            data: msg.text,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: BondyColors.textPrimary,
+                              height: 1.35,
+                            ),
+                          ),
                   ),
                   if (msg.streaming && msg.text.isEmpty) ...[
                     const SizedBox(width: 8),
