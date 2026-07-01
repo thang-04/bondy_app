@@ -218,17 +218,23 @@ class _AiHubScreenState extends State<AiHubScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    descriptor.emoji,
-                    style: const TextStyle(fontSize: 22),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  color: Colors.white.withValues(alpha: 0.82),
+                  child: Image.asset(
+                    descriptor.avatarAsset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Text(
+                          descriptor.emoji,
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
