@@ -57,6 +57,7 @@ import 'screens/chat/healing_chatbot_coach_screen.dart';
 import 'screens/chat/bondy_ai_chat_screen.dart';
 import 'screens/chat/active_chat_deeper_prompts_screen.dart';
 import 'screens/chat/ai_hub_screen.dart';
+import 'screens/chat/ai_mode_intake_screen.dart';
 import 'screens/chat/zodiac_ai_chat_screen.dart';
 import 'screens/chat/tarot_reading_screen.dart';
 import 'screens/chat/emotional_checkin_ai_screen.dart';
@@ -308,10 +309,12 @@ class BondyApp extends StatelessWidget {
           '/chat/info': (context) => const ChatInfoScreen(),
           '/chatbot': (context) => const HealingChatbotCoachScreen(),
           '/ai-hub': (context) => const AiHubScreen(),
+          '/ai-mode-intake': (context) => const AiModeIntakeScreen(),
           '/bondy-ai': (context) => const BondyAIChatScreen(),
           '/zodiac-ai': (context) => const ZodiacAiChatScreen(),
           '/tarot-reading': (context) => const TarotReadingScreen(),
-          '/emotional-checkin-ai': (context) => const EmotionalCheckinAiScreen(),
+          '/emotional-checkin-ai': (context) =>
+              const EmotionalCheckinAiScreen(),
           '/healing/article-detail': (context) =>
               const HealingArticleDetailScreen(),
           '/healing/exercise-detail': (context) =>

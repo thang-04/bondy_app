@@ -58,6 +58,7 @@ flutter:
     - assets/images/
     - assets/images/healing_stitch/
     - assets/images/ai_avatars/
+    - assets/images/tarot/
     - .env
 
 flutter_launcher_icons:

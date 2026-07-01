@@ -42,6 +42,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
   bool _showSafetyWarning = false;
   bool _didReadArguments = false;
   String? _pendingMessage;
+  List<String> _intakeSummary = const [];
 
   @override
   void initState() {
@@ -61,8 +62,18 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic> && args['initialMessage'] is String) {
         final initialMessage = args['initialMessage'] as String;
+        final displayMessage = args['displayMessage']?.toString().trim();
+        final summary = _summaryFromArgs(args['intakeSummary']);
+        if (summary.isNotEmpty && mounted) {
+          setState(() => _intakeSummary = summary);
+        }
         args.remove('initialMessage');
-        _proceedWithMessage(initialMessage);
+        _proceedWithMessage(
+          initialMessage,
+          displayMessage: displayMessage?.isNotEmpty == true
+              ? displayMessage
+              : null,
+        );
       }
     });
   }
@@ -94,14 +105,13 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
             Container(
               width: 36,
               height: 36,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                gradient: HealingStitchColors.warmGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.self_improvement,
-                color: Colors.white,
-                size: 20,
+              child: Image.asset(
+                'assets/images/ai_avatars/avatar_healing.png',
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 10),
@@ -154,9 +164,16 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) =>
-                      _buildBubble(_messages[index]),
+                  itemCount:
+                      _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                  itemBuilder: (context, index) {
+                    if (_intakeSummary.isNotEmpty && index == 0) {
+                      return _buildIntakeSummaryCard();
+                    }
+                    final messageIndex =
+                        index - (_intakeSummary.isEmpty ? 0 : 1);
+                    return _buildBubble(_messages[messageIndex]);
+                  },
                 ),
               ),
               _buildPromptRail(quota),
@@ -306,7 +323,10 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     _proceedWithMessage(message);
   }
 
-  Future<void> _proceedWithMessage(String message) async {
+  Future<void> _proceedWithMessage(
+    String message, {
+    String? displayMessage,
+  }) async {
     final quotaViewModel = context.read<AiQuotaViewModel>();
     final currentQuota = quotaViewModel.quotaFor(AiChatMode.healing);
     if (currentQuota != null && currentQuota.remaining <= 0) {
@@ -317,7 +337,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     final assistantMessage = _BotMessage('', false, streaming: true);
     setState(() {
       _isSending = true;
-      _messages.add(_BotMessage(message, true));
+      _messages.add(
+        _BotMessage(displayMessage ?? message, true, requestText: message),
+      );
       _messages.add(assistantMessage);
       _controller.clear();
     });
@@ -400,10 +422,50 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
             role: message.isUser
                 ? AiChatMessageRole.user
                 : AiChatMessageRole.assistant,
-            content: message.text,
+            content: message.requestText ?? message.text,
           ),
         )
         .toList();
+  }
+
+  Widget _buildIntakeSummaryCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BondyColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin đã cung cấp',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: BondyColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ..._intakeSummary.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                line,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: BondyColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBubble(_BotMessage message) {
@@ -419,14 +481,13 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
             Container(
               width: 32,
               height: 32,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                gradient: HealingStitchColors.warmGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.self_improvement,
-                color: Colors.white,
-                size: 16,
+              child: Image.asset(
+                'assets/images/ai_avatars/avatar_healing.png',
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 8),
@@ -648,7 +709,21 @@ class _QuotaBadge extends StatelessWidget {
 class _BotMessage {
   String text;
   final bool isUser;
+  final String? requestText;
   bool streaming;
 
-  _BotMessage(this.text, this.isUser, {this.streaming = false});
+  _BotMessage(
+    this.text,
+    this.isUser, {
+    this.requestText,
+    this.streaming = false,
+  });
+}
+
+List<String> _summaryFromArgs(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .map((item) => item.toString())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }

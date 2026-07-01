@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,11 +61,40 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
   late List<bool> _flipped;
   int? _activeCardIndex;
   bool _isSending = false;
+  bool _didReadArguments = false;
+  List<String> _intakeSummary = const [];
 
   @override
   void initState() {
     super.initState();
     _drawCards();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didReadArguments) return;
+    _didReadArguments = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is! Map<String, dynamic>) return;
+
+      final summary = _summaryFromArgs(args['intakeSummary']);
+      if (summary.isNotEmpty && mounted) {
+        setState(() => _intakeSummary = summary);
+      }
+
+      final initialMessage = args['initialMessage'];
+      final displayMessage = args['displayMessage']?.toString().trim();
+      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+        _sendMessage(
+          initialMessage.trim(),
+          displayMessage: displayMessage?.isNotEmpty == true
+              ? displayMessage
+              : null,
+        );
+      }
+    });
   }
 
   @override
@@ -112,14 +142,16 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _sendMessage(String text) async {
+  Future<void> _sendMessage(String text, {String? displayMessage}) async {
     final message = text.trim();
     if (message.isEmpty || _isSending) return;
 
     final assistantMessage = _TarotMessage('', false, streaming: true);
     setState(() {
       _isSending = true;
-      _chatMessages.add(_TarotMessage(message, true));
+      _chatMessages.add(
+        _TarotMessage(displayMessage ?? message, true, requestText: message),
+      );
       _chatMessages.add(assistantMessage);
       _controller.clear();
     });
@@ -185,7 +217,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             role: message.isUser
                 ? AiChatMessageRole.user
                 : AiChatMessageRole.assistant,
-            content: message.text,
+            content: message.requestText ?? message.text,
           ),
         )
         .toList();
@@ -234,6 +266,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
                     color: Colors.white.withValues(alpha: 0.1),
                   ),
                   const SizedBox(height: 16),
+                  if (_intakeSummary.isNotEmpty) ...[
+                    _buildIntakeSummaryCard(),
+                    const SizedBox(height: 16),
+                  ],
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _chatMessages.map(_buildChatBubble).toList(),
@@ -243,6 +279,47 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             ),
           ),
           _buildBottomControls(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntakeSummaryCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF24244A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin đã cung cấp',
+            style: GoogleFonts.manrope(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFFFFD700),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ..._intakeSummary.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                line,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.78),
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -304,12 +381,20 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
         decoration: BoxDecoration(
           color: isFlipped ? const Color(0xFF24244A) : const Color(0xFF2D2D5E),
           borderRadius: BorderRadius.circular(12),
+          image: DecorationImage(
+            image: AssetImage(
+              isFlipped
+                  ? 'assets/images/tarot/tarot_card_front.png'
+                  : 'assets/images/tarot/tarot_card_back.png',
+            ),
+            fit: BoxFit.cover,
+          ),
           border: Border.all(
             color: isActive
                 ? const Color(0xFFFF8C42)
                 : (isFlipped
-                      ? const Color(0xFF4A4A8A)
-                      : const Color(0xFF3B3B7A)),
+                      ? const Color(0xFF4A4A8A).withValues(alpha: 0.5)
+                      : const Color(0xFF3B3B7A).withValues(alpha: 0.5)),
             width: isActive ? 2.0 : 1.0,
           ),
         ),
@@ -318,35 +403,54 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(card.emoji, style: const TextStyle(fontSize: 28)),
-                    const SizedBox(height: 12),
+                    Text(card.emoji, style: const TextStyle(fontSize: 32)),
+                    const SizedBox(height: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        card.name,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.manrope(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          card.name,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.manrope(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 )
               : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text('⭐', style: TextStyle(fontSize: 24)),
-                    const SizedBox(height: 8),
-                    Text(
-                      _positionLabel(index),
-                      style: GoogleFonts.manrope(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF8E8ECB),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _positionLabel(index),
+                        style: GoogleFonts.manrope(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFE5E5FF),
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
                 ),
         ),
@@ -412,7 +516,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
                 color: Color(0xFF2D2D5E),
                 shape: BoxShape.circle,
               ),
-              child: Image.asset('assets/images/ai_avatars/avatar_tarot.png', fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/images/ai_avatars/avatar_tarot.png',
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -504,32 +611,44 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E38),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0xFF2D2D5E)),
-                      ),
-                      child: TextField(
-                        key: const Key('tarot_ai_chat_input'),
-                        controller: _controller,
-                        enabled: !_isSending,
-                        onSubmitted: _sendMessage,
-                        style: GoogleFonts.manrope(
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Hỏi thêm về lá bài...',
-                          hintStyle: GoogleFonts.manrope(
-                            fontSize: 14,
-                            color: Colors.white30,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFFFD700,
+                              ).withValues(alpha: 0.3),
+                            ),
                           ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
+                          child: TextField(
+                            key: const Key('tarot_ai_chat_input'),
+                            controller: _controller,
+                            enabled: !_isSending,
+                            onSubmitted: _sendMessage,
+                            style: GoogleFonts.manrope(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Hỏi thêm về lá bài...',
+                              hintStyle: GoogleFonts.manrope(
+                                fontSize: 14,
+                                color: Colors.white30,
+                              ),
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -546,7 +665,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
                       height: 44,
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFFF6B9D), Color(0xFFFF4D6D)],
+                          colors: [Color(0xFF8E2DE2), Color(0xFFFFD700)],
                         ),
                         shape: BoxShape.circle,
                       ),
@@ -637,7 +756,21 @@ class _TarotCardData {
 class _TarotMessage {
   String text;
   final bool isUser;
+  final String? requestText;
   bool streaming;
 
-  _TarotMessage(this.text, this.isUser, {this.streaming = false});
+  _TarotMessage(
+    this.text,
+    this.isUser, {
+    this.requestText,
+    this.streaming = false,
+  });
+}
+
+List<String> _summaryFromArgs(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .map((item) => item.toString())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }

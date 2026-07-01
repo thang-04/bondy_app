@@ -37,6 +37,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
   bool _showSafetyWarning = false;
   bool _didReadArguments = false;
   String? _pendingMessage;
+  List<String> _intakeSummary = const [];
 
   AiModeDescriptor get _modeDescriptor => AiModeCatalog.byMode(_mode);
 
@@ -56,9 +57,20 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         setState(() => _mode = nextMode);
       }
 
+      final summary = _summaryFromArgs(args['intakeSummary']);
+      if (summary.isNotEmpty && mounted) {
+        setState(() => _intakeSummary = summary);
+      }
+
       final initialMessage = args['initialMessage'];
+      final displayMessage = args['displayMessage']?.toString().trim();
       if (initialMessage is String && initialMessage.trim().isNotEmpty) {
-        _proceedWithMessage(initialMessage.trim());
+        _proceedWithMessage(
+          initialMessage.trim(),
+          displayMessage: displayMessage?.isNotEmpty == true
+              ? displayMessage
+              : null,
+        );
       }
     });
   }
@@ -90,10 +102,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
               width: 36,
               height: 36,
               clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              child: Image.asset(
+                _modeDescriptor.avatarAsset,
+                fit: BoxFit.cover,
               ),
-              child: Image.asset(_modeDescriptor.avatarAsset, fit: BoxFit.cover),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -134,9 +147,16 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) =>
-                      _buildBubble(_messages[index]),
+                  itemCount:
+                      _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                  itemBuilder: (context, index) {
+                    if (_intakeSummary.isNotEmpty && index == 0) {
+                      return _buildIntakeSummaryCard();
+                    }
+                    final messageIndex =
+                        index - (_intakeSummary.isEmpty ? 0 : 1);
+                    return _buildBubble(_messages[messageIndex]);
+                  },
                 ),
               ),
               SizedBox(
@@ -300,12 +320,17 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
     _proceedWithMessage(message);
   }
 
-  Future<void> _proceedWithMessage(String message) async {
+  Future<void> _proceedWithMessage(
+    String message, {
+    String? displayMessage,
+  }) async {
     if (_isSending || message.trim().isEmpty) return;
     final assistantMessage = _BotMessage('', false, streaming: true);
     setState(() {
       _isSending = true;
-      _messages.add(_BotMessage(message, true));
+      _messages.add(
+        _BotMessage(displayMessage ?? message, true, requestText: message),
+      );
       _messages.add(assistantMessage);
       _controller.clear();
     });
@@ -371,10 +396,50 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             role: message.isUser
                 ? AiChatMessageRole.user
                 : AiChatMessageRole.assistant,
-            content: message.text,
+            content: message.requestText ?? message.text,
           ),
         )
         .toList();
+  }
+
+  Widget _buildIntakeSummaryCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BondyColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin đã cung cấp',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: BondyColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ..._intakeSummary.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                line,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: BondyColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBubble(_BotMessage msg) {
@@ -391,10 +456,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
               width: 32,
               height: 32,
               clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              child: Image.asset(
+                _modeDescriptor.avatarAsset,
+                fit: BoxFit.cover,
               ),
-              child: Image.asset(_modeDescriptor.avatarAsset, fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
           ],
@@ -542,7 +608,21 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
 class _BotMessage {
   String text;
   final bool isUser;
+  final String? requestText;
   bool streaming;
 
-  _BotMessage(this.text, this.isUser, {this.streaming = false});
+  _BotMessage(
+    this.text,
+    this.isUser, {
+    this.requestText,
+    this.streaming = false,
+  });
+}
+
+List<String> _summaryFromArgs(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .map((item) => item.toString())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }

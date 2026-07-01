@@ -33,6 +33,35 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
   ];
 
   bool _isSending = false;
+  bool _didReadArguments = false;
+  List<String> _intakeSummary = const [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didReadArguments) return;
+    _didReadArguments = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is! Map<String, dynamic>) return;
+
+      final summary = _summaryFromArgs(args['intakeSummary']);
+      if (summary.isNotEmpty && mounted) {
+        setState(() => _intakeSummary = summary);
+      }
+
+      final initialMessage = args['initialMessage'];
+      final displayMessage = args['displayMessage']?.toString().trim();
+      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+        _sendMessage(
+          initialMessage.trim(),
+          displayMessage: displayMessage?.isNotEmpty == true
+              ? displayMessage
+              : null,
+        );
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -41,14 +70,16 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage(String text) async {
+  Future<void> _sendMessage(String text, {String? displayMessage}) async {
     final message = text.trim();
     if (message.isEmpty || _isSending) return;
 
     final assistantMessage = _ZodiacMessage('', false, streaming: true);
     setState(() {
       _isSending = true;
-      _messages.add(_ZodiacMessage(message, true));
+      _messages.add(
+        _ZodiacMessage(displayMessage ?? message, true, requestText: message),
+      );
       _messages.add(assistantMessage);
       _controller.clear();
     });
@@ -114,7 +145,7 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
             role: message.isUser
                 ? AiChatMessageRole.user
                 : AiChatMessageRole.assistant,
-            content: message.text,
+            content: message.requestText ?? message.text,
           ),
         )
         .toList();
@@ -149,9 +180,14 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) =>
-                  _buildMessageBubble(_messages[index]),
+              itemCount: _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+              itemBuilder: (context, index) {
+                if (_intakeSummary.isNotEmpty && index == 0) {
+                  return _buildIntakeSummaryCard();
+                }
+                final messageIndex = index - (_intakeSummary.isEmpty ? 0 : 1);
+                return _buildMessageBubble(_messages[messageIndex]);
+              },
             ),
           ),
           _buildBottomControls(),
@@ -211,6 +247,46 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
     );
   }
 
+  Widget _buildIntakeSummaryCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFE5EC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin đã cung cấp',
+            style: GoogleFonts.manrope(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: BondyColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ..._intakeSummary.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                line,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: BondyColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMessageBubble(_ZodiacMessage msg) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -225,10 +301,11 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
               width: 32,
               height: 32,
               clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              child: Image.asset(
+                'assets/images/ai_avatars/avatar_tuvi.png',
+                fit: BoxFit.cover,
               ),
-              child: Image.asset('assets/images/ai_avatars/avatar_tuvi.png', fit: BoxFit.cover),
             ),
             const SizedBox(width: 8),
           ],
@@ -439,7 +516,21 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
 class _ZodiacMessage {
   String text;
   final bool isUser;
+  final String? requestText;
   bool streaming;
 
-  _ZodiacMessage(this.text, this.isUser, {this.streaming = false});
+  _ZodiacMessage(
+    this.text,
+    this.isUser, {
+    this.requestText,
+    this.streaming = false,
+  });
+}
+
+List<String> _summaryFromArgs(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .map((item) => item.toString())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }

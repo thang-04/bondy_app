@@ -27,7 +27,12 @@ void main() {
         containsAll(['cung-hoang-dao', 'tuong-hop', 'xem-ngay', 'la-so']),
       );
       expect(tarot.skills.single.key, 'tarot');
-      expect(tarot.routeName, '/tarot-reading');
+      expect(tarot.routeName, '/ai-mode-intake');
+      expect(tarot.routeArguments, {'mode': 'tarot'});
+      expect(
+        AiModeCatalog.byMode(AiChatMode.defaultMode).routeName,
+        '/bondy-ai',
+      );
     },
   );
 }
