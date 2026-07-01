@@ -37,7 +37,14 @@ String discoverSwipeActionForDirection(AxisDirection direction) {
 }
 
 class DiscoverMatchingScreen extends StatefulWidget {
-  const DiscoverMatchingScreen({super.key});
+  final DiscoverService? discoverService;
+  final ProfileService? profileService;
+
+  const DiscoverMatchingScreen({
+    super.key,
+    this.discoverService,
+    this.profileService,
+  });
 
   @override
   State<DiscoverMatchingScreen> createState() => _DiscoverMatchingScreenState();
@@ -46,6 +53,7 @@ class DiscoverMatchingScreen extends StatefulWidget {
 class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   final AppinioSwiperController _swiperController = AppinioSwiperController();
   late final DiscoverService _discoverService;
+  late final ProfileService _profileService;
   late final DiscoverViewModel _viewModel;
   String? _swipeFeedbackAction;
   bool _swipeFeedbackVisible = false;
@@ -66,7 +74,8 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   @override
   void initState() {
     super.initState();
-    _discoverService = DiscoverService();
+    _discoverService = widget.discoverService ?? DiscoverService();
+    _profileService = widget.profileService ?? ProfileService();
     _viewModel = DiscoverViewModel(service: _discoverService);
     _viewModel.addListener(_onViewModelUpdate);
     analytics.discoverView();
@@ -94,13 +103,22 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
 
   Future<void> _loadCurrentUserPhoto() async {
     try {
-      final profile = await ProfileService().getProfile();
+      final profile = await _profileService.getProfile();
       if (!mounted) return;
       final photo = profile.photos.isNotEmpty
           ? profile.photos.first
           : profile.image;
       setState(() => _currentUserPhoto = photo);
     } catch (_) {}
+  }
+
+  void _handleBackNavigation() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    navigator.pushNamedAndRemoveUntil('/home', (_) => false);
   }
 
   void _onViewModelUpdate() {
@@ -438,214 +456,222 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     final hasUnlimitedLikes =
         subViewModel.currentSubscription?.unlimitedLikes == true;
 
-    return Scaffold(
-      backgroundColor: BondyColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Khám phá'),
-        actions: [
-          if (_viewModel.quota != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Chip(
-                  label: Text(
-                    hasUnlimitedLikes
-                        ? '∞ like'
-                        : '${_viewModel.quota!.remaining}/${_viewModel.quota!.limit} like',
-                    style: const TextStyle(fontSize: 11),
+    return PopScope(
+      canPop: Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _handleBackNavigation();
+      },
+      child: Scaffold(
+        backgroundColor: BondyColors.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: _handleBackNavigation,
+          ),
+          title: const Text('Khám phá'),
+          actions: [
+            if (_viewModel.quota != null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Chip(
+                    label: Text(
+                      hasUnlimitedLikes
+                          ? '∞ like'
+                          : '${_viewModel.quota!.remaining}/${_viewModel.quota!.limit} like',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
                   ),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
-            ),
-          IconButton(
-            onPressed: () async {
-              final filters = await showModalBottomSheet<DiscoverFilters>(
-                context: context,
-                isScrollControlled: true,
-                builder: (_) => DiscoverFiltersSheet(
-                  service: _discoverService,
-                  initial: _viewModel.activeFilters,
-                ),
-              );
-              if (filters != null) {
-                await _viewModel.applyFilters(filters);
-                _resetDeckView();
-                _precacheNextImages();
-              }
-            },
-            icon: const Icon(Icons.tune),
-            tooltip: 'Bộ lọc',
-          ),
-          IconButton(
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/discover/softened'),
-            icon: const Icon(Icons.spa_outlined),
-            tooltip: 'Chế độ nhẹ nhàng',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _viewModel,
-          builder: (context, _) {
-            if (_viewModel.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: BondyColors.primary),
-              );
-            }
-
-            if (_viewModel.errorMessage != null &&
-                _viewModel.profiles.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    _viewModel.errorMessage!,
-                    textAlign: TextAlign.center,
+            IconButton(
+              onPressed: () async {
+                final filters = await showModalBottomSheet<DiscoverFilters>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => DiscoverFiltersSheet(
+                    service: _discoverService,
+                    initial: _viewModel.activeFilters,
                   ),
-                ),
-              );
-            }
+                );
+                if (filters != null) {
+                  await _viewModel.applyFilters(filters);
+                  _resetDeckView();
+                  _precacheNextImages();
+                }
+              },
+              icon: const Icon(Icons.tune),
+              tooltip: 'Bộ lọc',
+            ),
+            IconButton(
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/discover/softened'),
+              icon: const Icon(Icons.spa_outlined),
+              tooltip: 'Chế độ nhẹ nhàng',
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: AnimatedBuilder(
+            animation: _viewModel,
+            builder: (context, _) {
+              if (_viewModel.isLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(color: BondyColors.primary),
+                );
+              }
 
-            if (_viewModel.isEmpty) {
-              return const Center(
-                child: Text('Chưa có gợi ý phù hợp. Hãy quay lại sau nhé.'),
-              );
-            }
-
-            final profiles = _viewModel.profiles;
-            return Stack(
-              children: [
-                Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Người phù hợp với bạn',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Dựa trên sự đồng điệu cảm xúc',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: BondyColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
+              if (_viewModel.errorMessage != null &&
+                  _viewModel.profiles.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      _viewModel.errorMessage!,
+                      textAlign: TextAlign.center,
                     ),
+                  ),
+                );
+              }
 
-                    // Expanded area for the Swiper
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: _deckEnded
-                            ? _buildDeckEnded()
-                            : AppinioSwiper(
-                                // Đổi key khi nạp lại deck để swiper khởi tạo lại
-                                // từ index 0 (không có API reset index công khai).
-                                key: ValueKey(_deckRevision),
-                                controller: _swiperController,
-                                swipeOptions: const SwipeOptions.only(
-                                  left: true,
-                                  right: true,
-                                  up: true,
-                                ),
-                                onSwipeBegin: _onSwipeBegin,
-                                onSwipeEnd: _onSwipeEnd,
-                                onEnd: () {
-                                  if (mounted) {
-                                    setState(() => _deckEnded = true);
-                                  }
-                                },
-                                cardCount: profiles.length,
-                                cardBuilder: (BuildContext context, int index) {
-                                  return DiscoverMatchingCard(
-                                    profile: profiles[index],
-                                    onOpenDetail: _openProfileDetail,
-                                  );
-                                },
+              if (_viewModel.isEmpty) {
+                return const Center(
+                  child: Text('Chưa có gợi ý phù hợp. Hãy quay lại sau nhé.'),
+                );
+              }
+
+              final profiles = _viewModel.profiles;
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Người phù hợp với bạn',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
                               ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Dựa trên sự đồng điệu cảm xúc',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                color: BondyColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // Bottom Action buttons
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Rewind last swipe
-                          _buildActionButton(
-                            icon: Icons.replay,
-                            color: const Color(0xFF6B7280),
-                            onTap: _onRewind,
-                            size: 48,
-                            iconSize: 22,
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Dislike / Swipe Left
-                          _buildActionButton(
-                            icon: Icons.close,
-                            color: const Color(0xFFEF4444),
-                            onTap: () {
-                              if (_deckEnded) return;
-                              _showSwipeFeedback('PASS');
-                              _swiperController.swipeLeft();
-                            },
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Super Like (swipe up)
-                          _buildActionButton(
-                            icon: Icons.star_rounded,
-                            color: const Color(0xFFF59E0B),
-                            onTap: () {
-                              if (_deckEnded) return;
-                              _showSwipeFeedback('SUPER_LIKE');
-                              _swiperController.swipeUp();
-                            },
-                            size: 64, // Larger central button
-                            iconSize: 32,
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Like / Swipe Right
-                          _buildActionButton(
-                            icon: Icons.favorite,
-                            color: BondyColors.primary,
-                            onTap: () {
-                              if (_deckEnded) return;
-                              _showSwipeFeedback('LIKE');
-                              _swiperController.swipeRight();
-                            },
-                          ),
-                        ],
+                      // Expanded area for the Swiper
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: _deckEnded
+                              ? _buildDeckEnded()
+                              : AppinioSwiper(
+                                  // Đổi key khi nạp lại deck để swiper khởi tạo lại
+                                  // từ index 0 (không có API reset index công khai).
+                                  key: ValueKey(_deckRevision),
+                                  controller: _swiperController,
+                                  swipeOptions: const SwipeOptions.only(
+                                    left: true,
+                                    right: true,
+                                    up: true,
+                                  ),
+                                  onSwipeBegin: _onSwipeBegin,
+                                  onSwipeEnd: _onSwipeEnd,
+                                  onEnd: () {
+                                    if (mounted) {
+                                      setState(() => _deckEnded = true);
+                                    }
+                                  },
+                                  cardCount: profiles.length,
+                                  cardBuilder:
+                                      (BuildContext context, int index) {
+                                        return DiscoverMatchingCard(
+                                          profile: profiles[index],
+                                          onOpenDetail: _openProfileDetail,
+                                        );
+                                      },
+                                ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                _buildSwipeFeedback(),
-              ],
-            );
-          },
+
+                      // Bottom Action buttons
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Rewind last swipe
+                            _buildActionButton(
+                              icon: Icons.replay,
+                              color: const Color(0xFF6B7280),
+                              onTap: _onRewind,
+                              size: 48,
+                              iconSize: 22,
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Dislike / Swipe Left
+                            _buildActionButton(
+                              icon: Icons.close,
+                              color: const Color(0xFFEF4444),
+                              onTap: () {
+                                if (_deckEnded) return;
+                                _showSwipeFeedback('PASS');
+                                _swiperController.swipeLeft();
+                              },
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Super Like (swipe up)
+                            _buildActionButton(
+                              icon: Icons.star_rounded,
+                              color: const Color(0xFFF59E0B),
+                              onTap: () {
+                                if (_deckEnded) return;
+                                _showSwipeFeedback('SUPER_LIKE');
+                                _swiperController.swipeUp();
+                              },
+                              size: 64, // Larger central button
+                              iconSize: 32,
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Like / Swipe Right
+                            _buildActionButton(
+                              icon: Icons.favorite,
+                              color: BondyColors.primary,
+                              onTap: () {
+                                if (_deckEnded) return;
+                                _showSwipeFeedback('LIKE');
+                                _swiperController.swipeRight();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildSwipeFeedback(),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
