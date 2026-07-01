@@ -9,4 +9,8 @@ void main() {
     expect(discoverSwipeActionForDirection(AxisDirection.up), 'SUPER_LIKE');
     expect(discoverSwipeActionForDirection(AxisDirection.down), 'PASS');
   });
+
+  test('does not auto-start the discover swipe tutorial', () {
+    expect(discoverSwipeTutorialAutoStartEnabled, isFalse);
+  });
 }

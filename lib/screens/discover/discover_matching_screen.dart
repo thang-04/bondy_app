@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
 import '../../models/discover/discover_profile_model.dart';
 import '../../services/discover_service.dart';
@@ -14,7 +13,6 @@ import '../../services/onboarding_router.dart';
 import '../../viewmodels/discover/discover_viewmodel.dart';
 import '../../widgets/match/new_match_receipt_sheet.dart';
 import '../../widgets/common/bondy_feedback.dart';
-import '../../widgets/onboarding/swipe_tutorial_overlay.dart';
 import 'widgets/discover_matching_card.dart';
 import 'widgets/discover_filters_sheet.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
@@ -22,6 +20,8 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/chat/chat_viewmodel.dart';
 import '../../viewmodels/subscription/subscription_viewmodel.dart';
 import '../../services/analytics_service.dart';
+
+const bool discoverSwipeTutorialAutoStartEnabled = false;
 
 String discoverSwipeActionForDirection(AxisDirection direction) {
   switch (direction) {
@@ -51,10 +51,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
   bool _swipeFeedbackVisible = false;
   Timer? _swipeFeedbackTimer;
   String? _currentUserPhoto;
-  
-  final GlobalKey _cardAreaKey = GlobalKey();
-  final GlobalKey _bottomButtonsKey = GlobalKey();
-  bool _showSwipeTutorial = false;
 
   // AppinioSwiper tự quản lý index của deck. KHÔNG được xóa profile khỏi list
   // trong lúc quẹt — nếu xóa, swiper vừa tự tăng index vừa bị thu nhỏ list nên
@@ -84,34 +80,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     await _viewModel.loadProfiles();
     _resetDeckView();
     _precacheNextImages();
-    if (_viewModel.profiles.isNotEmpty) {
-      _checkSwipeTutorial();
-    }
-  }
-
-  Future<void> _checkSwipeTutorial() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeen = prefs.getBool('has_seen_swipe_tutorial') ?? false;
-    final skipAll = prefs.getBool('skip_all_tutorials') ?? false;
-    if ((hasSeen || skipAll) && mounted) return;
-
-    if (!hasSeen && !skipAll && mounted) {
-      // Đợi UI render xong để GlobalKey có RenderObject
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
-      setState(() => _showSwipeTutorial = true);
-    }
-  }
-
-  Future<void> _dismissSwipeTutorial({bool skipped = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_seen_swipe_tutorial', true);
-    if (skipped) {
-      await prefs.setBool('skip_all_tutorials', true);
-    }
-    if (mounted) {
-      setState(() => _showSwipeTutorial = false);
-    }
   }
 
   /// Tạo lại swiper từ đầu deck (index về 0) sau khi list được nạp lại hoàn
@@ -162,9 +130,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     int targetIndex,
     SwiperActivity activity,
   ) {
-    if (_showSwipeTutorial) {
-      _dismissSwipeTutorial();
-    }
     if (activity is! Swipe) return;
     _showSwipeFeedback(discoverSwipeActionForDirection(activity.direction));
   }
@@ -174,9 +139,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
     int targetIndex,
     SwiperActivity activity,
   ) async {
-    if (_showSwipeTutorial) {
-      _dismissSwipeTutorial();
-    }
     if (activity is! Swipe) return;
     final profiles = _viewModel.profiles;
     if (previousIndex >= profiles.length) return;
@@ -591,7 +553,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
 
                     // Expanded area for the Swiper
                     Expanded(
-                      key: _cardAreaKey,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: _deckEnded
@@ -614,20 +575,18 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                                   }
                                 },
                                 cardCount: profiles.length,
-                                cardBuilder:
-                                    (BuildContext context, int index) {
-                                      return DiscoverMatchingCard(
-                                        profile: profiles[index],
-                                        onOpenDetail: _openProfileDetail,
-                                      );
-                                    },
-                                ),
+                                cardBuilder: (BuildContext context, int index) {
+                                  return DiscoverMatchingCard(
+                                    profile: profiles[index],
+                                    onOpenDetail: _openProfileDetail,
+                                  );
+                                },
+                              ),
                       ),
                     ),
 
                     // Bottom Action buttons
                     Padding(
-                      key: _bottomButtonsKey,
                       padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -684,15 +643,6 @@ class _DiscoverMatchingScreenState extends State<DiscoverMatchingScreen> {
                   ],
                 ),
                 _buildSwipeFeedback(),
-                if (_showSwipeTutorial)
-                  Positioned.fill(
-                    child: SwipeTutorialOverlay(
-                      cardAreaKey: _cardAreaKey,
-                      bottomButtonsKey: _bottomButtonsKey,
-                      onDismiss: _dismissSwipeTutorial,
-                      onSkip: () => _dismissSwipeTutorial(skipped: true),
-                    ),
-                  ),
               ],
             );
           },
