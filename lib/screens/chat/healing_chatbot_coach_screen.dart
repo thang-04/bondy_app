@@ -27,7 +27,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
   final _safetyService = SafetyGuardrailsService();
   final String _sessionId = 'healing-${DateTime.now().millisecondsSinceEpoch}';
 
-  final List<_BotMessage> _messages = [
+  List<_BotMessage> _messages = [
     _BotMessage(
       'Chào bạn, mình là Bondy. Mình ở đây để lắng nghe và đồng hành cùng bạn trong hôm nay.',
       false,
@@ -37,6 +37,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       false,
     ),
   ];
+
+  String? _conversationId;
+  bool _isLoadingHistory = false;
 
   bool _isSending = false;
   bool _showSafetyWarning = false;
@@ -60,22 +63,52 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     _didReadArguments = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is Map<String, dynamic> && args['initialMessage'] is String) {
-        final initialMessage = args['initialMessage'] as String;
-        final displayMessage = args['displayMessage']?.toString().trim();
-        final summary = _summaryFromArgs(args['intakeSummary']);
-        if (summary.isNotEmpty && mounted) {
-          setState(() => _intakeSummary = summary);
+      if (args is! Map<String, dynamic>) return;
+      final summary = _summaryFromArgs(args['intakeSummary']);
+      if (summary.isNotEmpty && mounted) {
+        setState(() => _intakeSummary = summary);
+      }
+
+      final conversationId = args['conversationId']?.toString();
+      if (conversationId != null && conversationId.isNotEmpty) {
+        _loadConversationHistory(conversationId);
+      } else {
+        if (args['initialMessage'] is String) {
+          final initialMessage = args['initialMessage'] as String;
+          final displayMessage = args['displayMessage']?.toString().trim();
+          args.remove('initialMessage');
+          _proceedWithMessage(
+            initialMessage,
+            displayMessage: displayMessage?.isNotEmpty == true
+                ? displayMessage
+                : null,
+          );
         }
-        args.remove('initialMessage');
-        _proceedWithMessage(
-          initialMessage,
-          displayMessage: displayMessage?.isNotEmpty == true
-              ? displayMessage
-              : null,
-        );
       }
     });
+  }
+
+  Future<void> _loadConversationHistory(String conversationId) async {
+    setState(() {
+      _isLoadingHistory = true;
+      _conversationId = conversationId;
+    });
+    try {
+      final detail = await _aiService.getConversation(conversationId);
+      if (!mounted) return;
+      setState(() {
+        _messages = detail.messages
+            .map((m) => _BotMessage(m.content, m.isUser))
+            .toList();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      // Ignore error, keep default greeting
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   @override
@@ -145,6 +178,24 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: HealingStitchColors.coral),
+            onPressed: () {
+              setState(() {
+                _conversationId = null;
+                _messages = [
+                  _BotMessage(
+                    'Chào bạn, mình là Bondy. Mình ở đây để lắng nghe và đồng hành cùng bạn trong hôm nay.',
+                    false,
+                  ),
+                  _BotMessage(
+                    'Bạn có thể kể ngắn gọn điều đang làm mình nặng lòng, hoặc chọn một gợi ý bên dưới.',
+                    false,
+                  ),
+                ];
+              });
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: Center(
@@ -161,20 +212,24 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
           Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  itemCount:
-                      _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
-                  itemBuilder: (context, index) {
-                    if (_intakeSummary.isNotEmpty && index == 0) {
-                      return _buildIntakeSummaryCard();
-                    }
-                    final messageIndex =
-                        index - (_intakeSummary.isEmpty ? 0 : 1);
-                    return _buildBubble(_messages[messageIndex]);
-                  },
-                ),
+                child: _isLoadingHistory
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(BondyColors.primary)))
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        itemCount:
+                            _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (_intakeSummary.isNotEmpty && index == 0) {
+                            return _buildIntakeSummaryCard();
+                          }
+                          final messageIndex =
+                              index - (_intakeSummary.isEmpty ? 0 : 1);
+                          return _buildBubble(_messages[messageIndex]);
+                        },
+                      ),
               ),
               _buildPromptRail(quota),
               const SizedBox(height: 8),
@@ -346,11 +401,20 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
     _scrollToBottom();
 
     try {
+      if (_conversationId == null) {
+        final conv = await _aiService.createConversation(
+          mode: AiChatMode.healing.apiValue,
+          title: message,
+        );
+        _conversationId = conv.id;
+      }
+
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
           messages: _buildRequestMessages(),
           mode: AiChatMode.healing,
           sessionId: _sessionId,
+          conversationId: _conversationId,
         ),
       )) {
         if (!mounted) return;

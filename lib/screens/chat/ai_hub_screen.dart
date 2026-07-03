@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/ai_mode_catalog.dart';
+import '../../models/ai_conversation.dart';
 import '../../services/ai_service.dart';
+import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 
 class AiHubScreen extends StatefulWidget {
@@ -15,6 +17,10 @@ class AiHubScreen extends StatefulWidget {
 class _AiHubScreenState extends State<AiHubScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  final AiService _aiService = AiService(ApiClient());
+  
+  List<AiConversation> _conversations = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -23,6 +29,24 @@ class _AiHubScreenState extends State<AiHubScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+    
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    try {
+      final response = await _aiService.getConversations();
+      if (mounted) {
+        setState(() {
+          _conversations = response.conversations;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -46,9 +70,9 @@ class _AiHubScreenState extends State<AiHubScreen>
             const SizedBox(height: 16),
             _buildModeGrid(context),
             const SizedBox(height: 28),
-            _buildSectionTitle('Skill đang có'),
+            _buildSectionTitle('Lịch sử trò chuyện'),
             const SizedBox(height: 12),
-            _buildSkillList(),
+            _buildConversationHistory(),
             const SizedBox(height: 40),
           ],
         ),
@@ -271,59 +295,193 @@ class _AiHubScreenState extends State<AiHubScreen>
     );
   }
 
-  Widget _buildSkillList() {
-    final skills = AiModeCatalog.modes
-        .expand((mode) => mode.skills)
-        .fold<Map<String, AiSkillDescriptor>>(
-          {},
-          (map, skill) => map..putIfAbsent(skill.key, () => skill),
-        )
-        .values
-        .toList();
+  Widget _buildConversationHistory() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(BondyColors.primary),
+          ),
+        ),
+      );
+    }
+
+    if (_conversations.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(BondyRadius.md),
+          border: Border.all(color: BondyColors.divider, width: 1),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              const Icon(Icons.chat_bubble_outline, color: BondyColors.textSecondary, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                'Chưa có cuộc trò chuyện nào',
+                style: GoogleFonts.manrope(
+                  fontSize: 14,
+                  color: BondyColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Chọn một mode AI ở trên để bắt đầu',
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: BondyColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Column(
-      children: skills
-          .map(
-            (skill) => Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(BondyRadius.md),
-                border: Border.all(color: BondyColors.divider, width: 1),
+      children: _conversations.map((conv) => _buildConversationItem(conv)).toList(),
+    );
+  }
+
+  Widget _buildConversationItem(AiConversation conversation) {
+    // Find mode descriptor to get icon and color
+    final modeEnum = AiChatMode.values.firstWhere(
+      (m) => m.apiValue == conversation.mode,
+      orElse: () => AiChatMode.defaultMode,
+    );
+    final descriptor = AiModeCatalog.modes.firstWhere(
+      (m) => m.mode == modeEnum,
+      orElse: () => AiModeCatalog.modes.first,
+    );
+    final colors = _modeColors(modeEnum);
+
+    return Dismissible(
+      key: Key(conversation.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(BondyRadius.md),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: Icon(Icons.delete_outline, color: Colors.red.shade400),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Xóa cuộc trò chuyện?'),
+            content: const Text('Hành động này không thể hoàn tác.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Hủy', style: TextStyle(color: BondyColors.textSecondary)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_awesome, color: BondyColors.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        _aiService.deleteConversation(conversation.id);
+        setState(() {
+          _conversations.removeWhere((c) => c.id == conversation.id);
+        });
+      },
+      child: GestureDetector(
+        onTap: () {
+          // Navigate to specific chat screen with conversationId
+          Navigator.pushNamed(
+            context,
+            descriptor.routeName,
+            arguments: {
+              ...descriptor.routeArguments,
+              if (descriptor.routeArguments.isEmpty) 'mode': descriptor.mode.apiValue,
+              'conversationId': conversation.id,
+            },
+          ).then((_) => _loadConversations()); // Reload history when back
+        },
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(BondyRadius.md),
+            border: Border.all(color: BondyColors.divider, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.$1,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(descriptor.emoji, style: const TextStyle(fontSize: 20)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      conversation.displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: BondyColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
                         Text(
-                          skill.label,
+                          descriptor.title,
                           style: GoogleFonts.manrope(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: BondyColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: colors.$3,
                           ),
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          skill.description,
+                          ' · ${conversation.relativeTime}',
                           style: GoogleFonts.manrope(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: BondyColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          )
-          .toList(),
+              const Icon(Icons.chevron_right, color: BondyColors.textSecondary, size: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

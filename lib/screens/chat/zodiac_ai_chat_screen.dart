@@ -21,7 +21,7 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
   final _scrollController = ScrollController();
   final _sessionId = 'ai-tu-vi-${DateTime.now().millisecondsSinceEpoch}';
 
-  final List<_ZodiacMessage> _messages = [
+  List<_ZodiacMessage> _messages = [
     _ZodiacMessage(
       'Chào bạn! Mình là AI Bondy. Hãy cho mình biết cung, tuổi hoặc câu hỏi tình duyên bạn muốn xem.',
       false,
@@ -31,6 +31,9 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
       false,
     ),
   ];
+
+  String? _conversationId;
+  bool _isLoadingHistory = false;
 
   bool _isSending = false;
   bool _didReadArguments = false;
@@ -50,17 +53,45 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
         setState(() => _intakeSummary = summary);
       }
 
-      final initialMessage = args['initialMessage'];
-      final displayMessage = args['displayMessage']?.toString().trim();
-      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
-        _sendMessage(
-          initialMessage.trim(),
-          displayMessage: displayMessage?.isNotEmpty == true
-              ? displayMessage
-              : null,
-        );
+      final conversationId = args['conversationId']?.toString();
+      if (conversationId != null && conversationId.isNotEmpty) {
+        _loadConversationHistory(conversationId);
+      } else {
+        final initialMessage = args['initialMessage'];
+        final displayMessage = args['displayMessage']?.toString().trim();
+        if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+          _sendMessage(
+            initialMessage.trim(),
+            displayMessage: displayMessage?.isNotEmpty == true
+                ? displayMessage
+                : null,
+          );
+        }
       }
     });
+  }
+
+  Future<void> _loadConversationHistory(String conversationId) async {
+    setState(() {
+      _isLoadingHistory = true;
+      _conversationId = conversationId;
+    });
+    try {
+      final detail = await _aiService.getConversation(conversationId);
+      if (!mounted) return;
+      setState(() {
+        _messages = detail.messages
+            .map((m) => _ZodiacMessage(m.content, m.isUser))
+            .toList();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      // Ignore error, keep default greeting
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   @override
@@ -86,11 +117,20 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
     _scrollToBottom();
 
     try {
+      if (_conversationId == null) {
+        final conv = await _aiService.createConversation(
+          mode: AiChatMode.aiTuVi.apiValue,
+          title: message,
+        );
+        _conversationId = conv.id;
+      }
+
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
           messages: _buildRequestMessages(),
           mode: AiChatMode.aiTuVi,
           sessionId: _sessionId,
+          conversationId: _conversationId,
         ),
       )) {
         if (!mounted) return;
@@ -172,23 +212,48 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
             color: BondyColors.textPrimary,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFF8C42)),
+            onPressed: () {
+              setState(() {
+                _conversationId = null;
+                _messages = [
+                  _ZodiacMessage(
+                    'Chào bạn! Mình là AI Bondy. Hãy cho mình biết cung, tuổi hoặc câu hỏi tình duyên bạn muốn xem.',
+                    false,
+                  ),
+                  _ZodiacMessage(
+                    'Bạn có thể hỏi về tính cách, độ tương hợp, ngày tốt hoặc lá số cơ bản.',
+                    false,
+                  ),
+                ];
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
           _buildGradientHeader(),
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
-              itemBuilder: (context, index) {
-                if (_intakeSummary.isNotEmpty && index == 0) {
-                  return _buildIntakeSummaryCard();
-                }
-                final messageIndex = index - (_intakeSummary.isEmpty ? 0 : 1);
-                return _buildMessageBubble(_messages[messageIndex]);
-              },
-            ),
+            child: _isLoadingHistory
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Color(0xFFFF8C42))))
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    itemCount: _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                    itemBuilder: (context, index) {
+                      if (_intakeSummary.isNotEmpty && index == 0) {
+                        return _buildIntakeSummaryCard();
+                      }
+                      final messageIndex = index - (_intakeSummary.isEmpty ? 0 : 1);
+                      return _buildMessageBubble(_messages[messageIndex]);
+                    },
+                  ),
           ),
           _buildBottomControls(),
         ],

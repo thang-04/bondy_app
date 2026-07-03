@@ -22,7 +22,9 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _sessionId = 'tarot-${DateTime.now().millisecondsSinceEpoch}';
-  final List<_TarotMessage> _chatMessages = [];
+  List<_TarotMessage> _chatMessages = [];
+  String? _conversationId;
+  bool _isLoadingHistory = false;
 
   final List<_TarotCardData> _allCards = [
     _TarotCardData(
@@ -84,21 +86,52 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
         setState(() => _intakeSummary = summary);
       }
 
-      final initialMessage = args['initialMessage'];
-      final displayMessage = args['displayMessage']?.toString().trim();
-      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
-        // Xóa tin nhắn hướng dẫn mặc định được thêm bởi _drawCards() khi có intake context
-        _chatMessages.removeWhere(
-          (m) => !m.isUser && m.text.startsWith('Hãy lật'),
-        );
-        _sendMessage(
-          initialMessage.trim(),
-          displayMessage: displayMessage?.isNotEmpty == true
-              ? displayMessage
-              : null,
-        );
+      final conversationId = args['conversationId']?.toString();
+      if (conversationId != null && conversationId.isNotEmpty) {
+        _loadConversationHistory(conversationId);
+      } else {
+        final initialMessage = args['initialMessage'];
+        final displayMessage = args['displayMessage']?.toString().trim();
+        if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+          // Xóa tin nhắn hướng dẫn mặc định được thêm bởi _drawCards() khi có intake context
+          _chatMessages.removeWhere(
+            (m) => !m.isUser && m.text.startsWith('Hãy lật'),
+          );
+          _sendMessage(
+            initialMessage.trim(),
+            displayMessage: displayMessage?.isNotEmpty == true
+                ? displayMessage
+                : null,
+          );
+        }
       }
     });
+  }
+
+  Future<void> _loadConversationHistory(String conversationId) async {
+    setState(() {
+      _isLoadingHistory = true;
+      _conversationId = conversationId;
+    });
+    try {
+      final detail = await _aiService.getConversation(conversationId);
+      if (!mounted) return;
+      setState(() {
+        _chatMessages = detail.messages
+            .map((m) => _TarotMessage(m.content, m.isUser))
+            .toList();
+        // Cố tình ẩn phần lật bài nếu đã có lịch sử
+        _activeCardIndex = null;
+        _flipped = [true, true, true]; 
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      // Ignore error, keep default greeting
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   @override
@@ -162,11 +195,20 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
     _scrollToBottom();
 
     try {
+      if (_conversationId == null) {
+        final conv = await _aiService.createConversation(
+          mode: AiChatMode.tarot.apiValue,
+          title: message,
+        );
+        _conversationId = conv.id;
+      }
+
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
           messages: _buildRequestMessages(),
           mode: AiChatMode.tarot,
           sessionId: _sessionId,
+          conversationId: _conversationId,
         ),
       )) {
         if (!mounted) return;
@@ -247,40 +289,56 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             color: Colors.white,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFFD700)),
+            onPressed: () {
+              setState(() {
+                _conversationId = null;
+                _drawCards();
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 28),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(3, _buildTarotCard),
+            child: _isLoadingHistory
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Color(0xFFFFD700))))
+                : SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 28),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(3, _buildTarotCard),
+                        ),
+                        const SizedBox(height: 28),
+                        if (_activeCardIndex != null) _buildInterpretationCard(),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 0.5,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_intakeSummary.isNotEmpty) ...[
+                          _buildIntakeSummaryCard(),
+                          const SizedBox(height: 16),
+                        ],
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _chatMessages.map(_buildChatBubble).toList(),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 28),
-                  if (_activeCardIndex != null) _buildInterpretationCard(),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 0.5,
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_intakeSummary.isNotEmpty) ...[
-                    _buildIntakeSummaryCard(),
-                    const SizedBox(height: 16),
-                  ],
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _chatMessages.map(_buildChatBubble).toList(),
-                  ),
-                ],
-              ),
-            ),
           ),
           _buildBottomControls(),
         ],

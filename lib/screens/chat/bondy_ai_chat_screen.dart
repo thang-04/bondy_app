@@ -24,13 +24,16 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
   final _safetyService = SafetyGuardrailsService();
   final _sessionId = 'bondy-${DateTime.now().millisecondsSinceEpoch}';
 
-  final List<_BotMessage> _messages = [
+  List<_BotMessage> _messages = [
     _BotMessage(
       'Chào bạn! Mình là Bondy AI. Bạn có thể hỏi mình về trò chuyện, hẹn hò, cảm xúc hoặc kế hoạch hôm nay.',
       false,
     ),
     _BotMessage('Hãy nhập câu hỏi hoặc chọn một gợi ý nhanh bên dưới.', false),
   ];
+
+  String? _conversationId;
+  bool _isLoadingHistory = false;
 
   AiChatMode _mode = AiChatMode.defaultMode;
   bool _isSending = false;
@@ -62,17 +65,45 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         setState(() => _intakeSummary = summary);
       }
 
-      final initialMessage = args['initialMessage'];
-      final displayMessage = args['displayMessage']?.toString().trim();
-      if (initialMessage is String && initialMessage.trim().isNotEmpty) {
-        _proceedWithMessage(
-          initialMessage.trim(),
-          displayMessage: displayMessage?.isNotEmpty == true
-              ? displayMessage
-              : null,
-        );
+      final conversationId = args['conversationId']?.toString();
+      if (conversationId != null && conversationId.isNotEmpty) {
+        _loadConversationHistory(conversationId);
+      } else {
+        final initialMessage = args['initialMessage'];
+        final displayMessage = args['displayMessage']?.toString().trim();
+        if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+          _proceedWithMessage(
+            initialMessage.trim(),
+            displayMessage: displayMessage?.isNotEmpty == true
+                ? displayMessage
+                : null,
+          );
+        }
       }
     });
+  }
+
+  Future<void> _loadConversationHistory(String conversationId) async {
+    setState(() {
+      _isLoadingHistory = true;
+      _conversationId = conversationId;
+    });
+    try {
+      final detail = await _aiService.getConversation(conversationId);
+      if (!mounted) return;
+      setState(() {
+        _messages = detail.messages
+            .map((m) => _BotMessage(m.content, m.isUser))
+            .toList();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      // Ignore error, keep default greeting
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   @override
@@ -138,26 +169,48 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: BondyColors.primary),
+            onPressed: () {
+              setState(() {
+                _conversationId = null;
+                _messages = [
+                  _BotMessage(
+                    'Chào bạn! Mình là Bondy AI. Bạn có thể hỏi mình về trò chuyện, hẹn hò, cảm xúc hoặc kế hoạch hôm nay.',
+                    false,
+                  ),
+                  _BotMessage('Hãy nhập câu hỏi hoặc chọn một gợi ý nhanh bên dưới.', false),
+                ];
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Stack(
         children: [
           Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount:
-                      _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
-                  itemBuilder: (context, index) {
-                    if (_intakeSummary.isNotEmpty && index == 0) {
-                      return _buildIntakeSummaryCard();
-                    }
-                    final messageIndex =
-                        index - (_intakeSummary.isEmpty ? 0 : 1);
-                    return _buildBubble(_messages[messageIndex]);
-                  },
-                ),
+                child: _isLoadingHistory
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(BondyColors.primary)))
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount:
+                            _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (_intakeSummary.isNotEmpty && index == 0) {
+                            return _buildIntakeSummaryCard();
+                          }
+                          final messageIndex =
+                              index - (_intakeSummary.isEmpty ? 0 : 1);
+                          return _buildBubble(_messages[messageIndex]);
+                        },
+                      ),
               ),
               SizedBox(
                 height: 44,
@@ -337,11 +390,20 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
     _scrollToBottom();
 
     try {
+      if (_conversationId == null) {
+        final conv = await _aiService.createConversation(
+          mode: _mode.apiValue,
+          title: message,
+        );
+        _conversationId = conv.id;
+      }
+
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
           messages: _buildRequestMessages(),
           mode: _mode,
           sessionId: _sessionId,
+          conversationId: _conversationId,
         ),
       )) {
         if (!mounted) return;

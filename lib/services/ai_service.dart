@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/ai_conversation.dart';
 import 'api_client.dart';
 import 'auth_service.dart';
 
@@ -384,22 +385,26 @@ class AiStreamChatRequest {
   final List<AiChatMessage> messages;
   final AiChatMode mode;
   final String? sessionId;
+  final String? conversationId;
 
   const AiStreamChatRequest({
     required this.messages,
     this.mode = AiChatMode.defaultMode,
     this.sessionId,
+    this.conversationId,
   });
 
   factory AiStreamChatRequest.singleUserMessage({
     required String message,
     AiChatMode mode = AiChatMode.defaultMode,
     String? sessionId,
+    String? conversationId,
   }) {
     return AiStreamChatRequest(
       messages: [AiChatMessage.user(message)],
       mode: mode,
       sessionId: sessionId,
+      conversationId: conversationId,
     );
   }
 
@@ -407,6 +412,7 @@ class AiStreamChatRequest {
     'messages': messages.map((message) => message.toJson()).toList(),
     'mode': mode.apiValue,
     if (sessionId != null && sessionId!.isNotEmpty) 'sessionId': sessionId,
+    if (conversationId != null && conversationId!.isNotEmpty) 'conversationId': conversationId,
   };
 }
 
@@ -742,5 +748,75 @@ class AiService {
       default:
         return null;
     }
+  }
+
+  // ── Conversation History API ──────────────────────────────────────
+
+  /// Lấy danh sách conversations của user.
+  Future<AiConversationListResponse> getConversations({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final response = await _apiClient.get(
+      '/ai/conversations',
+      authenticated: true,
+      queryParams: {'limit': '$limit', 'offset': '$offset'},
+    );
+    return AiConversationListResponse.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
+  /// Tạo conversation mới.
+  Future<AiConversation> createConversation({
+    required String mode,
+    String? title,
+  }) async {
+    final response = await _apiClient.post(
+      '/ai/conversations',
+      body: {
+        'mode': mode,
+        if (title != null) 'title': title,
+      },
+      authenticated: true,
+    );
+    return AiConversation.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
+  /// Lấy conversation detail + messages.
+  Future<AiConversationDetail> getConversation(String conversationId) async {
+    final response = await _apiClient.get(
+      '/ai/conversations/$conversationId',
+      authenticated: true,
+    );
+    return AiConversationDetail.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
+  /// Xóa conversation.
+  Future<void> deleteConversation(String conversationId) async {
+    await _apiClient.delete(
+      '/ai/conversations/$conversationId',
+      authenticated: true,
+    );
+  }
+
+  /// Lưu message pair (user + assistant) sau khi chat xong.
+  Future<void> saveMessages(
+    String conversationId, {
+    required String userMessage,
+    required String assistantMessage,
+  }) async {
+    await _apiClient.post(
+      '/ai/conversations/$conversationId/messages',
+      body: {
+        'userMessage': userMessage,
+        'assistantMessage': assistantMessage,
+      },
+      authenticated: true,
+    );
   }
 }
