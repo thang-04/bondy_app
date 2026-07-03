@@ -303,6 +303,12 @@ class AiModeIntakeDraft {
   }
 
   String buildInitialMessage() {
+    // Với mode tarot, gửi thẳng tin nhắn tiếng Việt tự nhiên
+    // để AI backend nhận diện đúng intent mà không bị confuse bởi metadata
+    if (mode == AiChatMode.tarot) {
+      final lines = _promptLines(mode);
+      return lines.where((l) => l.trim().isNotEmpty).join('\n');
+    }
     final lines = <String>[
       'Mode: ${mode.apiValue}',
       'User provided intake context before chat.',
@@ -324,10 +330,18 @@ class AiModeIntakeDraft {
           'Question: ${_value('question')}',
         ];
       case AiChatMode.tarot:
+        final spread = _value('spread');
+        final spreadLabel = spread == 'one-card'
+            ? '1 lá nhanh'
+            : spread == 'three-card-love'
+                ? '3 lá tình yêu (Quá khứ – Hiện tại – Tương lai)'
+                : 'Giữa hai lựa chọn';
+        final status = _value('relationshipStatus', fallback: '');
+        final question = _value('question');
+        final statusLine =
+            status.isNotEmpty ? ' Tình trạng hiện tại: $status.' : '';
         return [
-          'Spread: ${_value('spread')}',
-          'Relationship status: ${_value('relationshipStatus', fallback: 'unknown')}',
-          'Question: ${_value('question')}',
+          'Tôi muốn xem Tarot.$statusLine Kiểu trải bài: $spreadLabel. Câu hỏi của tôi: $question. Hãy bắt đầu đọc bài Tarot cho tôi theo câu hỏi này.',
         ];
       case AiChatMode.healing:
         return [

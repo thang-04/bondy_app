@@ -87,6 +87,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       final initialMessage = args['initialMessage'];
       final displayMessage = args['displayMessage']?.toString().trim();
       if (initialMessage is String && initialMessage.trim().isNotEmpty) {
+        // Xóa tin nhắn hướng dẫn mặc định được thêm bởi _drawCards() khi có intake context
+        _chatMessages.removeWhere(
+          (m) => !m.isUser && m.text.startsWith('Hãy lật'),
+        );
         _sendMessage(
           initialMessage.trim(),
           displayMessage: displayMessage?.isNotEmpty == true

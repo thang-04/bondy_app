@@ -18,7 +18,7 @@ SELECTED_USERS=${USER_OPTIONS[$RANDOM_INDEX]}
 
 # Tính toán các tham số
 BATCH_SIZE=8
-WAIT_TIME=900 # 15 phút chờ mỗi batch (vì mỗi tab giờ chạy ~13.6 phút)
+WAIT_TIME=1200 # 20 phút chờ mỗi batch (vì mỗi tab giờ chạy ~18 phút)
 
 # ---- BẮT ĐẦU LOG ----
 echo "" >> "$LOG_FILE"
