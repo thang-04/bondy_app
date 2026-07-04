@@ -32,7 +32,7 @@ class AuthViewModel extends ChangeNotifier {
   // Token tạm để xử lý flow liên kết tài khoản Google
   String? _pendingGoogleIdToken;
 
-  static final RegExp _emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$');
+  static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   /// F-05: registration requires a slightly stronger password — at least 8
   /// characters with both a letter and a digit. Login keeps the 6-char floor

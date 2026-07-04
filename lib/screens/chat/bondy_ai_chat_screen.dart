@@ -7,6 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/safety_guardrails_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
+import '../../widgets/common/ai_quota_paywall_dialog.dart';
 
 class BondyAIChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -171,7 +172,10 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: BondyColors.primary),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: BondyColors.primary,
+            ),
             onPressed: () {
               setState(() {
                 _conversationId = null;
@@ -180,7 +184,10 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                     'Chào bạn! Mình là Bondy AI. Bạn có thể hỏi mình về trò chuyện, hẹn hò, cảm xúc hoặc kế hoạch hôm nay.',
                     false,
                   ),
-                  _BotMessage('Hãy nhập câu hỏi hoặc chọn một gợi ý nhanh bên dưới.', false),
+                  _BotMessage(
+                    'Hãy nhập câu hỏi hoặc chọn một gợi ý nhanh bên dưới.',
+                    false,
+                  ),
                 ];
               });
             },
@@ -196,7 +203,11 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
                 child: _isLoadingHistory
                     ? const Center(
                         child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(BondyColors.primary)))
+                          valueColor: AlwaysStoppedAnimation(
+                            BondyColors.primary,
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(16),
@@ -433,8 +444,18 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
       }
     } on ApiClientException catch (error) {
       if (!mounted) return;
-      setState(() => assistantMessage.text = error.message);
-    } catch (_) {
+      if (error.code == 'AI_CHAT_QUOTA_EXCEEDED' && error.data != null) {
+        final exceeded = AiQuotaExceededData.fromJson(error.data!);
+        setState(() {
+          assistantMessage.text = exceeded.paywall?.message ?? error.message;
+        });
+        await showAiQuotaPaywallDialog(context, data: exceeded);
+      } else {
+        setState(() => assistantMessage.text = error.message);
+      }
+    } catch (e, st) {
+      debugPrint('[BondyAIChat] Unexpected error: $e');
+      debugPrint('[BondyAIChat] Stack: $st');
       if (!mounted) return;
       setState(() {
         assistantMessage.text =

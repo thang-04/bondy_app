@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../widgets/common/ai_markdown_text.dart';
+import '../../widgets/common/ai_quota_paywall_dialog.dart';
 
 class TarotReadingScreen extends StatefulWidget {
   final AiService? aiService;
@@ -66,6 +67,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
   bool _didReadArguments = false;
   List<String> _intakeSummary = const [];
 
+  bool _isFlippingMode = true;
+  int _totalCards = 3;
+  String? _pendingAiPrompt;
+
   @override
   void initState() {
     super.initState();
@@ -92,17 +97,27 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       } else {
         final initialMessage = args['initialMessage'];
         final displayMessage = args['displayMessage']?.toString().trim();
+        final spread = args['spread']?.toString();
+        final question = args['question']?.toString();
+
+        final c = spread == 'one-card' ? 1 : 3;
+        if (_totalCards != c) {
+          _drawCards(count: c);
+        }
+
         if (initialMessage is String && initialMessage.trim().isNotEmpty) {
           // Xóa tin nhắn hướng dẫn mặc định được thêm bởi _drawCards() khi có intake context
           _chatMessages.removeWhere(
             (m) => !m.isUser && m.text.startsWith('Hãy lật'),
           );
-          _sendMessage(
-            initialMessage.trim(),
-            displayMessage: displayMessage?.isNotEmpty == true
-                ? displayMessage
-                : null,
-          );
+
+          _pendingAiPrompt = initialMessage.trim();
+          final textToShow = (question?.isNotEmpty == true)
+              ? question
+              : displayMessage;
+          if (textToShow != null) {
+            _controller.text = textToShow;
+          }
         }
       }
     });
@@ -122,7 +137,8 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             .toList();
         // Cố tình ẩn phần lật bài nếu đã có lịch sử
         _activeCardIndex = null;
-        _flipped = [true, true, true]; 
+        _flipped = List.filled(_totalCards, true);
+        _isFlippingMode = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } catch (e) {
@@ -141,12 +157,15 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
     super.dispose();
   }
 
-  void _drawCards() {
+  void _drawCards({int? count}) {
+    final c = count ?? _totalCards;
     final cards = List<_TarotCardData>.from(_allCards)..shuffle(Random());
     setState(() {
-      _selectedCards = cards.take(3).toList();
-      _flipped = [false, false, false];
+      _totalCards = c;
+      _selectedCards = cards.take(c).toList();
+      _flipped = List.filled(c, false);
       _activeCardIndex = null;
+      _isFlippingMode = true;
       _chatMessages
         ..clear()
         ..add(
@@ -176,18 +195,37 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
         ),
       );
     });
-    _scrollToBottom();
+
+    if (_isFlippingMode && !_flipped.contains(false)) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _isFlippingMode = false;
+          });
+          _scrollToBottom();
+        }
+      });
+    } else {
+      _scrollToBottom();
+    }
   }
 
   Future<void> _sendMessage(String text, {String? displayMessage}) async {
     final message = text.trim();
     if (message.isEmpty || _isSending) return;
 
+    final requestText = _pendingAiPrompt ?? message;
+    _pendingAiPrompt = null;
+
     final assistantMessage = _TarotMessage('', false, streaming: true);
     setState(() {
       _isSending = true;
       _chatMessages.add(
-        _TarotMessage(displayMessage ?? message, true, requestText: message),
+        _TarotMessage(
+          displayMessage ?? message,
+          true,
+          requestText: requestText,
+        ),
       );
       _chatMessages.add(assistantMessage);
       _controller.clear();
@@ -238,8 +276,18 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       }
     } on ApiClientException catch (error) {
       if (!mounted) return;
-      setState(() => assistantMessage.text = error.message);
-    } catch (_) {
+      if (error.code == 'AI_CHAT_QUOTA_EXCEEDED' && error.data != null) {
+        final exceeded = AiQuotaExceededData.fromJson(error.data!);
+        setState(() {
+          assistantMessage.text = exceeded.paywall?.message ?? error.message;
+        });
+        await showAiQuotaPaywallDialog(context, data: exceeded);
+      } else {
+        setState(() => assistantMessage.text = error.message);
+      }
+    } catch (e, st) {
+      debugPrint('[TarotChat] Unexpected error: $e');
+      debugPrint('[TarotChat] Stack: $st');
       if (!mounted) return;
       setState(() {
         assistantMessage.text =
@@ -271,6 +319,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isFlippingMode && !_isLoadingHistory) {
+      return _buildFullScreenFlipping();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
       appBar: AppBar(
@@ -291,7 +343,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFFD700)),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: Color(0xFFFFD700),
+            ),
             onPressed: () {
               setState(() {
                 _conversationId = null;
@@ -308,20 +363,29 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             child: _isLoadingHistory
                 ? const Center(
                     child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Color(0xFFFFD700))))
+                      valueColor: AlwaysStoppedAnimation(Color(0xFFFFD700)),
+                    ),
+                  )
                 : SingleChildScrollView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     child: Column(
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 28),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(3, _buildTarotCard),
+                          children: List.generate(
+                            _totalCards,
+                            (index) => _buildTarotCard(index),
+                          ),
                         ),
                         const SizedBox(height: 28),
-                        if (_activeCardIndex != null) _buildInterpretationCard(),
+                        if (_activeCardIndex != null)
+                          _buildInterpretationCard(),
                         const SizedBox(height: 16),
                         Container(
                           height: 0.5,
@@ -334,7 +398,9 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
                         ],
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: _chatMessages.map(_buildChatBubble).toList(),
+                          children: _chatMessages
+                              .map(_buildChatBubble)
+                              .toList(),
                         ),
                       ],
                     ),
@@ -429,17 +495,54 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
     );
   }
 
-  Widget _buildTarotCard(int index) {
+  Widget _buildFullScreenFlipping() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D1A),
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Lật bài để nhận thông điệp',
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_totalCards, (index) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: _totalCards == 1 ? 0 : 8.0,
+                    ),
+                    child: _buildTarotCard(index, isFullScreen: true),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTarotCard(int index, {bool isFullScreen = false}) {
     final isFlipped = _flipped[index];
     final card = _selectedCards[index];
-    final isActive = _activeCardIndex == index;
+    final isActive = !isFullScreen && _activeCardIndex == index;
+    final width = isFullScreen ? 110.0 : 95.0;
+    final height = isFullScreen ? 165.0 : 145.0;
 
     return GestureDetector(
       onTap: () => _flipCard(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        width: 95,
-        height: 145,
+        width: width,
+        height: height,
         decoration: BoxDecoration(
           color: isFlipped ? const Color(0xFF24244A) : const Color(0xFF2D2D5E),
           borderRadius: BorderRadius.circular(12),
@@ -792,6 +895,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
   }
 
   String _positionLabel(int index) {
+    if (_totalCards == 1) return 'Tarot';
     return index == 0 ? 'Quá khứ' : (index == 1 ? 'Hiện tại' : 'Tương lai');
   }
 

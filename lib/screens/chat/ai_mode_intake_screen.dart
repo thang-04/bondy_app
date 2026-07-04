@@ -346,6 +346,8 @@ class _AiModeIntakeScreenState extends State<AiModeIntakeScreen> {
         'initialMessage': draft.buildInitialMessage(),
         'displayMessage': draft.displayMessage,
         'intakeSummary': draft.summaryLines,
+        'spread': draft.values['spread'],
+        'question': draft.values['question'],
       },
     );
   }

@@ -1493,8 +1493,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       String path = '';
       if (!kIsWeb) {
         final dir = await getTemporaryDirectory();
-        path =
-            '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       }
       // aacLc không được hỗ trợ trên web → fallback sang opus. Trên native vẫn
       // ưu tiên aacLc cho file .m4a gọn nhẹ, mở được ở mọi nơi.
@@ -1745,7 +1744,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           FilledButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              await Navigator.of(context).pushNamed('/settings/premium');
+              await Navigator.of(context).pushNamed(
+                '/settings/premium',
+                arguments: {'initialTab': 'aiChatPasses'},
+              );
               if (mounted) {
                 await context.read<AiQuotaViewModel>().loadQuota();
               }
@@ -1884,7 +1886,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                 ),
                 child: Text(
                   'Chấp nhận 💬',
@@ -1915,7 +1920,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                 ),
                 child: Text(
                   'Từ chối',
@@ -1984,9 +1992,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   Widget _buildInputBar() {
     final bool isReceiverUnaccepted = _isMessageRequest && !_chatAccepted;
-    final int sentCount = _messages.where((m) => m.senderId == _currentUserId).length;
-    final bool isInitiatorLimitReached = _isInitiator && !_chatAccepted && sentCount >= 3;
-    final bool isInputBarDisabled = isReceiverUnaccepted || isInitiatorLimitReached;
+    final int sentCount = _messages
+        .where((m) => m.senderId == _currentUserId)
+        .length;
+    final bool isInitiatorLimitReached =
+        _isInitiator && !_chatAccepted && sentCount >= 3;
+    final bool isInputBarDisabled =
+        isReceiverUnaccepted || isInitiatorLimitReached;
 
     final coachQuota = context.watch<AiQuotaViewModel>().quotaFor(
       AiChatMode.coach,
@@ -2009,72 +2021,72 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           children: [
             if (!isInputBarDisabled)
               SizedBox(
-              height: 42,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: AIPromptsConfig.deeperPrompts.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
+                height: 42,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: AIPromptsConfig.deeperPrompts.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ActionChip(
+                          avatar: const Icon(
+                            Icons.auto_awesome,
+                            size: 16,
+                            color: BondyColors.primary,
+                          ),
+                          label: Text(
+                            aiSuggestionLabel,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: BondyColors.textPrimary,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFFFFF1EE),
+                          side: BorderSide(
+                            color: BondyColors.primary.withValues(alpha: 0.28),
+                          ),
+                          onPressed: _isSending || _isLoading
+                              ? null
+                              : _toggleAiSuggestions,
+                        ),
+                      );
+                    }
+                    final prompt = AIPromptsConfig.deeperPrompts[index - 1];
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ActionChip(
                         avatar: const Icon(
-                          Icons.auto_awesome,
+                          Icons.psychology,
                           size: 16,
                           color: BondyColors.primary,
                         ),
                         label: Text(
-                          aiSuggestionLabel,
+                          prompt,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: BondyColors.textPrimary,
                           ),
                         ),
-                        backgroundColor: const Color(0xFFFFF1EE),
+                        backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: BondyColors.primary.withValues(alpha: 0.28),
+                          color: BondyColors.primary.withValues(alpha: 0.2),
                         ),
-                        onPressed: _isSending || _isLoading
-                            ? null
-                            : _toggleAiSuggestions,
+                        onPressed: () {
+                          setState(() {
+                            _controller.text = prompt;
+                          });
+                          _controller.selection = TextSelection.fromPosition(
+                            TextPosition(offset: _controller.text.length),
+                          );
+                        },
                       ),
                     );
-                  }
-                  final prompt = AIPromptsConfig.deeperPrompts[index - 1];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ActionChip(
-                      avatar: const Icon(
-                        Icons.psychology,
-                        size: 16,
-                        color: BondyColors.primary,
-                      ),
-                      label: Text(
-                        prompt,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: BondyColors.textPrimary,
-                        ),
-                      ),
-                      backgroundColor: Colors.white,
-                      side: BorderSide(
-                        color: BondyColors.primary.withValues(alpha: 0.2),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _controller.text = prompt;
-                        });
-                        _controller.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _controller.text.length),
-                        );
-                      },
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ),
             if (_showAiPanel)
               InlineAiSuggestionPanel(
                 viewModel: _aiCoachViewModel,
@@ -2165,11 +2177,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             Row(
               children: [
                 IconButton(
-                  onPressed: (_isSending || isInputBarDisabled) ? null : _pickAndSendImage,
+                  onPressed: (_isSending || isInputBarDisabled)
+                      ? null
+                      : _pickAndSendImage,
                   icon: const Icon(Icons.image_outlined),
                 ),
                 IconButton(
-                  onPressed: (_isSending || isInputBarDisabled) ? null : _toggleVoiceRecording,
+                  onPressed: (_isSending || isInputBarDisabled)
+                      ? null
+                      : _toggleVoiceRecording,
                   icon: Icon(
                     _isRecording ? Icons.stop_circle : Icons.mic_none,
                     color: _isRecording ? Colors.red : null,
@@ -2197,13 +2213,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     onSubmitted: (_) {
                       if (!isInputBarDisabled) _sendMessage();
                     },
-                    enabled: !_isSending && _chatId != null && !isInputBarDisabled,
+                    enabled:
+                        !_isSending && _chatId != null && !isInputBarDisabled,
                     decoration: InputDecoration(
                       hintText: isReceiverUnaccepted
                           ? '🔒 Chấp nhận để trả lời'
                           : (isInitiatorLimitReached
-                              ? '⏳ Chờ chấp nhận...'
-                              : 'Nhập tin nhắn...'),
+                                ? '⏳ Chờ chấp nhận...'
+                                : 'Nhập tin nhắn...'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -2247,7 +2264,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   key: const Key('send_button'),
-                  onPressed: _controller.text.trim().isEmpty || _isSending || isInputBarDisabled
+                  onPressed:
+                      _controller.text.trim().isEmpty ||
+                          _isSending ||
+                          isInputBarDisabled
                       ? null
                       : () {
                           _sendMessage();

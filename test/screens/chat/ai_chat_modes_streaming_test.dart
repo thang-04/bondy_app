@@ -1,3 +1,4 @@
+import 'package:bondy/models/ai_conversation.dart';
 import 'package:bondy/screens/chat/bondy_ai_chat_screen.dart';
 import 'package:bondy/screens/chat/emotional_checkin_ai_screen.dart';
 import 'package:bondy/screens/chat/tarot_reading_screen.dart';
@@ -12,6 +13,43 @@ class _RecordingAiService extends AiService {
   final requests = <AiStreamChatRequest>[];
 
   _RecordingAiService() : super(ApiClient());
+
+  @override
+  Future<AiConversation> createConversation({
+    required String mode,
+    String? title,
+  }) async {
+    final now = DateTime.now();
+    return AiConversation(
+      id: 'conversation-$mode',
+      mode: mode,
+      title: title,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  @override
+  Future<AiConversationDetail> getConversation(String conversationId) async {
+    final now = DateTime.now();
+    return AiConversationDetail(
+      conversation: AiConversation(
+        id: conversationId,
+        mode: 'tarot',
+        title: 'Tarot history',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      messages: [
+        AiConversationMessage(
+          id: 'm-1',
+          role: 'assistant',
+          content: 'Trai bai truoc do',
+          createdAt: now,
+        ),
+      ],
+    );
+  }
 
   @override
   Stream<AiChatStreamEvent> streamChat(AiStreamChatRequest request) async* {
@@ -83,8 +121,16 @@ void main() {
     final aiService = _RecordingAiService();
 
     await tester.pumpWidget(
-      MaterialApp(home: TarotReadingScreen(aiService: aiService)),
+      MaterialApp(
+        onGenerateRoute: (_) => MaterialPageRoute<void>(
+          settings: const RouteSettings(
+            arguments: {'conversationId': 'tarot-conv-1'},
+          ),
+          builder: (_) => TarotReadingScreen(aiService: aiService),
+        ),
+      ),
     );
+    await tester.pumpAndSettle();
 
     await tester.enterText(
       find.byKey(const Key('tarot_ai_chat_input')),

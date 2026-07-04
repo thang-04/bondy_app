@@ -42,6 +42,8 @@ class AiQuotaViewModel extends ChangeNotifier {
       summary = AiQuotaSummary(
         tier: quota.tier,
         resetsAt: quota.resetsAt,
+        daily: quota.feature == 'daily_ai_chat' ? quota : null,
+        passes: const AiChatPassesSummary.empty(),
         quotas: {quota.mode: quota},
         dailyLimitsByTier: const {},
       );

@@ -58,33 +58,57 @@ class _QuotaApiClient extends ApiClient {
       'data': {
         'tier': 'FREE',
         'resetsAt': '2026-06-13T17:00:00.000Z',
+        'daily': {
+          'mode': 'default',
+          'feature': 'daily_ai_chat',
+          'label': 'AI Hub chat',
+          'tier': 'FREE',
+          'limit': 5,
+          'used': 2,
+          'remaining': 3,
+          'resetsAt': '2026-06-13T17:00:00.000Z',
+        },
+        'passes': {
+          'active': [
+            {
+              'id': 'pass-1',
+              'packageCode': 'AI_CHAT_PASS_3D',
+              'totalTurns': 60,
+              'usedTurns': 10,
+              'remainingTurns': 50,
+              'startsAt': '2026-06-13T00:00:00.000Z',
+              'expiresAt': '2026-06-16T00:00:00.000Z',
+            },
+          ],
+          'totalRemaining': 50,
+        },
         'quotas': {
           'healing': {
             'mode': 'healing',
-            'feature': 'daily_ai_healing',
-            'label': 'AI chua lanh',
+            'feature': 'daily_ai_chat',
+            'label': 'AI Hub chat',
             'tier': 'FREE',
-            'limit': 3,
-            'used': 1,
-            'remaining': 2,
+            'limit': 5,
+            'used': 2,
+            'remaining': 3,
             'resetsAt': '2026-06-13T17:00:00.000Z',
           },
           'coach': {
             'mode': 'coach',
-            'feature': 'daily_ai_coach',
-            'label': 'Goi y tro chuyen',
+            'feature': 'daily_ai_chat',
+            'label': 'AI Hub chat',
             'tier': 'FREE',
-            'limit': 3,
-            'used': 0,
+            'limit': 5,
+            'used': 2,
             'remaining': 3,
             'resetsAt': '2026-06-13T17:00:00.000Z',
           },
         },
         'dailyLimitsByTier': {
-          'FREE': {'healing': 3, 'coach': 3},
-          'PLUS': {'healing': 20, 'coach': 20},
-          'PREMIUM': {'healing': 50, 'coach': 50},
-          'ELITE': {'healing': 100, 'coach': 100},
+          'FREE': 5,
+          'PLUS': 20,
+          'PREMIUM': 50,
+          'ELITE': 100,
         },
       },
     };
@@ -123,10 +147,56 @@ void main() {
     final summary = await service.getQuota();
 
     expect(summary.tier, 'FREE');
-    expect(summary.quotaFor(AiChatMode.healing)?.remaining, 2);
-    expect(summary.quotaFor(AiChatMode.coach)?.limit, 3);
+    expect(summary.daily?.remaining, 3);
+    expect(summary.passes.totalRemaining, 50);
+    expect(summary.passes.active.single.packageCode, 'AI_CHAT_PASS_3D');
+    expect(summary.quotaFor(AiChatMode.healing)?.remaining, 3);
+    expect(summary.quotaFor(AiChatMode.coach)?.limit, 5);
     expect(summary.limitForTier('ELITE', AiChatMode.healing), 100);
     expect(summary.limitForTier('PLUS', AiChatMode.coach), 20);
+  });
+
+  test('parses AI quota exceeded paywall data for AI pass tab routing', () {
+    final data = AiQuotaExceededData.fromJson({
+      'mode': 'tarot',
+      'tier': 'FREE',
+      'quota': {
+        'mode': 'tarot',
+        'feature': 'daily_ai_chat',
+        'label': 'AI Hub chat',
+        'tier': 'FREE',
+        'limit': 5,
+        'used': 5,
+        'remaining': 0,
+        'resetsAt': '2026-06-13T17:00:00.000Z',
+      },
+      'passes': {'active': [], 'totalRemaining': 0},
+      'dailyLimitsByTier': {'FREE': 5, 'PLUS': 20, 'PREMIUM': 50, 'ELITE': 100},
+      'paywall': {
+        'reason': 'AI_CHAT_DAILY_LIMIT_EXCEEDED',
+        'title': 'Het luot AI',
+        'message': 'Mua them luot AI.',
+        'primaryCtaLabel': 'Xem goi AI',
+        'redirectScreen': 'PaymentPlansScreen',
+        'redirectParams': {'tab': 'aiChatPasses'},
+        'recommendedProductTypes': ['AI_CHAT_PASS', 'SUBSCRIPTION'],
+      },
+      'upgradeModal': {
+        'title': 'Het luot AI',
+        'message': 'Mua them luot AI.',
+        'ctaLabel': 'Xem goi AI',
+        'secondaryCtaLabel': 'De sau',
+        'targetScreen': 'PaymentPlansScreen',
+        'recommendedTier': 'PLUS',
+        'benefits': ['Mua goi AI ngan han'],
+      },
+    });
+
+    expect(data.mode, AiChatMode.tarot);
+    expect(data.passes.totalRemaining, 0);
+    expect(data.paywall?.redirectTab, 'aiChatPasses');
+    expect(data.paywall?.primaryCtaLabel, 'Xem goi AI');
+    expect(data.limitForTier('FREE', AiChatMode.tarot), 5);
   });
 
   test('streams healing chat chunks and metadata quota', () async {

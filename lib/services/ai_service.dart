@@ -213,6 +213,8 @@ class AiModeQuota {
   final int used;
   final int remaining;
   final String? resetsAt;
+  final String? source;
+  final AiQuotaPass? pass;
 
   const AiModeQuota({
     required this.mode,
@@ -223,9 +225,12 @@ class AiModeQuota {
     required this.used,
     required this.remaining,
     this.resetsAt,
+    this.source,
+    this.pass,
   });
 
   factory AiModeQuota.fromJson(Map<String, dynamic> json) {
+    final passJson = json['pass'];
     return AiModeQuota(
       mode: AiChatMode.fromJson(json['mode']),
       feature: json['feature']?.toString() ?? '',
@@ -235,12 +240,22 @@ class AiModeQuota {
       used: (json['used'] as num?)?.toInt() ?? 0,
       remaining: (json['remaining'] as num?)?.toInt() ?? 0,
       resetsAt: json['resetsAt']?.toString(),
+      source: json['source']?.toString(),
+      pass: passJson is Map
+          ? AiQuotaPass.fromJson(passJson.cast<String, dynamic>())
+          : null,
     );
   }
 
-  AiModeQuota copyWith({int? used, int? remaining}) {
+  AiModeQuota copyWith({
+    AiChatMode? mode,
+    int? used,
+    int? remaining,
+    String? source,
+    AiQuotaPass? pass,
+  }) {
     return AiModeQuota(
-      mode: mode,
+      mode: mode ?? this.mode,
       feature: feature,
       label: label,
       tier: tier,
@@ -248,6 +263,31 @@ class AiModeQuota {
       used: used ?? this.used,
       remaining: remaining ?? this.remaining,
       resetsAt: resetsAt,
+      source: source ?? this.source,
+      pass: pass ?? this.pass,
+    );
+  }
+}
+
+class AiQuotaPass {
+  final String id;
+  final String packageCode;
+  final int remainingTurns;
+  final String expiresAt;
+
+  const AiQuotaPass({
+    required this.id,
+    required this.packageCode,
+    required this.remainingTurns,
+    required this.expiresAt,
+  });
+
+  factory AiQuotaPass.fromJson(Map<String, dynamic> json) {
+    return AiQuotaPass(
+      id: json['id']?.toString() ?? '',
+      packageCode: json['packageCode']?.toString() ?? '',
+      remainingTurns: (json['remainingTurns'] as num?)?.toInt() ?? 0,
+      expiresAt: json['expiresAt']?.toString() ?? '',
     );
   }
 }
@@ -292,43 +332,58 @@ class AiQuotaExceededData {
   final AiChatMode mode;
   final String tier;
   final AiModeQuota? quota;
-  final Map<String, Map<String, int>> dailyLimitsByTier;
+  final AiChatPassesSummary passes;
+  final Map<String, int> dailyLimitsByTier;
+  final AiQuotaPaywall? paywall;
   final AiQuotaUpgradeModal? upgradeModal;
 
   const AiQuotaExceededData({
     required this.mode,
     required this.tier,
     required this.quota,
+    required this.passes,
     required this.dailyLimitsByTier,
+    required this.paywall,
     required this.upgradeModal,
   });
 
   factory AiQuotaExceededData.fromJson(Map<String, dynamic> json) {
     final quotaJson = json['quota'];
     final modalJson = json['upgradeModal'];
+    final paywallJson = json['paywall'];
     return AiQuotaExceededData(
       mode: AiChatMode.fromJson(json['mode']),
       tier: json['tier']?.toString() ?? 'FREE',
       quota: quotaJson is Map
           ? AiModeQuota.fromJson(quotaJson.cast<String, dynamic>())
           : null,
+      passes: AiChatPassesSummary.fromJson(json['passes']),
       dailyLimitsByTier: _parseDailyLimits(json['dailyLimitsByTier']),
+      paywall: paywallJson is Map
+          ? AiQuotaPaywall.fromJson(paywallJson.cast<String, dynamic>())
+          : null,
       upgradeModal: modalJson is Map
           ? AiQuotaUpgradeModal.fromJson(modalJson.cast<String, dynamic>())
           : null,
     );
   }
+
+  int? limitForTier(String tier, AiChatMode mode) => dailyLimitsByTier[tier];
 }
 
 class AiQuotaSummary {
   final String tier;
   final String? resetsAt;
+  final AiModeQuota? daily;
+  final AiChatPassesSummary passes;
   final Map<AiChatMode, AiModeQuota> quotas;
-  final Map<String, Map<String, int>> dailyLimitsByTier;
+  final Map<String, int> dailyLimitsByTier;
 
   const AiQuotaSummary({
     required this.tier,
     required this.resetsAt,
+    required this.daily,
+    required this.passes,
     required this.quotas,
     required this.dailyLimitsByTier,
   });
@@ -343,10 +398,21 @@ class AiQuotaSummary {
         quotas[quota.mode] = quota;
       }
     }
+    final dailyJson = json['daily'];
+    final daily = dailyJson is Map
+        ? AiModeQuota.fromJson(dailyJson.cast<String, dynamic>())
+        : null;
+    if (daily != null) {
+      for (final mode in AiChatMode.values) {
+        quotas.putIfAbsent(mode, () => daily.copyWith(mode: mode));
+      }
+    }
 
     return AiQuotaSummary(
       tier: json['tier']?.toString() ?? 'FREE',
       resetsAt: json['resetsAt']?.toString(),
+      daily: daily,
+      passes: AiChatPassesSummary.fromJson(json['passes']),
       quotas: quotas,
       dailyLimitsByTier: _parseDailyLimits(json['dailyLimitsByTier']),
     );
@@ -355,30 +421,138 @@ class AiQuotaSummary {
   AiModeQuota? quotaFor(AiChatMode mode) => quotas[mode];
 
   int? limitForTier(String tier, AiChatMode mode) {
-    return dailyLimitsByTier[tier]?[mode.apiValue];
+    return dailyLimitsByTier[tier];
   }
 
   AiQuotaSummary copyWithQuota(AiModeQuota quota) {
     return AiQuotaSummary(
       tier: quota.tier.isNotEmpty ? quota.tier : tier,
       resetsAt: quota.resetsAt ?? resetsAt,
+      daily: quota.feature == 'daily_ai_chat' ? quota : daily,
+      passes: passes,
       quotas: {...quotas, quota.mode: quota},
       dailyLimitsByTier: dailyLimitsByTier,
     );
   }
 }
 
-Map<String, Map<String, int>> _parseDailyLimits(Object? value) {
+class AiChatPassSummary {
+  final String id;
+  final String packageCode;
+  final int totalTurns;
+  final int usedTurns;
+  final int remainingTurns;
+  final String startsAt;
+  final String expiresAt;
+
+  const AiChatPassSummary({
+    required this.id,
+    required this.packageCode,
+    required this.totalTurns,
+    required this.usedTurns,
+    required this.remainingTurns,
+    required this.startsAt,
+    required this.expiresAt,
+  });
+
+  factory AiChatPassSummary.fromJson(Map<String, dynamic> json) {
+    return AiChatPassSummary(
+      id: json['id']?.toString() ?? '',
+      packageCode: json['packageCode']?.toString() ?? '',
+      totalTurns: (json['totalTurns'] as num?)?.toInt() ?? 0,
+      usedTurns: (json['usedTurns'] as num?)?.toInt() ?? 0,
+      remainingTurns: (json['remainingTurns'] as num?)?.toInt() ?? 0,
+      startsAt: json['startsAt']?.toString() ?? '',
+      expiresAt: json['expiresAt']?.toString() ?? '',
+    );
+  }
+}
+
+class AiChatPassesSummary {
+  final List<AiChatPassSummary> active;
+  final int totalRemaining;
+
+  const AiChatPassesSummary({
+    required this.active,
+    required this.totalRemaining,
+  });
+
+  const AiChatPassesSummary.empty() : active = const [], totalRemaining = 0;
+
+  factory AiChatPassesSummary.fromJson(Object? value) {
+    if (value is! Map) return const AiChatPassesSummary.empty();
+    final json = value.cast<String, dynamic>();
+    final active = (json['active'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((item) => AiChatPassSummary.fromJson(item.cast<String, dynamic>()))
+        .toList();
+    return AiChatPassesSummary(
+      active: active,
+      totalRemaining:
+          (json['totalRemaining'] as num?)?.toInt() ??
+          active.fold<int>(0, (sum, pass) => sum + pass.remainingTurns),
+    );
+  }
+}
+
+class AiQuotaPaywall {
+  final String reason;
+  final String title;
+  final String message;
+  final String primaryCtaLabel;
+  final String redirectScreen;
+  final String? redirectTab;
+  final List<String> recommendedProductTypes;
+
+  const AiQuotaPaywall({
+    required this.reason,
+    required this.title,
+    required this.message,
+    required this.primaryCtaLabel,
+    required this.redirectScreen,
+    required this.redirectTab,
+    required this.recommendedProductTypes,
+  });
+
+  factory AiQuotaPaywall.fromJson(Map<String, dynamic> json) {
+    final params = json['redirectParams'];
+    return AiQuotaPaywall(
+      reason: json['reason']?.toString() ?? '',
+      title: json['title']?.toString() ?? 'Ban da het luot AI',
+      message: json['message']?.toString() ?? '',
+      primaryCtaLabel: json['primaryCtaLabel']?.toString() ?? 'Xem goi AI',
+      redirectScreen: json['redirectScreen']?.toString() ?? '',
+      redirectTab: params is Map ? params['tab']?.toString() : null,
+      recommendedProductTypes:
+          (json['recommendedProductTypes'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+    );
+  }
+}
+
+Map<String, int> _parseDailyLimits(Object? value) {
   final raw = value is Map ? value.cast<String, dynamic>() : const {};
   return raw.map((tier, limits) {
-    final rawLimits = limits is Map ? limits.cast<String, dynamic>() : const {};
-    return MapEntry(
-      tier,
-      rawLimits.map(
-        (mode, limit) => MapEntry(mode, (limit as num?)?.toInt() ?? 0),
-      ),
-    );
+    if (limits is num) return MapEntry(tier, limits.toInt());
+    if (limits is Map) {
+      final rawLimits = limits.cast<String, dynamic>();
+      final preferred =
+          rawLimits['default'] ??
+          rawLimits['healing'] ??
+          rawLimits['coach'] ??
+          _firstNumericValue(rawLimits.values);
+      return MapEntry(tier, (preferred as num?)?.toInt() ?? 0);
+    }
+    return MapEntry(tier, 0);
   });
+}
+
+num? _firstNumericValue(Iterable<dynamic> values) {
+  for (final value in values) {
+    if (value is num) return value;
+  }
+  return null;
 }
 
 class AiStreamChatRequest {
@@ -412,7 +586,8 @@ class AiStreamChatRequest {
     'messages': messages.map((message) => message.toJson()).toList(),
     'mode': mode.apiValue,
     if (sessionId != null && sessionId!.isNotEmpty) 'sessionId': sessionId,
-    if (conversationId != null && conversationId!.isNotEmpty) 'conversationId': conversationId,
+    if (conversationId != null && conversationId!.isNotEmpty)
+      'conversationId': conversationId,
   };
 }
 
@@ -772,12 +947,14 @@ class AiService {
     required String mode,
     String? title,
   }) async {
+    final body = <String, dynamic>{'mode': mode};
+    if (title != null) {
+      body['title'] = title;
+    }
+
     final response = await _apiClient.post(
       '/ai/conversations',
-      body: {
-        'mode': mode,
-        if (title != null) 'title': title,
-      },
+      body: body,
       authenticated: true,
     );
     return AiConversation.fromJson(
@@ -812,10 +989,7 @@ class AiService {
   }) async {
     await _apiClient.post(
       '/ai/conversations/$conversationId/messages',
-      body: {
-        'userMessage': userMessage,
-        'assistantMessage': assistantMessage,
-      },
+      body: {'userMessage': userMessage, 'assistantMessage': assistantMessage},
       authenticated: true,
     );
   }

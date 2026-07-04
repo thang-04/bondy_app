@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -97,6 +98,28 @@ class BondyErrorMapper {
 
   static String _clean(String? value) {
     var text = (value ?? '').trim();
+
+    // Trích xuất message nếu lỗi trả về là một chuỗi JSON (ví dụ từ Zod validation của backend)
+    if (text.startsWith('[') && text.endsWith(']')) {
+      try {
+        final List<dynamic> decoded = jsonDecode(text);
+        if (decoded.isNotEmpty && decoded.first is Map) {
+          final firstError = decoded.first as Map<String, dynamic>;
+          if (firstError.containsKey('message')) {
+            text = firstError['message'].toString();
+          }
+        }
+      } catch (_) {}
+    } else if (text.startsWith('{') && text.endsWith('}')) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(text);
+        if (decoded.containsKey('message')) {
+          text = decoded['message'].toString();
+        } else if (decoded.containsKey('error')) {
+          text = decoded['error'].toString();
+        }
+      } catch (_) {}
+    }
 
     // Loại bỏ các tiền tố Exception/Error phổ biến để lấy thông báo thực tế
     if (text.toLowerCase().startsWith('exception:')) {

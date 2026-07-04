@@ -252,15 +252,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               : 'Đăng nhập',
                           isLoading: auth.isLoading,
                           borderRadius: 30,
-                          onPressed: auth.isValid && !auth.isLoading
-                              ? () => context
-                                    .read<AuthViewModel>()
-                                    .loginAndNavigate(
+                          onPressed: auth.isLoading
+                              ? null
+                              : () {
+                                  _validate();
+                                  final currentAuth = context.read<AuthViewModel>();
+                                  if (currentAuth.isValid) {
+                                    currentAuth.loginAndNavigate(
                                       context,
                                       _emailController.text,
                                       _passwordController.text,
-                                    )
-                              : () {},
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Vui lòng nhập email hợp lệ và mật khẩu ít nhất 6 ký tự'),
+                                      ),
+                                    );
+                                  }
+                                },
                         ),
                         const SizedBox(height: 20),
                         // ─── Divider ───

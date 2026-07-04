@@ -267,11 +267,20 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    final http.Response response;
+    try {
+      response = await _client.post(
+        Uri.parse('$_baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      ).timeout(_timeout);
+    } on TimeoutException {
+      throw const AuthServiceException(
+        'Máy chủ không phản hồi. Kiểm tra kết nối và thử lại.',
+      );
+    } catch (e) {
+      throw AuthServiceException('Không thể kết nối máy chủ: $e');
+    }
 
     final body = _decodeBody(response);
     if (response.statusCode != 200 || body['success'] != true) {

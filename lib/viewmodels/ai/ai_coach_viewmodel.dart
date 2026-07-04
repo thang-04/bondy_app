@@ -155,7 +155,7 @@ class AiCoachViewModel extends ChangeNotifier {
         errorMessage = response.error ?? 'Có lỗi xảy ra';
       }
     } on ApiClientException catch (e) {
-      if (e.code == 'AI_DAILY_QUOTA_EXCEEDED' && e.data != null) {
+      if (_isAiQuotaExceeded(e) && e.data != null) {
         quotaExceededData = AiQuotaExceededData.fromJson(e.data!);
         quota = quotaExceededData?.quota ?? quota;
         upgradeModal = quotaExceededData?.upgradeModal;
@@ -233,32 +233,42 @@ class AiCoachViewModel extends ChangeNotifier {
       );
 
       if (requestVersion != _requestVersion) {
-        debugPrint('[AiCoach] stale response (v$requestVersion != v$_requestVersion), discarding');
+        debugPrint(
+          '[AiCoach] stale response (v$requestVersion != v$_requestVersion), discarding',
+        );
         return;
       }
 
-      debugPrint('[AiCoach] response received: success=${response.success}, '
-          'hasData=${response.data != null}, error=${response.error}');
+      debugPrint(
+        '[AiCoach] response received: success=${response.success}, '
+        'hasData=${response.data != null}, error=${response.error}',
+      );
 
       if (response.success &&
           response.data != null &&
           !response.data!.meta.failed) {
         final data = response.data!;
-        final flowVersionMatches = data.flowVersion == 'coach-v2' ||
+        final flowVersionMatches =
+            data.flowVersion == 'coach-v2' ||
             data.flowVersion == '1' ||
             data.flowVersion == '1.0' ||
             data.flowVersion.isEmpty;
-        final responseMatchesRequest = flowVersionMatches &&
+        final responseMatchesRequest =
+            flowVersionMatches &&
             (data.chatId.isEmpty || chatId.isEmpty || data.chatId == chatId) &&
-            (data.matchId.isEmpty || matchId.isEmpty || data.matchId == matchId) &&
+            (data.matchId.isEmpty ||
+                matchId.isEmpty ||
+                data.matchId == matchId) &&
             (expectedPartnerId == null ||
                 expectedPartnerId.isEmpty ||
                 data.partnerId.isEmpty ||
                 data.partnerId == expectedPartnerId);
         if (!responseMatchesRequest) {
-          debugPrint('[AiCoach] response mismatch: flow=${data.flowVersion} '
-              'responseChatId=${data.chatId} responseMatchId=${data.matchId} '
-              'responsePartnerId=${data.partnerId}');
+          debugPrint(
+            '[AiCoach] response mismatch: flow=${data.flowVersion} '
+            'responseChatId=${data.chatId} responseMatchId=${data.matchId} '
+            'responsePartnerId=${data.partnerId}',
+          );
           errorMessage =
               'Kết quả AI không khớp với cuộc trò chuyện hiện tại. Vui lòng thử lại.';
           return;
@@ -287,7 +297,9 @@ class AiCoachViewModel extends ChangeNotifier {
         _parseLimitError(response.error!);
         errorMessage = null;
       } else {
-        debugPrint('[AiCoach] unexpected response state: error=${response.error}');
+        debugPrint(
+          '[AiCoach] unexpected response state: error=${response.error}',
+        );
         errorMessage = response.error ?? 'Có lỗi xảy ra';
       }
     } on TimeoutException {
@@ -297,16 +309,19 @@ class AiCoachViewModel extends ChangeNotifier {
             'AI cần nhiều thời gian hơn dự kiến. Vui lòng nhấn Thử lại.';
       }
     } on ApiClientException catch (e) {
-      debugPrint('[AiCoach] ApiClientException: code=${e.code} msg=${e.message} status=${e.statusCode}');
+      debugPrint(
+        '[AiCoach] ApiClientException: code=${e.code} msg=${e.message} status=${e.statusCode}',
+      );
       if (requestVersion == _requestVersion) {
-        if (e.code == 'AI_DAILY_QUOTA_EXCEEDED' && e.data != null) {
+        if (_isAiQuotaExceeded(e) && e.data != null) {
           quotaExceededData = AiQuotaExceededData.fromJson(e.data!);
           quota = quotaExceededData?.quota ?? quota;
           upgradeModal = quotaExceededData?.upgradeModal;
           remaining = quota?.remaining;
           isLimitReached = true;
           errorMessage = null;
-        } else if (e.message.contains('quá lâu') || e.message.contains('timeout')) {
+        } else if (e.message.contains('quá lâu') ||
+            e.message.contains('timeout')) {
           // ApiClient wraps TimeoutException as ApiClientException —
           // show an AI-specific message instead of the generic network one.
           errorMessage =
@@ -380,6 +395,11 @@ class AiCoachViewModel extends ChangeNotifier {
     showBottomSheet = false;
     selectedIntent = null;
     notifyListeners();
+  }
+
+  bool _isAiQuotaExceeded(ApiClientException error) {
+    return error.code == 'AI_DAILY_QUOTA_EXCEEDED' ||
+        error.code == 'AI_CHAT_QUOTA_EXCEEDED';
   }
 
   @override

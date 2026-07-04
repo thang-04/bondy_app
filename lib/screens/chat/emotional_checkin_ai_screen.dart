@@ -5,6 +5,7 @@ import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
+import '../../widgets/common/ai_quota_paywall_dialog.dart';
 
 class EmotionalCheckinAiScreen extends StatefulWidget {
   final AiService? aiService;
@@ -110,7 +111,15 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
       }
     } on ApiClientException catch (error) {
       if (!mounted) return;
-      setState(() => _aiResponse = error.message);
+      if (error.code == 'AI_CHAT_QUOTA_EXCEEDED' && error.data != null) {
+        final exceeded = AiQuotaExceededData.fromJson(error.data!);
+        setState(
+          () => _aiResponse = exceeded.paywall?.message ?? error.message,
+        );
+        await showAiQuotaPaywallDialog(context, data: exceeded);
+      } else {
+        setState(() => _aiResponse = error.message);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {

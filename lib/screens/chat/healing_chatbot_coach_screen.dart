@@ -179,7 +179,10 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: HealingStitchColors.coral),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: HealingStitchColors.coral,
+            ),
             onPressed: () {
               setState(() {
                 _conversationId = null;
@@ -215,7 +218,11 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
                 child: _isLoadingHistory
                     ? const Center(
                         child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(BondyColors.primary)))
+                          valueColor: AlwaysStoppedAnimation(
+                            BondyColors.primary,
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -449,7 +456,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       }
     } on ApiClientException catch (error) {
       if (!mounted) return;
-      if (error.code == 'AI_DAILY_QUOTA_EXCEEDED' && error.data != null) {
+      if ((error.code == 'AI_DAILY_QUOTA_EXCEEDED' ||
+              error.code == 'AI_CHAT_QUOTA_EXCEEDED') &&
+          error.data != null) {
         final exceeded = AiQuotaExceededData.fromJson(error.data!);
         final quota = exceeded.quota;
         if (quota != null) quotaViewModel.applyQuota(quota);
@@ -711,7 +720,10 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              await Navigator.of(context).pushNamed('/settings/premium');
+              await Navigator.of(context).pushNamed(
+                '/settings/premium',
+                arguments: {'initialTab': 'aiChatPasses'},
+              );
               if (mounted) {
                 await context.read<AiQuotaViewModel>().loadQuota();
               }

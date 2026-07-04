@@ -5,6 +5,7 @@ import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
+import '../../widgets/common/ai_quota_paywall_dialog.dart';
 
 class ZodiacAiChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -160,7 +161,15 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
       }
     } on ApiClientException catch (error) {
       if (!mounted) return;
-      setState(() => assistantMessage.text = error.message);
+      if (error.code == 'AI_CHAT_QUOTA_EXCEEDED' && error.data != null) {
+        final exceeded = AiQuotaExceededData.fromJson(error.data!);
+        setState(() {
+          assistantMessage.text = exceeded.paywall?.message ?? error.message;
+        });
+        await showAiQuotaPaywallDialog(context, data: exceeded);
+      } else {
+        setState(() => assistantMessage.text = error.message);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -214,7 +223,10 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFF8C42)),
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: Color(0xFFFF8C42),
+            ),
             onPressed: () {
               setState(() {
                 _conversationId = null;
@@ -241,16 +253,23 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
             child: _isLoadingHistory
                 ? const Center(
                     child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Color(0xFFFF8C42))))
+                      valueColor: AlwaysStoppedAnimation(Color(0xFFFF8C42)),
+                    ),
+                  )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    itemCount: _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    itemCount:
+                        _messages.length + (_intakeSummary.isEmpty ? 0 : 1),
                     itemBuilder: (context, index) {
                       if (_intakeSummary.isNotEmpty && index == 0) {
                         return _buildIntakeSummaryCard();
                       }
-                      final messageIndex = index - (_intakeSummary.isEmpty ? 0 : 1);
+                      final messageIndex =
+                          index - (_intakeSummary.isEmpty ? 0 : 1);
                       return _buildMessageBubble(_messages[messageIndex]);
                     },
                   ),

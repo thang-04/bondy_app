@@ -351,7 +351,13 @@ class BondyApp extends StatelessWidget {
           '/safety/pre-date-checkin': (context) => const PreDateCheckinScreen(),
           '/safety/active': (context) => const ActiveCheckinBanner(),
           '/community': (context) => const CommunityFeedScreen(),
-          '/settings/premium': (context) => const PremiumPaywallScreen(),
+          '/settings/premium': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments;
+            final initialTab = args is Map<String, dynamic>
+                ? (args['initialTab'] ?? args['tab'])?.toString()
+                : null;
+            return PremiumPaywallScreen(initialTab: initialTab);
+          },
           '/settings/privacy': (context) => const ProfilePrivacyScreen(),
           '/settings/change-password': (context) =>
               const ChangePasswordScreen(),

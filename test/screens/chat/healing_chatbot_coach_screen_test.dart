@@ -1,3 +1,4 @@
+import 'package:bondy/models/ai_conversation.dart';
 import 'package:bondy/screens/chat/healing_chatbot_coach_screen.dart';
 import 'package:bondy/services/ai_service.dart';
 import 'package:bondy/services/api_client.dart';
@@ -49,6 +50,21 @@ class _StreamingAiService extends AiService {
   AiStreamChatRequest? lastRequest;
 
   _StreamingAiService() : super(ApiClient());
+
+  @override
+  Future<AiConversation> createConversation({
+    required String mode,
+    String? title,
+  }) async {
+    final now = DateTime.now();
+    return AiConversation(
+      id: 'healing-conversation-1',
+      mode: mode,
+      title: title,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
 
   @override
   Stream<AiChatStreamEvent> streamChat(AiStreamChatRequest request) async* {

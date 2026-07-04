@@ -6,14 +6,28 @@ import 'package:flutter/services.dart';
 import '../healing/healing_stitch_style.dart';
 import '../../services/payment_service.dart';
 
+enum PaymentCheckoutProductType { subscription, aiChatPass }
+
 /// Shows a SePay VietQR code for a subscription [tier] inline (works on web +
 /// mobile) and polls the backend until the transaction webhook settles the
 /// order. Pops `true` when payment is confirmed.
 class PaymentCheckoutScreen extends StatefulWidget {
-  final String tier;
+  final String? tier;
+  final String? packageCode;
+  final PaymentCheckoutProductType productType;
   final PaymentService? service;
 
-  const PaymentCheckoutScreen({super.key, required this.tier, this.service});
+  const PaymentCheckoutScreen({
+    super.key,
+    this.tier,
+    this.packageCode,
+    this.productType = PaymentCheckoutProductType.subscription,
+    this.service,
+  }) : assert(
+         productType == PaymentCheckoutProductType.subscription
+             ? tier != null
+             : packageCode != null,
+       );
 
   @override
   State<PaymentCheckoutScreen> createState() => _PaymentCheckoutScreenState();
@@ -49,7 +63,9 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       _error = null;
     });
     try {
-      final order = await _service.createSubscriptionOrder(widget.tier);
+      final order = widget.productType == PaymentCheckoutProductType.aiChatPass
+          ? await _service.createAIChatPassOrder(widget.packageCode!)
+          : await _service.createSubscriptionOrder(widget.tier!);
       if (!mounted) return;
       setState(() {
         _order = order;
@@ -116,12 +132,17 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle,
-                color: HealingStitchColors.coral, size: 64),
+            const Icon(
+              Icons.check_circle,
+              color: HealingStitchColors.coral,
+              size: 64,
+            ),
             const SizedBox(height: 16),
-            Text('Thanh toán thành công!',
-                style: healingText(size: 20, weight: FontWeight.w800),
-                textAlign: TextAlign.center),
+            Text(
+              'Thanh toán thành công!',
+              style: healingText(size: 20, weight: FontWeight.w800),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
             Text(
               'Gói ${_order?.planName ?? _order?.tier ?? ''} của bạn đã được kích hoạt.',
@@ -133,9 +154,13 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Tuyệt vời',
-                style: healingText(
-                    weight: FontWeight.w700, color: HealingStitchColors.coral)),
+            child: Text(
+              'Tuyệt vời',
+              style: healingText(
+                weight: FontWeight.w700,
+                color: HealingStitchColors.coral,
+              ),
+            ),
           ),
         ],
       ),
@@ -163,7 +188,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
     Clipboard.setData(ClipboardData(text: value));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã sao chép $label'), duration: const Duration(seconds: 1)),
+      SnackBar(
+        content: Text('Đã sao chép $label'),
+        duration: const Duration(seconds: 1),
+      ),
     );
   }
 
@@ -175,14 +203,17 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: HealingStitchColors.textMain,
-        title: Text('Thanh toán', style: healingText(size: 18, weight: FontWeight.w800)),
+        title: Text(
+          'Thanh toán',
+          style: healingText(size: 18, weight: FontWeight.w800),
+        ),
       ),
       body: SafeArea(
         child: _creating
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? _buildError()
-                : _buildContent(),
+            ? _buildError()
+            : _buildContent(),
       ),
     );
   }
@@ -193,12 +224,17 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline,
-              color: HealingStitchColors.orange, size: 56),
+          const Icon(
+            Icons.error_outline,
+            color: HealingStitchColors.orange,
+            size: 56,
+          ),
           const SizedBox(height: 16),
-          Text(_error ?? 'Đã xảy ra lỗi',
-              style: healingText(color: HealingStitchColors.textMuted),
-              textAlign: TextAlign.center),
+          Text(
+            _error ?? 'Đã xảy ra lỗi',
+            style: healingText(color: HealingStitchColors.textMuted),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _createOrder,
@@ -223,15 +259,32 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(order.planName ?? 'Gói ${order.tier}',
-              style: healingText(size: 22, weight: FontWeight.w800),
-              textAlign: TextAlign.center),
+          Text(
+            order.planName ?? 'Gói ${order.tier}',
+            style: healingText(size: 22, weight: FontWeight.w800),
+            textAlign: TextAlign.center,
+          ),
+          if (order.totalTurns != null && order.totalTurns! > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${order.totalTurns} lượt chat AI',
+              style: healingText(
+                size: 13,
+                weight: FontWeight.w700,
+                color: HealingStitchColors.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
             _formatVnd(order.amount) +
                 (order.period != null ? ' / ${order.period}' : ''),
             style: healingText(
-                size: 16, weight: FontWeight.w700, color: HealingStitchColors.coral),
+              size: 16,
+              weight: FontWeight.w700,
+              color: HealingStitchColors.coral,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -262,12 +315,18 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.qr_code_2,
-                                size: 48, color: HealingStitchColors.textMuted),
+                            const Icon(
+                              Icons.qr_code_2,
+                              size: 48,
+                              color: HealingStitchColors.textMuted,
+                            ),
                             const SizedBox(height: 8),
-                            Text('Không tải được mã QR',
-                                style: healingText(
-                                    color: HealingStitchColors.textMuted)),
+                            Text(
+                              'Không tải được mã QR',
+                              style: healingText(
+                                color: HealingStitchColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -277,12 +336,19 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.timer_outlined,
-                          size: 16, color: HealingStitchColors.textMuted),
+                      const Icon(
+                        Icons.timer_outlined,
+                        size: 16,
+                        color: HealingStitchColors.textMuted,
+                      ),
                       const SizedBox(width: 6),
-                      Text('Mã hết hạn sau ${_formatRemaining(_remaining)}',
-                          style: healingText(
-                              size: 13, color: HealingStitchColors.textMuted)),
+                      Text(
+                        'Mã hết hạn sau ${_formatRemaining(_remaining)}',
+                        style: healingText(
+                          size: 13,
+                          color: HealingStitchColors.textMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -305,11 +371,21 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                 _detailRow('Số tài khoản', order.accountNumber),
                 if (order.accountHolder != null &&
                     order.accountHolder!.isNotEmpty)
-                  _detailRow('Chủ tài khoản', order.accountHolder!,
-                      copyable: false),
-                _detailRow('Số tiền', _formatVnd(order.amount),
-                    copyValue: order.amount.toString()),
-                _detailRow('Nội dung CK', order.transferContent, highlight: true),
+                  _detailRow(
+                    'Chủ tài khoản',
+                    order.accountHolder!,
+                    copyable: false,
+                  ),
+                _detailRow(
+                  'Số tiền',
+                  _formatVnd(order.amount),
+                  copyValue: order.amount.toString(),
+                ),
+                _detailRow(
+                  'Nội dung CK',
+                  order.transferContent,
+                  highlight: true,
+                ),
               ],
             ),
           ),
@@ -324,7 +400,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
             child: Text(
               'Quét mã bằng app ngân hàng và chuyển khoản đúng số tiền & nội dung. '
               'Gói sẽ tự động kích hoạt ngay sau khi nhận được tiền — bạn không cần thao tác gì thêm.',
-              style: healingText(size: 13, color: HealingStitchColors.textMuted),
+              style: healingText(
+                size: 13,
+                color: HealingStitchColors.textMuted,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -338,7 +417,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
               ),
-              child: Text('Tạo mã mới', style: healingText(color: Colors.white)),
+              child: Text(
+                'Tạo mã mới',
+                style: healingText(color: Colors.white),
+              ),
             )
           else
             Row(
@@ -350,8 +432,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 10),
-                Text('Đang chờ thanh toán...',
-                    style: healingText(color: HealingStitchColors.textMuted)),
+                Text(
+                  'Đang chờ thanh toán...',
+                  style: healingText(color: HealingStitchColors.textMuted),
+                ),
               ],
             ),
           const SizedBox(height: 24),
@@ -365,14 +449,21 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          const Icon(Icons.timer_off_outlined,
-              size: 56, color: HealingStitchColors.textMuted),
+          const Icon(
+            Icons.timer_off_outlined,
+            size: 56,
+            color: HealingStitchColors.textMuted,
+          ),
           const SizedBox(height: 12),
-          Text('Mã QR đã hết hạn',
-              style: healingText(size: 16, weight: FontWeight.w700)),
+          Text(
+            'Mã QR đã hết hạn',
+            style: healingText(size: 16, weight: FontWeight.w700),
+          ),
           const SizedBox(height: 4),
-          Text('Tạo mã mới để tiếp tục thanh toán.',
-              style: healingText(size: 13, color: HealingStitchColors.textMuted)),
+          Text(
+            'Tạo mã mới để tiếp tục thanh toán.',
+            style: healingText(size: 13, color: HealingStitchColors.textMuted),
+          ),
         ],
       ),
     );
@@ -391,9 +482,13 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: healingText(
-                    size: 13, color: HealingStitchColors.textMuted)),
+            child: Text(
+              label,
+              style: healingText(
+                size: 13,
+                color: HealingStitchColors.textMuted,
+              ),
+            ),
           ),
           Expanded(
             child: Text(
@@ -413,8 +508,11 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               borderRadius: BorderRadius.circular(8),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child:
-                    Icon(Icons.copy, size: 18, color: HealingStitchColors.coral),
+                child: Icon(
+                  Icons.copy,
+                  size: 18,
+                  color: HealingStitchColors.coral,
+                ),
               ),
             ),
         ],

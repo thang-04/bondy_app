@@ -4,7 +4,9 @@ import 'api_client.dart';
 class PaymentOrder {
   final String id;
   final String code;
-  final String tier;
+  final String? productType;
+  final String? productCode;
+  final String? tier;
   final int amount;
   final int durationDays;
   final String status; // PENDING | PAID | EXPIRED | CANCELLED | FAILED
@@ -15,12 +17,15 @@ class PaymentOrder {
   final String transferContent;
   final String? planName;
   final String? period;
+  final int? totalTurns;
   final DateTime? paidAt;
   final DateTime expiresAt;
 
   PaymentOrder({
     required this.id,
     required this.code,
+    required this.productType,
+    required this.productCode,
     required this.tier,
     required this.amount,
     required this.durationDays,
@@ -32,6 +37,7 @@ class PaymentOrder {
     required this.transferContent,
     required this.planName,
     required this.period,
+    required this.totalTurns,
     required this.paidAt,
     required this.expiresAt,
   });
@@ -47,7 +53,9 @@ class PaymentOrder {
     return PaymentOrder(
       id: json['id']?.toString() ?? '',
       code: json['code']?.toString() ?? '',
-      tier: json['tier']?.toString() ?? 'FREE',
+      productType: json['productType']?.toString(),
+      productCode: json['productCode']?.toString(),
+      tier: json['tier']?.toString(),
       amount: (json['amount'] as num?)?.toInt() ?? 0,
       durationDays: (json['durationDays'] as num?)?.toInt() ?? 0,
       status: json['status']?.toString() ?? 'PENDING',
@@ -56,10 +64,15 @@ class PaymentOrder {
       accountNumber: json['accountNumber']?.toString() ?? '',
       accountHolder: json['accountHolder']?.toString(),
       transferContent: json['transferContent']?.toString() ?? '',
-      planName: json['planName']?.toString(),
+      planName:
+          json['planName']?.toString() ??
+          json['productCode']?.toString() ??
+          json['tier']?.toString(),
       period: json['period']?.toString(),
+      totalTurns: (json['totalTurns'] as num?)?.toInt(),
       paidAt: parseDate(json['paidAt']),
-      expiresAt: parseDate(json['expiresAt']) ??
+      expiresAt:
+          parseDate(json['expiresAt']) ??
           DateTime.now().add(const Duration(minutes: 15)),
     );
   }
@@ -95,16 +108,58 @@ class SubscriptionPlan {
   }
 }
 
+/// A finite AI Hub chat pass bundle.
+class AIChatPassPlan {
+  final String code;
+  final String name;
+  final int amount;
+  final int durationDays;
+  final int totalTurns;
+  final String period;
+  final String description;
+
+  AIChatPassPlan({
+    required this.code,
+    required this.name,
+    required this.amount,
+    required this.durationDays,
+    required this.totalTurns,
+    required this.period,
+    required this.description,
+  });
+
+  factory AIChatPassPlan.fromJson(Map<String, dynamic> json) {
+    return AIChatPassPlan(
+      code: json['code']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      amount: (json['amount'] as num?)?.toInt() ?? 0,
+      durationDays: (json['durationDays'] as num?)?.toInt() ?? 0,
+      totalTurns: (json['totalTurns'] as num?)?.toInt() ?? 0,
+      period: json['period']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+    );
+  }
+}
+
 class PlanCatalog {
   final bool gatewayConfigured;
+  final List<SubscriptionPlan> subscriptions;
   final List<SubscriptionPlan> plans;
-  PlanCatalog({required this.gatewayConfigured, required this.plans});
+  final List<AIChatPassPlan> aiChatPasses;
+
+  PlanCatalog({
+    required this.gatewayConfigured,
+    required this.subscriptions,
+    required this.aiChatPasses,
+    List<SubscriptionPlan>? plans,
+  }) : plans = plans ?? subscriptions;
 }
 
 class PaymentService {
   final ApiClient _apiClient;
 
-  PaymentService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  PaymentService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   /// Create a SePay VietQR order for [tier] (PLUS | PREMIUM | ELITE).
   Future<PaymentOrder> createSubscriptionOrder(String tier) async {
@@ -118,12 +173,21 @@ class PaymentService {
     );
   }
 
+  /// Create a SePay VietQR order for a finite AI chat pass package.
+  Future<PaymentOrder> createAIChatPassOrder(String packageCode) async {
+    final response = await _apiClient.post(
+      '/payments/ai-chat-pass',
+      authenticated: true,
+      body: {'packageCode': packageCode},
+    );
+    return PaymentOrder.fromJson(
+      (response['data'] as Map<String, dynamic>?) ?? {},
+    );
+  }
+
   /// Poll the latest status of an order.
   Future<PaymentOrder> getOrder(String id) async {
-    final response = await _apiClient.get(
-      '/payments/$id',
-      authenticated: true,
-    );
+    final response = await _apiClient.get('/payments/$id', authenticated: true);
     return PaymentOrder.fromJson(
       (response['data'] as Map<String, dynamic>?) ?? {},
     );
@@ -131,14 +195,25 @@ class PaymentService {
 
   /// Fetch the plan catalog + whether the gateway is configured.
   Future<PlanCatalog> getPlans() async {
-    final response = await _apiClient.get('/payments/plans', authenticated: true);
+    final response = await _apiClient.get(
+      '/payments/plans',
+      authenticated: true,
+    );
     final data = (response['data'] as Map<String, dynamic>?) ?? {};
-    final plans = (data['plans'] as List<dynamic>? ?? [])
+    final subscriptionList =
+        (data['subscriptions'] as List<dynamic>?) ??
+        (data['plans'] as List<dynamic>?) ??
+        const [];
+    final subscriptions = subscriptionList
         .map((e) => SubscriptionPlan.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final aiChatPasses = (data['aiChatPasses'] as List<dynamic>? ?? [])
+        .map((e) => AIChatPassPlan.fromJson(e as Map<String, dynamic>))
         .toList();
     return PlanCatalog(
       gatewayConfigured: data['gatewayConfigured'] == true,
-      plans: plans,
+      subscriptions: subscriptions,
+      aiChatPasses: aiChatPasses,
     );
   }
 }
