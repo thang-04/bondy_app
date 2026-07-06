@@ -24,6 +24,7 @@ import '../../services/discover_service.dart';
 import '../auth/interests_setup_screen.dart';
 import 'home_dashboard_screen.dart';
 import '../../widgets/discover/like_quota_exceeded_dialog.dart';
+import '../../services/analytics_service.dart';
 
 import '../../widgets/common/ai_chat_bubble.dart';
 
@@ -59,7 +60,29 @@ class _MainShellScreenState extends State<MainShellScreen>
       if (!mounted) return;
       context.read<ChatViewModel>().fetchChats();
       context.read<RelationshipViewModel>().loadDashboard();
+      _logScreenView(_currentIndex);
     });
+  }
+
+  void _logScreenView(int index) {
+    String screenName;
+    switch (index) {
+      case 0:
+        screenName = 'HomeScreen';
+        break;
+      case 1:
+        screenName = 'HealingScreen';
+        break;
+      case 2:
+        screenName = 'MatchesScreen';
+        break;
+      case 3:
+        screenName = 'ProfileScreen';
+        break;
+      default:
+        screenName = 'MainShellScreen';
+    }
+    AnalyticsService.instance.screenView(screenName);
   }
 
   @override
@@ -76,6 +99,9 @@ class _MainShellScreenState extends State<MainShellScreen>
   }
 
   void _selectTab(int index) {
+    if (_currentIndex != index) {
+      _logScreenView(index);
+    }
     setState(() => _currentIndex = index);
     MainShellScreen.isShowingProfile = index == 3;
     if (index == 0) {

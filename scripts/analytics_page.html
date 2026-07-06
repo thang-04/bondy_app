@@ -12,7 +12,7 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-XD4HYE0MPD', {
-      send_page_view: true,
+      send_page_view: false, // Tắt page_view mặc định để không hiện '/' trên GA4
       cookie_flags: 'SameSite=None;Secure',
       debug_mode: true
     });
@@ -34,15 +34,12 @@
     function randId(prefix, len) { return prefix + Math.random().toString(36).substr(2, len || 8); }
     function chance(percent) { return Math.random() * 100 < percent; }
 
+    // Các mode AI thực tế từ AiModeCatalog (ưu tiên Tử vi, Tarot, Chữa lành, Lên kế hoạch)
     const AI_BOTS = [
-      { id: 'ai_chat_bot', name: 'Bondy AI Chat' },
-      { id: 'ai_relationship_advisor', name: 'Relationship Advisor' },
-      { id: 'ai_mood_coach', name: 'Mood Coach' },
-      { id: 'ai_self_care', name: 'Self Care Guide' },
-      { id: 'ai_conflict_resolver', name: 'Conflict Resolver' },
-      { id: 'ai_dating_tips', name: 'Dating Tips' },
-      { id: 'ai_love_language', name: 'Love Language Quiz' },
-      { id: 'ai_mindfulness', name: 'Mindfulness Guide' },
+      { id: 'ai-tu-vi', name: 'Tử vi tình yêu', hasIntake: true },
+      { id: 'tarot', name: 'Tarot', hasIntake: true },
+      { id: 'healing', name: 'Chữa lành', hasIntake: true },
+      { id: 'plan', name: 'Lên kế hoạch', hasIntake: true },
     ];
 
     const HEALING_COURSES = [
@@ -96,6 +93,11 @@
         { name: 'screen_view', params: { firebase_screen: 'AIHubScreen', firebase_screen_class: 'AIHubScreen' }, delay: randInt(12000, 20000) },
       ];
 
+      // Đôi khi xem lịch sử chat trong AI Hub
+      if (chance(60)) {
+        events.push({ name: 'ai_history_viewed', params: {}, delay: randInt(8000, 15000) });
+      }
+
       // Duyệt qua các bot
       for (let i = 0; i < numBotsViewed; i++) {
         events.push({
@@ -106,9 +108,20 @@
       }
 
       events.push({ name: 'ai_bot_selected', params: { botId: selectedBot.id }, delay: randInt(8000, 18000) });
+
+      // Vào màn hình Intake
+      if (selectedBot.hasIntake) {
+        events.push({ name: 'screen_view', params: { firebase_screen: 'AiModeIntakeScreen', firebase_screen_class: 'AiModeIntakeScreen', ai_mode: selectedBot.id }, delay: randInt(8000, 15000) });
+        
+        // Xem skill của bot (nếu có bấm xem chi tiết)
+        if (chance(70)) {
+          events.push({ name: 'ai_skill_viewed', params: { botId: selectedBot.id }, delay: randInt(6000, 12000) });
+        }
+      }
+
       events.push({ name: 'chat_opened', params: { chatId: selectedBot.id }, delay: randInt(10000, 20000) });
 
-      // Tổng delay trên AIHub: ~80-180s tùy số bot xem
+      // Tổng delay trên AIHub: ~80-200s tùy số bot xem
       const totalDelay = events.reduce((sum, e) => sum + e.delay, 0);
       events.push({ name: 'user_engagement', params: { engagement_time_msec: totalDelay }, delay: 2000 });
 
@@ -275,6 +288,10 @@
     const totalDelay = JOURNEY.reduce((sum, e) => sum + e.delay, 0);
     console.log('Estimated duration: ' + Math.round(totalDelay / 1000) + 's (' + Math.round(totalDelay / 60000) + 'm)');
 
+    // Biến lưu trữ màn hình hiện tại
+    let currentScreen = 'HomeScreen';
+    let currentScreenClass = 'HomeScreen';
+
     function sendNextEvent() {
       if (eventIndex >= JOURNEY.length) {
         const elapsed = Math.round((Date.now() - startTime) / 1000);
@@ -291,6 +308,21 @@
       if (!params.engagement_time_msec) {
         params.engagement_time_msec = step.delay + randInt(5000, 15000);
       }
+
+      // NẾU là event screen_view, cập nhật biến màn hình hiện tại
+      if (step.name === 'screen_view') {
+        currentScreen = params.firebase_screen || currentScreen;
+        currentScreenClass = params.firebase_screen_class || currentScreenClass;
+        
+        gtag('set', {
+          page_path: '/' + currentScreen,
+          page_title: currentScreen,
+        });
+      }
+
+      // ÉP TÊN MÀN HÌNH VÀO TẤT CẢ CÁC EVENT ĐỂ GA4 KHÔNG GÁN VÀO '/'
+      params.firebase_screen = currentScreen;
+      params.firebase_screen_class = currentScreenClass;
 
       gtag('event', step.name, params);
       totalSent++;

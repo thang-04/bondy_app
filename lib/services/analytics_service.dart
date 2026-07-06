@@ -15,6 +15,11 @@ abstract class AnalyticsClient {
     required String name,
     Map<String, Object>? parameters,
   });
+
+  Future<void> logScreenView({
+    required String screenName,
+    String? screenClass,
+  });
 }
 
 class FirebaseAnalyticsClient implements AnalyticsClient {
@@ -44,6 +49,17 @@ class FirebaseAnalyticsClient implements AnalyticsClient {
     Map<String, Object>? parameters,
   }) {
     return _analytics.logEvent(name: name, parameters: parameters);
+  }
+
+  @override
+  Future<void> logScreenView({
+    required String screenName,
+    String? screenClass,
+  }) {
+    return _analytics.logScreenView(
+      screenName: screenName,
+      screenClass: screenClass ?? screenName,
+    );
   }
 }
 
@@ -152,6 +168,17 @@ class AnalyticsService {
   }
 
   // ─── Core event helpers ───────────────────────────────────────────────────
+
+  void screenView(String screenName, [String? screenClass]) {
+    if (!_enabled) return;
+    _call(
+      'log screen view $screenName',
+      () => _analyticsClient.logScreenView(
+        screenName: screenName,
+        screenClass: screenClass,
+      ),
+    );
+  }
 
   void appOpen() => track('app_open');
 
