@@ -87,6 +87,10 @@ class SubscriptionPlan {
   final String period;
   final String description;
 
+  /// Bullet perks for the paywall card. May be empty when the backend predates
+  /// this field — the UI falls back to a per-tier default in that case.
+  final List<String> highlights;
+
   SubscriptionPlan({
     required this.tier,
     required this.name,
@@ -94,6 +98,7 @@ class SubscriptionPlan {
     required this.durationDays,
     required this.period,
     required this.description,
+    this.highlights = const [],
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
@@ -104,6 +109,11 @@ class SubscriptionPlan {
       durationDays: (json['durationDays'] as num?)?.toInt() ?? 0,
       period: json['period']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
+      highlights:
+          (json['highlights'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 }

@@ -79,27 +79,30 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     return [
       SubscriptionPlan(
         tier: 'PLUS',
-        name: 'PLUS',
+        name: 'Bondy Plus',
         amount: 39000,
         durationDays: 30,
-        period: 'tháng',
-        description: 'Thêm lượt AI mỗi ngày và mở khóa các quyền lợi Plus.',
+        period: '1 tháng',
+        description:
+            'Gấp 4 lần lượt trò chuyện AI, hoàn tác vuốt không giới hạn và mở khóa kho chữa lành.',
       ),
       SubscriptionPlan(
         tier: 'PREMIUM',
-        name: 'PREMIUM',
+        name: 'Bondy Premium',
         amount: 199000,
         durationDays: 365,
-        period: 'năm',
-        description: 'Gói cân bằng cho dating, healing và AI.',
+        period: '1 năm',
+        description:
+            'Thích không giới hạn, 50 lượt AI mỗi ngày và báo cáo cảm xúc cặp đôi.',
       ),
       SubscriptionPlan(
         tier: 'ELITE',
-        name: 'ELITE',
+        name: 'Bondy Elite',
         amount: 399000,
         durationDays: 365,
-        period: 'năm',
-        description: 'Mức cao nhất cho người dùng Bondy thường xuyên.',
+        period: '1 năm',
+        description:
+            'Toàn bộ quyền lợi Premium cùng quota AI cao nhất và ưu tiên hỗ trợ.',
       ),
     ];
   }
@@ -329,7 +332,11 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                     if (_selectedTab == _tabAiPasses)
                       _buildAiPassTab(quota, gatewayConfigured)
                     else
-                      _buildSubscriptionTab(quota, gatewayConfigured),
+                      _buildSubscriptionTab(
+                        quota,
+                        gatewayConfigured,
+                        currentTier,
+                      ),
                   ],
                 ),
               ),
@@ -531,16 +538,21 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
   Widget _buildSubscriptionTab(
     AiQuotaSummary? summary,
     bool gatewayConfigured,
+    String currentTier,
   ) {
+    final selected = _selectedSubscription;
+    final isRenew = currentTier == selected.tier;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildAiQuotaComparison(summary),
+        _buildCurrentPlanBanner(currentTier, summary),
         const SizedBox(height: 16),
-        ..._subscriptionPlans.map(_subscriptionTile),
-        const SizedBox(height: 18),
+        for (final plan in _subscriptionPlans) _subscriptionTile(plan, currentTier),
+        const SizedBox(height: 8),
         _primaryButton(
-          label: 'Nâng cấp ${_selectedSubscription.name}',
+          label: isRenew
+              ? 'Gia hạn ${selected.name}'
+              : 'Nâng cấp ${selected.name}',
           enabled: gatewayConfigured,
           onPressed: _checkoutSubscription,
         ),
@@ -548,104 +560,291 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     );
   }
 
-  Widget _buildAiQuotaComparison(AiQuotaSummary? summary) {
-    final limits = summary?.dailyLimitsByTier.isNotEmpty == true
-        ? summary!.dailyLimitsByTier
-        : const {'FREE': 5, 'PLUS': 20, 'PREMIUM': 50, 'ELITE': 100};
-    const tiers = ['FREE', 'PLUS', 'PREMIUM', 'ELITE'];
-
+  /// Reference card showing what the user has today, so the paid tiers below
+  /// read as clear upgrades.
+  Widget _buildCurrentPlanBanner(String currentTier, AiQuotaSummary? summary) {
+    final isFree = currentTier == 'FREE';
+    final freeAi = summary?.dailyLimitsByTier['FREE'] ?? 5;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: HealingStitchColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HealingStitchColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Quota AI mỗi ngày',
-            style: healingText(weight: FontWeight.w800),
+          Icon(
+            isFree ? Icons.lock_open_outlined : Icons.verified,
+            color: HealingStitchColors.coral,
           ),
-          const SizedBox(height: 10),
-          for (final tier in tiers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 84,
-                    child: Text(
-                      tier,
-                      style: healingText(weight: FontWeight.w900),
-                    ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFree
+                      ? 'Bạn đang dùng gói Free'
+                      : 'Bạn đang dùng gói $currentTier',
+                  style: healingText(weight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isFree
+                      ? 'Miễn phí: $freeAi lượt AI · 1 Super Like · 50 lượt thích mỗi ngày. Nâng cấp để mở khóa thêm.'
+                      : 'Chọn gia hạn hoặc đổi sang gói khác bên dưới.',
+                  style: healingText(
+                    size: 12,
+                    color: HealingStitchColors.textMuted,
+                    height: 1.3,
                   ),
-                  Expanded(
-                    child: Text(
-                      '${limits[tier] ?? 0} lượt AI Hub/ngày',
-                      textAlign: TextAlign.right,
-                      style: healingText(
-                        size: 12,
-                        color: HealingStitchColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _subscriptionTile(SubscriptionPlan plan) {
+  /// Perks for a plan: prefer server-provided highlights, else a per-tier
+  /// default kept in sync with the backend limits.
+  List<String> _highlightsFor(SubscriptionPlan plan) {
+    if (plan.highlights.isNotEmpty) return plan.highlights;
+    switch (plan.tier) {
+      case 'PLUS':
+        return const [
+          '20 lượt trò chuyện AI mỗi ngày (gấp 4 lần Free)',
+          '5 Super Like mỗi ngày',
+          'Hoàn tác vuốt nhầm không giới hạn',
+          'Mở khóa kho nội dung chữa lành',
+        ];
+      case 'PREMIUM':
+        return const [
+          'Lượt thích không giới hạn mỗi ngày',
+          '50 lượt trò chuyện AI mỗi ngày',
+          '10 Super Like mỗi ngày',
+          'Báo cáo cảm xúc cặp đôi',
+          'Toàn bộ kho chữa lành cao cấp',
+        ];
+      case 'ELITE':
+        return const [
+          'Tất cả quyền lợi của Premium',
+          '100 lượt trò chuyện AI mỗi ngày — cao nhất',
+          '20 Super Like mỗi ngày',
+          'Ưu tiên hỗ trợ 24/7',
+        ];
+      default:
+        return plan.description.isEmpty ? const [] : [plan.description];
+    }
+  }
+
+  /// For multi-month plans, the equivalent monthly price (rounded to 1.000đ)
+  /// so a yearly plan reads as better value at a glance.
+  String? _perMonthLabel(SubscriptionPlan plan) {
+    if (plan.durationDays <= 31) return null;
+    final months = plan.durationDays / 30.0;
+    if (months <= 1) return null;
+    final perMonth = ((plan.amount / months) / 1000).round() * 1000;
+    return '≈ ${_formatVnd(perMonth)}/tháng';
+  }
+
+  Widget _subscriptionTile(SubscriptionPlan plan, String currentTier) {
     final selected = _selectedTier == plan.tier;
+    final isCurrent = currentTier == plan.tier;
+    final isPopular = plan.tier == 'PREMIUM';
+    final highlights = _highlightsFor(plan);
+    final perMonth = _perMonthLabel(plan);
+
     return GestureDetector(
       onTap: () => setState(() => _selectedTier = plan.tier),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: selected
               ? HealingStitchColors.paleCoral
               : HealingStitchColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected
                 ? HealingStitchColors.coral
                 : HealingStitchColors.border,
             width: selected ? 2 : 1,
           ),
+          boxShadow: selected ? [healingSoftShadow(0.05)] : null,
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(plan.name, style: healingText(weight: FontWeight.w800)),
-                  const SizedBox(height: 4),
-                  Text(
-                    plan.description,
-                    style: healingText(
-                      size: 12,
-                      color: HealingStitchColors.textMuted,
-                    ),
+            // Header row — always visible. Collapsed = name + price only, so
+            // the list stays short; tapping a plan expands its perks below.
+            Row(
+              children: [
+                _radioDot(selected),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              plan.name,
+                              style: healingText(
+                                size: 16,
+                                weight: FontWeight.w800,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (isCurrent)
+                            _tierBadge('ĐANG DÙNG', gradient: false)
+                          else if (isPopular)
+                            _tierBadge('PHỔ BIẾN NHẤT', gradient: true),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: _formatVnd(plan.amount),
+                              style: healingText(
+                                size: 16,
+                                weight: FontWeight.w900,
+                                color: HealingStitchColors.coral,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' / ${plan.period}',
+                              style: healingText(
+                                size: 12,
+                                color: HealingStitchColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                AnimatedRotation(
+                  turns: selected ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: HealingStitchColors.textMuted,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              '${_formatVnd(plan.amount)} / ${plan.period}',
-              textAlign: TextAlign.right,
-              style: healingText(
-                weight: FontWeight.w900,
-                color: HealingStitchColors.coral,
-              ),
+            // Perks — only the selected plan shows them, animated open/closed.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: selected
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        if (perMonth != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: HealingStitchColors.coral.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Chỉ $perMonth',
+                              style: healingText(
+                                size: 11,
+                                weight: FontWeight.w700,
+                                color: HealingStitchColors.coral,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        Container(height: 1, color: HealingStitchColors.border),
+                        const SizedBox(height: 12),
+                        for (final perk in highlights)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 18,
+                                  color: HealingStitchColors.coral,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    perk,
+                                    style: healingText(size: 13, height: 1.3),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _radioDot(bool selected) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? HealingStitchColors.coral : Colors.transparent,
+        border: Border.all(
+          color: selected
+              ? HealingStitchColors.coral
+              : HealingStitchColors.border,
+          width: 2,
+        ),
+      ),
+      child: selected
+          ? const Icon(Icons.check, size: 13, color: Colors.white)
+          : null,
+    );
+  }
+
+  Widget _tierBadge(String text, {required bool gradient}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        gradient: gradient ? HealingStitchColors.warmGradient : null,
+        color: gradient
+            ? null
+            : HealingStitchColors.purple.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: healingText(
+          size: 10,
+          weight: FontWeight.w900,
+          color: gradient ? Colors.white : HealingStitchColors.purple,
         ),
       ),
     );

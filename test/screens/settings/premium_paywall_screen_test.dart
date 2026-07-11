@@ -25,6 +25,7 @@ class _StaticPaymentService extends PaymentService {
           durationDays: 30,
           period: 'thang',
           description: 'Plus subscription',
+          highlights: const ['20 luot AI moi ngay', '5 Super Like moi ngay'],
         ),
       ],
       aiChatPasses: [
@@ -117,7 +118,11 @@ void main() {
     await tester.tap(find.text('Subscription'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Plus subscription'), findsOneWidget);
+    // New paywall card shows the plan name + its perk bullets (not the raw
+    // description), so users can compare tiers at a glance.
+    expect(find.text('PLUS'), findsOneWidget);
+    expect(find.text('20 luot AI moi ngay'), findsOneWidget);
+    expect(find.text('5 Super Like moi ngay'), findsOneWidget);
     expect(find.text('AI Pack 3D'), findsNothing);
   });
 }
