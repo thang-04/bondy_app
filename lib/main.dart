@@ -213,6 +213,7 @@ class BondyApp extends StatelessWidget {
         navigatorObservers: [
           ...buildAnalyticsObservers(),
           AiBubbleRouteObserver(),
+          aiHubRouteObserver,
         ],
         builder: (context, child) {
           final mediaQuery = MediaQuery.of(context);

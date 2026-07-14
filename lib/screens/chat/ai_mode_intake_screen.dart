@@ -31,8 +31,10 @@ class _AiModeIntakeScreenState extends State<AiModeIntakeScreen> {
     _didInit = true;
 
     final args = ModalRoute.of(context)?.settings.arguments;
+    String? conversationId;
     if (args is Map<String, dynamic>) {
       _mode = AiChatMode.fromJson(args['mode']);
+      conversationId = args['conversationId']?.toString();
     }
     _config = AiModeIntakeConfig.byMode(_mode);
 
@@ -44,6 +46,26 @@ class _AiModeIntakeScreenState extends State<AiModeIntakeScreen> {
       } else {
         _controllers[field.key] = TextEditingController();
       }
+    }
+
+    // Mở lại một cuộc trò chuyện cũ từ lịch sử: bỏ qua bước intake và đi thẳng
+    // tới màn chat/đọc bài để nạp lại hội thoại theo conversationId, thay vì
+    // bắt người dùng nhập lại các câu hỏi như bắt đầu mới.
+    if (conversationId != null && conversationId.isNotEmpty) {
+      final destination =
+          AiModeIntakeDraft(mode: _mode, values: const {}).destinationRoute;
+      final resumeId = conversationId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          destination,
+          arguments: {
+            'mode': _mode.apiValue,
+            'conversationId': resumeId,
+          },
+        );
+      });
+      return;
     }
 
     if (!AiModeIntakeConfig.requiresIntake(_mode)) {

@@ -7,6 +7,11 @@ import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 
+/// Theo dõi điều hướng để làm mới lịch sử khi quay lại AI hub. Được đăng ký
+/// trong `navigatorObservers` của MaterialApp (main.dart).
+final RouteObserver<PageRoute<dynamic>> aiHubRouteObserver =
+    RouteObserver<PageRoute<dynamic>>();
+
 class AiHubScreen extends StatefulWidget {
   const AiHubScreen({super.key});
 
@@ -15,10 +20,10 @@ class AiHubScreen extends StatefulWidget {
 }
 
 class _AiHubScreenState extends State<AiHubScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   late final AnimationController _animController;
   final AiService _aiService = AiService(ApiClient());
-  
+
   List<AiConversation> _conversations = [];
   bool _isLoading = true;
 
@@ -29,7 +34,23 @@ class _AiHubScreenState extends State<AiHubScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
-    
+
+    _loadConversations();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      aiHubRouteObserver.subscribe(this, route);
+    }
+  }
+
+  /// Quay lại AI hub từ một màn chat/đọc bài phía trên → nạp lại lịch sử để
+  /// cuộc trò chuyện vừa tạo xuất hiện ngay, không cần thoát hẳn app.
+  @override
+  void didPopNext() {
     _loadConversations();
   }
 
@@ -51,6 +72,7 @@ class _AiHubScreenState extends State<AiHubScreen>
 
   @override
   void dispose() {
+    aiHubRouteObserver.unsubscribe(this);
     _animController.dispose();
     super.dispose();
   }

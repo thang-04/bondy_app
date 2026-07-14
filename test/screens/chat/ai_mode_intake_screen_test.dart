@@ -61,4 +61,44 @@ void main() {
     expect(args['initialMessage'], contains('Question: Co hop nhau khong?'));
     expect(args['intakeSummary'], contains('Người kia: 1994'));
   });
+
+  testWidgets(
+    'opening from history (conversationId) skips intake and loads the conversation',
+    (tester) async {
+      Object? capturedArguments;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          initialRoute: '/intake',
+          onGenerateRoute: (settings) {
+            if (settings.name == '/intake') {
+              return MaterialPageRoute<void>(
+                settings: const RouteSettings(
+                  name: '/intake',
+                  arguments: {'mode': 'tarot', 'conversationId': 'conv-123'},
+                ),
+                builder: (_) => const AiModeIntakeScreen(),
+              );
+            }
+            if (settings.name == '/tarot-reading') {
+              capturedArguments = settings.arguments;
+              return MaterialPageRoute<void>(
+                builder: (_) => const Scaffold(body: Text('tarot target')),
+              );
+            }
+            return null;
+          },
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Không được hiển thị form intake, mà đi thẳng tới màn đọc bài.
+      expect(find.byKey(const Key('ai_intake_submit')), findsNothing);
+      expect(find.text('tarot target'), findsOneWidget);
+      final args = capturedArguments as Map<String, dynamic>;
+      expect(args['mode'], 'tarot');
+      expect(args['conversationId'], 'conv-123');
+    },
+  );
 }
