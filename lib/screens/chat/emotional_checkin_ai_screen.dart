@@ -6,6 +6,7 @@ import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
 import '../../widgets/common/ai_quota_paywall_dialog.dart';
+import '../../widgets/common/ai_thinking_dialog.dart';
 
 class EmotionalCheckinAiScreen extends StatefulWidget {
   final AiService? aiService;
@@ -30,6 +31,13 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
 
   late final AiService _aiService = widget.aiService ?? AiService(ApiClient());
   final _textController = TextEditingController();
+  final _thinking = AiThinkingController();
+  static const _thinkingMessages = <String>[
+    'Mình đang lắng nghe bạn…',
+    'Mình đang cảm nhận điều bạn chia sẻ…',
+    'Sắp có lời hồi đáp cho bạn…',
+    'Chờ mình thêm chút nhé…',
+  ];
   final _sessionId = 'emotion-${DateTime.now().millisecondsSinceEpoch}';
   late final AnimationController _responseAnimController;
   late final Animation<double> _responseSlideAnim;
@@ -76,7 +84,9 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
       _aiResponse = '';
     });
     _responseAnimController.forward(from: 0);
+    _thinking.show(context, messages: _thinkingMessages);
 
+    var firstChunk = true;
     try {
       await for (final event in _aiService.streamChat(
         AiStreamChatRequest(
@@ -87,6 +97,10 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
       )) {
         if (!mounted) return;
         if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          if (firstChunk) {
+            firstChunk = false;
+            _thinking.hide(context);
+          }
           final chunk = event.chunk!;
           setState(() {
             if (chunk.startsWith('__STRIPPED__')) {
@@ -116,6 +130,7 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
         setState(
           () => _aiResponse = exceeded.paywall?.message ?? error.message,
         );
+        _thinking.hide(context);
         await showAiQuotaPaywallDialog(context, data: exceeded);
       } else {
         setState(() => _aiResponse = error.message);
@@ -128,6 +143,7 @@ class _EmotionalCheckinAiScreenState extends State<EmotionalCheckinAiScreen>
       });
     } finally {
       if (mounted) {
+        _thinking.hide(context);
         setState(() => _isSending = false);
       }
     }

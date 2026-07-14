@@ -8,6 +8,7 @@ import '../../services/safety_guardrails_service.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/ai/ai_quota_viewmodel.dart';
 import '../../widgets/common/ai_markdown_text.dart';
+import '../../widgets/common/ai_thinking_dialog.dart';
 import '../healing/healing_stitch_style.dart';
 
 class HealingChatbotCoachScreen extends StatefulWidget {
@@ -25,6 +26,13 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _safetyService = SafetyGuardrailsService();
+  final _thinking = AiThinkingController();
+  static const _thinkingMessages = <String>[
+    'Mình đang lắng nghe bạn…',
+    'Mình đang cảm nhận điều bạn chia sẻ…',
+    'Sắp có lời hồi đáp cho bạn…',
+    'Chờ mình thêm chút nhé…',
+  ];
   final String _sessionId = 'healing-${DateTime.now().millisecondsSinceEpoch}';
 
   List<_BotMessage> _messages = [
@@ -406,7 +414,9 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       _controller.clear();
     });
     _scrollToBottom();
+    _thinking.show(context, messages: _thinkingMessages);
 
+    var firstChunk = true;
     try {
       if (_conversationId == null) {
         final conv = await _aiService.createConversation(
@@ -426,6 +436,10 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       )) {
         if (!mounted) return;
         if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          if (firstChunk) {
+            firstChunk = false;
+            _thinking.hide(context);
+          }
           final chunk = event.chunk!;
           setState(() {
             if (chunk.startsWith('__STRIPPED__')) {
@@ -465,6 +479,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
         setState(() {
           _messages.remove(assistantMessage);
         });
+        _thinking.hide(context);
         _showQuotaUpgradeDialog(quota: quota, modal: exceeded.upgradeModal);
       } else {
         setState(() {
@@ -479,6 +494,7 @@ class _HealingChatbotCoachScreenState extends State<HealingChatbotCoachScreen> {
       });
     } finally {
       if (mounted) {
+        _thinking.hide(context);
         setState(() {
           assistantMessage.streaming = false;
           _isSending = false;

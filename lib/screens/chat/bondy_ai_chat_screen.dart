@@ -8,6 +8,7 @@ import '../../services/safety_guardrails_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
 import '../../widgets/common/ai_quota_paywall_dialog.dart';
+import '../../widgets/common/ai_thinking_dialog.dart';
 
 class BondyAIChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -23,6 +24,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _safetyService = SafetyGuardrailsService();
+  final _thinking = AiThinkingController();
   final _sessionId = 'bondy-${DateTime.now().millisecondsSinceEpoch}';
 
   List<_BotMessage> _messages = [
@@ -399,7 +401,9 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
       _controller.clear();
     });
     _scrollToBottom();
+    _thinking.show(context);
 
+    var firstChunk = true;
     try {
       if (_conversationId == null) {
         final conv = await _aiService.createConversation(
@@ -419,6 +423,10 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
       )) {
         if (!mounted) return;
         if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          if (firstChunk) {
+            firstChunk = false;
+            _thinking.hide(context);
+          }
           final chunk = event.chunk!;
           setState(() {
             if (chunk.startsWith('__STRIPPED__')) {
@@ -449,6 +457,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
         setState(() {
           assistantMessage.text = exceeded.paywall?.message ?? error.message;
         });
+        _thinking.hide(context);
         await showAiQuotaPaywallDialog(context, data: exceeded);
       } else {
         setState(() => assistantMessage.text = error.message);
@@ -463,6 +472,7 @@ class _BondyAIChatScreenState extends State<BondyAIChatScreen> {
       });
     } finally {
       if (mounted) {
+        _thinking.hide(context);
         setState(() {
           assistantMessage.streaming = false;
           _isSending = false;

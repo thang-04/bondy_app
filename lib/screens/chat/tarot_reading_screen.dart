@@ -8,6 +8,7 @@ import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
 import '../../widgets/common/ai_markdown_text.dart';
 import '../../widgets/common/ai_quota_paywall_dialog.dart';
+import '../../widgets/common/ai_thinking_dialog.dart';
 
 class TarotReadingScreen extends StatefulWidget {
   final AiService? aiService;
@@ -23,6 +24,13 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _sessionId = 'tarot-${DateTime.now().millisecondsSinceEpoch}';
+  final _thinking = AiThinkingController();
+  static const _thinkingMessages = <String>[
+    'Đang lật những lá bài…',
+    'Đang cảm nhận thông điệp từ các lá bài…',
+    'Sắp có lời giải cho bạn…',
+    'Chờ mình thêm chút nhé…',
+  ];
   List<_TarotMessage> _chatMessages = [];
   String? _conversationId;
   bool _isLoadingHistory = false;
@@ -231,7 +239,9 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       _controller.clear();
     });
     _scrollToBottom();
+    _thinking.show(context, messages: _thinkingMessages);
 
+    var firstChunk = true;
     try {
       if (_conversationId == null) {
         final conv = await _aiService.createConversation(
@@ -251,6 +261,10 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       )) {
         if (!mounted) return;
         if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          if (firstChunk) {
+            firstChunk = false;
+            _thinking.hide(context);
+          }
           final chunk = event.chunk!;
           setState(() {
             if (chunk.startsWith('__STRIPPED__')) {
@@ -281,6 +295,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
         setState(() {
           assistantMessage.text = exceeded.paywall?.message ?? error.message;
         });
+        _thinking.hide(context);
         await showAiQuotaPaywallDialog(context, data: exceeded);
       } else {
         setState(() => assistantMessage.text = error.message);
@@ -295,6 +310,7 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
       });
     } finally {
       if (mounted) {
+        _thinking.hide(context);
         setState(() {
           assistantMessage.streaming = false;
           _isSending = false;

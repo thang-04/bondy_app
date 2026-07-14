@@ -6,6 +6,7 @@ import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/ai_markdown_text.dart';
 import '../../widgets/common/ai_quota_paywall_dialog.dart';
+import '../../widgets/common/ai_thinking_dialog.dart';
 
 class ZodiacAiChatScreen extends StatefulWidget {
   final AiService? aiService;
@@ -20,6 +21,13 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
   late final AiService _aiService = widget.aiService ?? AiService(ApiClient());
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  final _thinking = AiThinkingController();
+  static const _thinkingMessages = <String>[
+    'Đang luận giải lá số…',
+    'Đang xem tinh tú và cung mệnh…',
+    'Sắp có lời giải cho bạn…',
+    'Chờ mình thêm chút nhé…',
+  ];
   final _sessionId = 'ai-tu-vi-${DateTime.now().millisecondsSinceEpoch}';
 
   List<_ZodiacMessage> _messages = [
@@ -116,7 +124,9 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
       _controller.clear();
     });
     _scrollToBottom();
+    _thinking.show(context, messages: _thinkingMessages);
 
+    var firstChunk = true;
     try {
       if (_conversationId == null) {
         final conv = await _aiService.createConversation(
@@ -136,6 +146,10 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
       )) {
         if (!mounted) return;
         if (event.type == AiStreamEventType.chunk && event.chunk != null) {
+          if (firstChunk) {
+            firstChunk = false;
+            _thinking.hide(context);
+          }
           final chunk = event.chunk!;
           setState(() {
             if (chunk.startsWith('__STRIPPED__')) {
@@ -166,6 +180,7 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
         setState(() {
           assistantMessage.text = exceeded.paywall?.message ?? error.message;
         });
+        _thinking.hide(context);
         await showAiQuotaPaywallDialog(context, data: exceeded);
       } else {
         setState(() => assistantMessage.text = error.message);
@@ -178,6 +193,7 @@ class _ZodiacAiChatScreenState extends State<ZodiacAiChatScreen> {
       });
     } finally {
       if (mounted) {
+        _thinking.hide(context);
         setState(() {
           assistantMessage.streaming = false;
           _isSending = false;
